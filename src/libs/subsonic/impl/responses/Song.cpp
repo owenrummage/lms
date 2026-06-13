@@ -192,7 +192,7 @@ namespace lms::api::subsonic
 
         {
             std::optional<core::UUID> mbid{ track->getRecordingMBID() };
-            trackResponse.setAttribute("musicBrainzId", mbid ? mbid->getAsString() : "");
+            trackResponse.setAttribute("musicBrainzId", mbid ? mbid->toString() : "");
         }
 
         {

@@ -46,6 +46,7 @@
 #include "traits/IdTypeTraits.hpp"
 #include "traits/PartialDateTimeTraits.hpp"
 #include "traits/StringViewTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 DBO_INSTANTIATE_TEMPLATES(lms::db::Country)
 DBO_INSTANTIATE_TEMPLATES(lms::db::Label)
@@ -218,7 +219,7 @@ namespace lms::db
                 query.where("t.codec = ?").bind(detail::getDbCodec(params.filters.codec.value()));
 
             if (params.releaseGroupMBID)
-                query.where("group_mbid = ?").bind(params.releaseGroupMBID->getAsString());
+                query.where("group_mbid = ?").bind(*params.releaseGroupMBID);
 
             switch (params.sortMethod)
             {
@@ -454,7 +455,7 @@ namespace lms::db
 
     Release::Release(const std::string& name, const std::optional<core::UUID>& MBID)
         : _name{ std::string(name, 0, _maxNameLength) }
-        , _MBID{ MBID ? MBID->getAsString() : "" }
+        , _MBID{ MBID }
     {
     }
 
@@ -467,7 +468,7 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Release>>("SELECT r from release r").where("r.mbid = ?").bind(mbid.getAsString()));
+        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Release>>("SELECT r from release r").where("r.mbid = ?").bind(mbid));
     }
 
     Release::pointer Release::find(Session& session, ReleaseId id)

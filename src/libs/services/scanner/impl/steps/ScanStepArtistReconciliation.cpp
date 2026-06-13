@@ -46,7 +46,7 @@ namespace lms::scanner
         {
             os << "'" << artist->getName() << "'";
             if (const auto mbid{ artist->getMBID() })
-                os << " [" << mbid->getAsString() << "]";
+                os << " [" << mbid->toString() << "]";
 
             return os;
         }

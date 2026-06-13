@@ -107,7 +107,7 @@ namespace lms::ui
                     user.modify()->setType(db::UserType::DEMO);
 
                     // For demo user, we create the subsonic API auth token now as we have no other mean to create it later
-                    core::Service<auth::IAuthTokenService>::get()->createAuthToken("subsonic", user->getId(), core::UUID::generate().getAsString());
+                    core::Service<auth::IAuthTokenService>::get()->createAuthToken("subsonic", user->getId(), core::UUID::generate().toString());
                 }
 
                 if (_authPasswordService)

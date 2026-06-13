@@ -561,10 +561,10 @@ namespace lms::api::subsonic
                 switch (context.getResponseFormat())
                 {
                 case ResponseFormat::json:
-                    artistInfoNode.setAttribute("musicBrainzId", artistMBID->getAsString());
+                    artistInfoNode.setAttribute("musicBrainzId", artistMBID->toString());
                     break;
                 case ResponseFormat::xml:
-                    artistInfoNode.createChild("musicBrainzId").setValue(artistMBID->getAsString());
+                    artistInfoNode.createChild("musicBrainzId").setValue(artistMBID->toString());
                     break;
                 }
             }

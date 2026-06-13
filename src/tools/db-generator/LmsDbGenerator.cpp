@@ -78,14 +78,14 @@ namespace lms
 
     db::Cluster::pointer generateCluster(db::Session& session, db::ClusterType::pointer clusterType)
     {
-        const std::string clusterName{ std::string{ clusterType->getName() } + "-" + std::string{ core::UUID::generate().getAsString() } };
+        const std::string clusterName{ std::string{ clusterType->getName() } + "-" + core::UUID::generate().toString() };
         return session.create<db::Cluster>(clusterType, clusterName);
     }
 
     db::Artist::pointer generateArtist(db::Session& session)
     {
         const core::UUID artistMBID{ core::UUID::generate() };
-        const std::string artistName{ "Artist-" + std::string{ core::UUID::generate().getAsString() } };
+        const std::string artistName{ "Artist-" + core::UUID::generate().toString() };
         return session.create<db::Artist>(artistName, artistMBID);
     }
 
@@ -94,7 +94,7 @@ namespace lms
         using namespace db;
 
         const core::UUID releaseMBID{ core::UUID::generate() };
-        const std::string releaseName{ "Release-" + std::string{ core::UUID::generate().getAsString() } };
+        const std::string releaseName{ "Release-" + core::UUID::generate().toString() };
         Release::pointer release{ context.session.create<Release>(releaseName, releaseMBID) };
         Medium::pointer medium{ context.session.create<Medium>(release) };
         medium.modify()->setTrackCount(params.trackCountPerRelease);
@@ -113,7 +113,7 @@ namespace lms
         {
             Track::pointer track{ context.session.create<Track>() };
 
-            track.modify()->setName("Track-" + std::string{ core::UUID::generate().getAsString() });
+            track.modify()->setName("Track-" + core::UUID::generate().toString());
             track.modify()->setMedium(medium);
             track.modify()->setTrackNumber(i);
             track.modify()->setDuration(std::chrono::seconds{ core::random::getRandom(30, 300) });

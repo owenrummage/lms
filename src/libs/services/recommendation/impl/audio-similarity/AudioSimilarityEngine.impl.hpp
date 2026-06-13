@@ -620,7 +620,7 @@ namespace lms::recommendation
         db::Artist::find(session, db::Artist::FindParameters{}, [&](const db::Artist::pointer& artist) {
             const auto mbid{ artist->getMBID() };
             // skip "Various Artists" to avoid false artist matches
-            if (mbid && mbid->getAsString() == "89ad4ac3-39f7-470e-963a-56509c546377")
+            if (mbid && mbid->toString() == "89ad4ac3-39f7-470e-963a-56509c546377")
                 return;
 
             std::unordered_set<db::TrackId> artistTrackIds;

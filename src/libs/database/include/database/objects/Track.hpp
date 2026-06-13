@@ -258,8 +258,8 @@ namespace lms::db
         void setName(std::string_view name);
         void setDate(const core::PartialDateTime& date) { _date = date; }
         void setOriginalDate(const core::PartialDateTime& date) { _originalDate = date; }
-        void setTrackMBID(const std::optional<core::UUID>& MBID) { _trackMBID = MBID ? MBID->getAsString() : ""; }
-        void setRecordingMBID(const std::optional<core::UUID>& MBID) { _recordingMBID = MBID ? MBID->getAsString() : ""; }
+        void setTrackMBID(const std::optional<core::UUID>& MBID) { _trackMBID = MBID; }
+        void setRecordingMBID(const std::optional<core::UUID>& MBID) { _recordingMBID = MBID; }
         void setCopyright(std::string_view copyright);
         void setCopyrightURL(std::string_view copyrightURL);
         void setAdvisory(Advisory advisory) { _advisory = advisory; }
@@ -308,8 +308,8 @@ namespace lms::db
         std::optional<int> getOriginalYear() const;
         const Wt::WDateTime& getLastWriteTime() const { return _fileLastWrite; }
         bool hasLyrics() const;
-        std::optional<core::UUID> getTrackMBID() const { return core::UUID::fromString(_trackMBID); }
-        std::optional<core::UUID> getRecordingMBID() const { return core::UUID::fromString(_recordingMBID); }
+        std::optional<core::UUID> getTrackMBID() const { return _trackMBID; }
+        std::optional<core::UUID> getRecordingMBID() const { return _recordingMBID; }
         std::string_view getCopyright() const;
         std::string_view getCopyrightURL() const;
         std::string_view getArtistDisplayName() const { return _artistDisplayName; }
@@ -413,8 +413,8 @@ namespace lms::db
         std::string _name;
         core::PartialDateTime _date;
         core::PartialDateTime _originalDate;
-        std::string _trackMBID;
-        std::string _recordingMBID;
+        std::optional<core::UUID> _trackMBID;
+        std::optional<core::UUID> _recordingMBID;
         std::string _copyright;
         std::string _copyrightURL;
         std::string _artistDisplayName;

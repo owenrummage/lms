@@ -46,6 +46,7 @@
 #include "traits/PartialDateTimeTraits.hpp"
 #include "traits/PathTraits.hpp"
 #include "traits/StringViewTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 DBO_INSTANTIATE_TEMPLATES(lms::db::Track)
 
@@ -392,21 +393,21 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        return utils::fetchQueryResults<Track::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Track>>("SELECT t from track t").where("t.mbid = ?").bind(mbid.getAsString()));
+        return utils::fetchQueryResults<Track::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Track>>("SELECT t from track t").where("t.mbid = ?").bind(mbid));
     }
 
     std::vector<Track::pointer> Track::findByRecordingMBID(Session& session, const core::UUID& mbid)
     {
         session.checkReadTransaction();
 
-        return utils::fetchQueryResults<Track::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Track>>("SELECT t from track t").where("t.recording_mbid = ?").bind(mbid.getAsString()));
+        return utils::fetchQueryResults<Track::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Track>>("SELECT t from track t").where("t.recording_mbid = ?").bind(mbid));
     }
 
     RangeResults<TrackId> Track::findIdsTrackMBIDDuplicates(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
-        auto query{ session.getDboSession()->query<TrackId>("SELECT track.id FROM track WHERE mbid in (SELECT mbid FROM track WHERE mbid <> '' GROUP BY mbid HAVING COUNT (*) > 1)").orderBy("track.release_id,track.mbid") };
+        auto query{ session.getDboSession()->query<TrackId>("SELECT track.id FROM track WHERE mbid in (SELECT mbid FROM track WHERE mbid IS NOT NULL GROUP BY mbid HAVING COUNT (*) > 1)").orderBy("track.release_id,track.mbid") };
 
         return utils::execRangeQuery<TrackId>(query, range);
     }

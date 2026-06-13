@@ -59,7 +59,7 @@ namespace lms::ui::utils
         Wt::WLink createArtistLink(const db::Artist::pointer& artist)
         {
             if (const auto mbid{ artist->getMBID() })
-                return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/mbid/" + std::string{ mbid->getAsString() } };
+                return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/mbid/" + mbid->toString() };
             else
                 return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/" + artist->getId().toString() };
         }
@@ -229,7 +229,7 @@ namespace lms::ui::utils
     Wt::WLink createReleaseLink(db::Release::pointer release)
     {
         if (const auto mbid{ release->getMBID() })
-            return Wt::WLink{ Wt::LinkType::InternalPath, "/release/mbid/" + std::string{ mbid->getAsString() } };
+            return Wt::WLink{ Wt::LinkType::InternalPath, "/release/mbid/" + mbid->toString() };
 
         return Wt::WLink{ Wt::LinkType::InternalPath, "/release/" + release->getId().toString() };
     }

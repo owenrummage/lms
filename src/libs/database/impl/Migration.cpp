@@ -35,7 +35,7 @@ namespace lms::db
 {
     namespace
     {
-        static constexpr Version LMS_DATABASE_VERSION{ 106 };
+        static constexpr Version LMS_DATABASE_VERSION{ 107 };
     }
 
     VersionInfo::VersionInfo()
@@ -1736,6 +1736,44 @@ FROM track)");
         utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE "user" ADD COLUMN "lastfm_session_key" TEXT NOT NULL DEFAULT '')");
     }
 
+    void migrateFromV106(Session& session)
+    {
+        dropIndexes(session);
+
+        // Convert the 5 MBID TEXT columns to BLOB (16 raw bytes)
+        // unhex() returns NULL for non-hex input, so malformed values become NULL
+
+        // artist.mbid
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist ADD COLUMN mbid_new BLOB)");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE artist SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist DROP COLUMN mbid)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist RENAME COLUMN mbid_new TO mbid)");
+
+        // release.mbid
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release ADD COLUMN mbid_new BLOB)");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE release SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release DROP COLUMN mbid)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release RENAME COLUMN mbid_new TO mbid)");
+
+        // release.group_mbid
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release ADD COLUMN group_mbid_new BLOB)");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE release SET group_mbid_new = CASE WHEN group_mbid != '' THEN unhex(replace(group_mbid, '-', '')) ELSE NULL END)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release DROP COLUMN group_mbid)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release RENAME COLUMN group_mbid_new TO group_mbid)");
+
+        // track.mbid
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track ADD COLUMN mbid_new BLOB)");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE track SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track DROP COLUMN mbid)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track RENAME COLUMN mbid_new TO mbid)");
+
+        // track.recording_mbid
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track ADD COLUMN recording_mbid_new BLOB)");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE track SET recording_mbid_new = CASE WHEN recording_mbid != '' THEN unhex(replace(recording_mbid, '-', '')) ELSE NULL END)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track DROP COLUMN recording_mbid)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track RENAME COLUMN recording_mbid_new TO recording_mbid)");
+    }
+
     bool doDbMigration(Session& session)
     {
         constexpr std::string_view outdatedMsg{ "Outdated database, please rebuild it (delete the .db file and restart)" };
@@ -1818,6 +1856,7 @@ FROM track)");
             { 103, migrateFromV103 },
             { 104, migrateFromV104 },
             { 105, migrateFromV105 },
+            { 106, migrateFromV106 },
         };
 
         bool migrationPerformed{};

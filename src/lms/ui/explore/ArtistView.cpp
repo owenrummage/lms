@@ -393,7 +393,7 @@ namespace lms::ui
         if (mbid)
         {
             setCondition("if-has-mbid", true);
-            bindString("mbid-link", std::string{ "https://musicbrainz.org/artist/" } + std::string{ mbid->getAsString() });
+            bindString("mbid-link", "https://musicbrainz.org/artist/" + mbid->toString());
         }
     }
 

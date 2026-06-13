@@ -102,7 +102,7 @@ namespace lms::api::subsonic
 
             {
                 std::optional<core::UUID> mbid{ artist->getMBID() };
-                artistNode.setAttribute("musicBrainzId", mbid ? mbid->getAsString() : "");
+                artistNode.setAttribute("musicBrainzId", mbid ? mbid->toString() : "");
             }
 
             artistNode.setAttribute("sortName", artist->getSortName());

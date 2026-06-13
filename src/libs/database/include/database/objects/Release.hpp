@@ -298,8 +298,8 @@ namespace lms::db
         // Accessors
         std::string_view getName() const { return _name; }
         std::string_view getSortName() const { return _sortName; }
-        std::optional<core::UUID> getMBID() const { return core::UUID::fromString(_MBID); }
-        std::optional<core::UUID> getGroupMBID() const { return core::UUID::fromString(_groupMBID); }
+        std::optional<core::UUID> getMBID() const { return _MBID; }
+        std::optional<core::UUID> getGroupMBID() const { return _groupMBID; }
         std::optional<std::size_t> getTotalDisc() const { return _totalDisc; } // the number of discs this release should have if complete
         std::chrono::milliseconds getDuration() const;
         Wt::WDateTime getAddedTime() const;
@@ -325,8 +325,8 @@ namespace lms::db
         // Setters
         void setName(std::string_view name) { _name = name; }
         void setSortName(std::string_view sortName) { _sortName = sortName; }
-        void setMBID(const std::optional<core::UUID>& mbid) { _MBID = mbid ? mbid->getAsString() : ""; }
-        void setGroupMBID(const std::optional<core::UUID>& mbid) { _groupMBID = mbid ? mbid->getAsString() : ""; }
+        void setMBID(const std::optional<core::UUID>& mbid) { _MBID = mbid; }
+        void setGroupMBID(const std::optional<core::UUID>& mbid) { _groupMBID = mbid; }
         void setTotalDisc(std::optional<int> totalDisc) { _totalDisc = totalDisc; }
         void setArtistDisplayName(std::string_view name) { _artistDisplayName = name; }
         void clearArtistLinks();
@@ -382,8 +382,8 @@ namespace lms::db
 
         std::string _name;
         std::string _sortName;
-        std::string _MBID;
-        std::string _groupMBID;
+        std::optional<core::UUID> _MBID;
+        std::optional<core::UUID> _groupMBID;
         std::optional<int> _totalDisc{};
         std::string _artistDisplayName;
         bool _isCompilation{}; // See https://picard-docs.musicbrainz.org/en/appendices/tag_mapping.html#compilation-itunes-5

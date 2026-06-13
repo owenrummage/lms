@@ -225,7 +225,7 @@ namespace lms::ui
             }
 
             auto doGenerate{ [subsonicTokenPtr, updateKeyButtonStates] {
-                const std::string newToken{ core::UUID::generate().getAsString() };
+                const std::string newToken{ core::UUID::generate().toString() };
                 {
                     auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
                     auto& authService{ *core::Service<auth::IAuthTokenService>::get() };

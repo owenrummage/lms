@@ -35,6 +35,7 @@
 #include "objects/detail/Types.hpp"
 #include "traits/IdTypeTraits.hpp"
 #include "traits/StringViewTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 DBO_INSTANTIATE_TEMPLATES(lms::db::Artist)
 
@@ -214,7 +215,7 @@ namespace lms::db
     } // namespace
 
     Artist::Artist(const std::string& name, const std::optional<core::UUID>& mbid)
-        : _mbid{ mbid ? mbid->getAsString() : "" }
+        : _mbid{ mbid }
     {
         setName(name);
     }
@@ -277,7 +278,7 @@ namespace lms::db
     Artist::pointer Artist::find(Session& session, const core::UUID& mbid)
     {
         session.checkReadTransaction();
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.mbid = ?").bind(std::string{ mbid.getAsString() }));
+        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.mbid = ?").bind(mbid));
     }
 
     Artist::pointer Artist::find(Session& session, ArtistId id)
@@ -384,17 +385,6 @@ AND NOT EXISTS (
             utils::executeCommand(*session.getDboSession(), "UPDATE artist SET preferred_artwork_id = ? WHERE id = ?", artworkId, artistId);
         else
             utils::executeCommand(*session.getDboSession(), "UPDATE artist SET preferred_artwork_id = NULL WHERE id = ?", artistId);
-    }
-
-    std::optional<core::UUID> Artist::getMBID() const
-    {
-        return core::UUID::fromString(_mbid);
-    }
-
-    bool Artist::hasMBID() const
-    {
-        // TODO optim this
-        return getMBID().has_value();
     }
 
     ObjectPtr<Artwork> Artist::getPreferredArtwork() const

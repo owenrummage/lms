@@ -89,9 +89,9 @@ namespace lms::scrobbling::listenBrainz
             if (const auto release{ track->getRelease() })
             {
                 if (auto MBID{ release->getMBID() })
-                    additionalInfo["release_mbid"] = Wt::Json::Value{ std::string{ MBID->getAsString() } };
+                    additionalInfo["release_mbid"] = Wt::Json::Value{ MBID->toString() };
                 if (auto groupMBID{ release->getGroupMBID() })
-                    additionalInfo["release_group_mbid"] = Wt::Json::Value{ std::string{ groupMBID->getAsString() } };
+                    additionalInfo["release_group_mbid"] = Wt::Json::Value{ groupMBID->toString() };
             }
 
             {
@@ -99,7 +99,7 @@ namespace lms::scrobbling::listenBrainz
                 for (const Artist& artist : artists)
                 {
                     if (artist.mbid)
-                        artistMBIDs.push_back(Wt::Json::Value{ std::string{ artist.mbid->getAsString() } });
+                        artistMBIDs.push_back(Wt::Json::Value{ artist.mbid->toString() });
                 }
 
                 if (!artistMBIDs.empty())
@@ -107,10 +107,10 @@ namespace lms::scrobbling::listenBrainz
             }
 
             if (auto MBID{ track->getTrackMBID() })
-                additionalInfo["track_mbid"] = Wt::Json::Value{ std::string{ MBID->getAsString() } };
+                additionalInfo["track_mbid"] = Wt::Json::Value{ MBID->toString() };
 
             if (auto MBID{ track->getRecordingMBID() })
-                additionalInfo["recording_mbid"] = Wt::Json::Value{ std::string{ MBID->getAsString() } };
+                additionalInfo["recording_mbid"] = Wt::Json::Value{ MBID->toString() };
 
             if (const std::optional<std::size_t> trackNumber{ track->getTrackNumber() })
                 additionalInfo["tracknumber"] = Wt::Json::Value{ static_cast<long long int>(*trackNumber) };

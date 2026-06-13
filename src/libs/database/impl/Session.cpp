@@ -66,6 +66,7 @@
 #include "traits/ImageHashTypeTraits.hpp"
 #include "traits/PartialDateTimeTraits.hpp"
 #include "traits/PathTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 namespace lms::db
 {

@@ -165,7 +165,7 @@ namespace lms::api::subsonic
 
         {
             std::optional<core::UUID> mbid{ release->getMBID() };
-            albumNode.setAttribute("musicBrainzId", mbid ? mbid->getAsString() : "");
+            albumNode.setAttribute("musicBrainzId", mbid ? mbid->toString() : "");
         }
 
         auto addClusters{ [&](Response::Node::Key field, std::string_view clusterTypeName) {
