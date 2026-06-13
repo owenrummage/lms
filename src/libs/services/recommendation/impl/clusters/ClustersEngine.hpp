@@ -54,8 +54,8 @@ namespace lms::recommendation
         ArtistResults findSimilarArtists(db::ArtistId artistId, core::EnumSet<db::TrackArtistLinkType> linkTypes, std::size_t maxCount) const override;
 
         TrackResults greedySelect(std::vector<db::TrackId> candidates, std::vector<db::TrackId> selectedTracks, std::size_t maxCount) const;
-        void buildTrackMetadata(db::Session& session);
         void buildTrackClusters(db::Session& session);
+        void buildTrackMetadata(db::Session& session);
         void buildReleaseClusters();
         void buildArtistClusters();
 

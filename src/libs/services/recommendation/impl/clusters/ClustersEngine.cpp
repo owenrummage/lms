@@ -23,7 +23,6 @@
 #include <limits>
 #include <memory>
 #include <optional>
-#include <random>
 #include <unordered_set>
 
 #include "database/IDb.hpp"
@@ -39,6 +38,7 @@
 
 #include "track-selection-constraints/DuplicateTrackConstraint.hpp"
 #include "track-selection-constraints/SameArtistConstraint.hpp"
+#include "track-selection-constraints/SameRecordingMBIDConstraint.hpp"
 #include "track-selection-constraints/SameReleaseConstraint.hpp"
 #include "track-selection-constraints/TrackCandidateContext.hpp"
 
@@ -103,6 +103,7 @@ namespace lms::recommendation
         constexpr float sameReleaseWeight{ 0.5F };
         constexpr float sameArtistWeight{ 0.5F };
         _trackEvaluator.addHardConstraint(std::make_unique<DuplicateTrackConstraint>());
+        _trackEvaluator.addHardConstraint(std::make_unique<SameRecordingMBIDConstraint>(_trackMetadata));
         _trackEvaluator.addSoftConstraint(std::make_unique<SameReleaseConstraint>(_trackMetadata), sameReleaseWeight);
         _trackEvaluator.addSoftConstraint(std::make_unique<SameArtistConstraint>(_trackMetadata), sameArtistWeight);
     }
@@ -122,8 +123,8 @@ namespace lms::recommendation
         db::Session& session{ _db.getTLSSession() };
         auto transaction{ session.createReadTransaction() };
 
-        buildTrackMetadata(session);
         buildTrackClusters(session);
+        buildTrackMetadata(session);
         buildReleaseClusters();
         buildArtistClusters();
 
@@ -134,11 +135,17 @@ namespace lms::recommendation
     {
         LOG(DEBUG, "building track metadata...");
 
-        db::Release::find(session, db::Release::FindParameters{}, [&](const db::Release::pointer& release) {
-            db::Track::FindParameters params;
-            params.setRelease(release->getId());
-            for (const db::TrackId trackId : db::Track::findIds(session, params).results)
-                _trackMetadata[trackId].releaseId = release->getId();
+        // Ensure cluster tracks with no release/artist have an entry
+        for (const auto& [trackId, _] : _trackClusters)
+            _trackMetadata.try_emplace(trackId);
+
+        db::Track::find(session, db::Track::FindParameters{}, [&](const db::Track::pointer& track) {
+            const auto it{ _trackMetadata.find(track->getId()) };
+            if (it != _trackMetadata.cend())
+            {
+                it->second.releaseId = track->getReleaseId();
+                it->second.recordingMBID = track->getRecordingMBID();
+            }
         });
 
         db::Artist::find(session, db::Artist::FindParameters{}, [&](const db::Artist::pointer& artist) {

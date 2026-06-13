@@ -50,10 +50,10 @@
 
 #include "InterpolationFitConstraint.hpp"
 #include "MaxDistanceConstraint.hpp"
-#include "NearDuplicateEmbeddingConstraint.hpp"
 #include "SmoothTransitionConstraint.hpp"
 #include "track-selection-constraints/DuplicateTrackConstraint.hpp"
 #include "track-selection-constraints/SameArtistConstraint.hpp"
+#include "track-selection-constraints/SameRecordingMBIDConstraint.hpp"
 #include "track-selection-constraints/SameReleaseConstraint.hpp"
 
 #include "Types.hpp"
@@ -121,11 +121,9 @@ namespace lms::recommendation
         constexpr float smoothTransitionWeight{ 0.2F };
         constexpr float sameReleaseWeight{ 0.5F };
         constexpr float sameArtistWeight{ 0.5F };
-        constexpr float nearDuplicateThreshold{ 0.01F };
-
         _similarityEvaluator = {};
         _similarityEvaluator.addHardConstraint(std::make_unique<DuplicateTrackConstraint>());
-        _similarityEvaluator.addHardConstraint(std::make_unique<NearDuplicateEmbeddingConstraint<ReducedDimCount>>(_trackVectors, nearDuplicateThreshold));
+        _similarityEvaluator.addHardConstraint(std::make_unique<SameRecordingMBIDConstraint>(_trackMetadata));
         _similarityEvaluator.addHardConstraint(std::make_unique<MaxDistanceConstraint<ReducedDimCount>>(_trackVectors, _trackDistanceThreshold));
         _similarityEvaluator.addSoftConstraint(std::make_unique<InterpolationFitConstraint<ReducedDimCount>>(_trackVectors), interpolationFitWeight);
         _similarityEvaluator.addSoftConstraint(std::make_unique<SmoothTransitionConstraint<ReducedDimCount>>(_trackVectors), smoothTransitionWeight);
@@ -134,7 +132,7 @@ namespace lms::recommendation
 
         _pathEvaluator = {};
         _pathEvaluator.addHardConstraint(std::make_unique<DuplicateTrackConstraint>());
-        _pathEvaluator.addHardConstraint(std::make_unique<NearDuplicateEmbeddingConstraint<ReducedDimCount>>(_trackVectors, nearDuplicateThreshold));
+        _pathEvaluator.addHardConstraint(std::make_unique<SameRecordingMBIDConstraint>(_trackMetadata));
         _pathEvaluator.addSoftConstraint(std::make_unique<InterpolationFitConstraint<ReducedDimCount>>(_trackVectors), interpolationFitWeight);
         _pathEvaluator.addSoftConstraint(std::make_unique<SmoothTransitionConstraint<ReducedDimCount>>(_trackVectors), smoothTransitionWeight);
         _pathEvaluator.addSoftConstraint(std::make_unique<SameReleaseConstraint>(_trackMetadata), sameReleaseWeight);
@@ -595,27 +593,28 @@ namespace lms::recommendation
             _trackVectors.try_emplace(trackId, &reducedVector);
         });
 
-        db::Release::find(session, db::Release::FindParameters{}, [&](const db::Release::pointer& release) {
-            std::vector<std::reference_wrapper<const ReducedVector>> releaseTrackFeatures;
+        db::Track::find(session, db::Track::FindParameters{}, [&](const db::Track::pointer& track) {
+            const auto itVec{ _trackVectors.find(track->getId()) };
+            if (itVec == _trackVectors.cend())
+                return;
 
-            db::Track::FindParameters params;
-            params.setRelease(release->getId());
+            auto& meta{ _trackMetadata[track->getId()] };
+            const db::ReleaseId releaseId{ track->getReleaseId() };
+            meta.releaseId = releaseId;
+            meta.recordingMBID = track->getRecordingMBID();
 
-            const auto trackIds{ db::Track::findIds(session, params) };
-            for (const db::TrackId trackId : trackIds.results)
-            {
-                const auto itFeatures{ _trackVectors.find(trackId) };
-                if (itFeatures != std::cend(_trackVectors))
-                {
-                    assert(itFeatures->second);
-                    releaseTrackFeatures.emplace_back(*itFeatures->second);
-                    _trackMetadata[trackId].releaseId = release->getId();
-                }
-            }
-
-            if (!releaseTrackFeatures.empty())
-                _releaseVectors.try_emplace(release->getId(), std::move(releaseTrackFeatures));
+            if (releaseId.isValid())
+                _releaseVectors[releaseId].emplace_back(*itVec->second);
         });
+
+        math::MedoidCalculator<ReducedVector> calc;
+        for (const auto& [id, vecs] : _releaseVectors)
+        {
+            calc.clear();
+            for (const auto& v : vecs)
+                calc.add(v.get());
+            _releaseMedoids.try_emplace(id, calc.finalize());
+        }
 
         db::Artist::find(session, db::Artist::FindParameters{}, [&](const db::Artist::pointer& artist) {
             const auto mbid{ artist->getMBID() };
@@ -657,15 +656,6 @@ namespace lms::recommendation
             if (!artistTrackVectors.empty())
                 _artistVectors.try_emplace(artist->getId(), std::move(artistTrackVectors));
         });
-
-        math::MedoidCalculator<ReducedVector> calc;
-        for (const auto& [id, vecs] : _releaseVectors)
-        {
-            calc.clear();
-            for (const auto& v : vecs)
-                calc.add(v.get());
-            _releaseMedoids.try_emplace(id, calc.finalize());
-        }
 
         for (const auto& [id, vecs] : _artistVectors)
         {
