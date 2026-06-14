@@ -51,7 +51,6 @@ namespace lms::db
             session.checkReadTransaction();
 
             auto query{ session.getDboSession()->query<ResultType>("SELECT " + std::string{ itemToSelect } + " FROM cluster c") };
-            query.groupBy("c.id");
 
             if (params.track.isValid() || params.release.isValid())
                 query.join("track_cluster t_c ON t_c.cluster_id = c.id");
@@ -83,7 +82,9 @@ namespace lms::db
                 break;
             }
 
-            query.groupBy("c.id");
+            // track_cluster has a UNIQUE constraint on (track_id, cluster_id), so no duplicates can occur when filtering by track
+            if (!params.track.isValid())
+                query.groupBy("c.id");
 
             return query;
         }

@@ -275,4 +275,35 @@ namespace lms::db::tests
             EXPECT_EQ(links[0]->getTrack()->getId(), track2.getId());
         }
     }
+
+    TEST_F(DatabaseFixture, Track_getArtists_typeFilterAndOrder)
+    {
+        ScopedTrack track{ session };
+        ScopedArtist artist1{ session, "Artist1" };
+        ScopedArtist artist2{ session, "Artist2" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            session.create<TrackArtistLink>(track.get(), artist1.get(), TrackArtistLinkType::Artist, false);
+            session.create<TrackArtistLink>(track.get(), artist2.get(), TrackArtistLinkType::Artist, false);
+            session.create<TrackArtistLink>(track.get(), artist1.get(), TrackArtistLinkType::Mixer, false);
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            const auto artistLinks{ track->getArtists({ TrackArtistLinkType::Artist }) };
+            ASSERT_EQ(artistLinks.size(), 2);
+            EXPECT_EQ(artistLinks[0]->getId(), artist1.getId());
+            EXPECT_EQ(artistLinks[1]->getId(), artist2.getId());
+
+            const auto mixerLinks{ track->getArtists({ TrackArtistLinkType::Mixer }) };
+            ASSERT_EQ(mixerLinks.size(), 1);
+            EXPECT_EQ(mixerLinks[0]->getId(), artist1.getId());
+
+            const auto noFilter{ track->getArtists({}) };
+            EXPECT_EQ(noFilter.size(), 2);
+        }
+    }
+
 } // namespace lms::db::tests
