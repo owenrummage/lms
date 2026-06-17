@@ -6,10 +6,14 @@ add_library(lmsdatabase STATIC
 	impl/objects/AuthToken.cpp
 	impl/objects/Cluster.cpp
 	impl/objects/Directory.cpp
+	impl/objects/Genre.cpp
+	impl/objects/Grouping.cpp
 	impl/objects/Image.cpp
+	impl/objects/Language.cpp
 	impl/objects/Listen.cpp
 	impl/objects/MediaLibrary.cpp
 	impl/objects/Medium.cpp
+	impl/objects/Mood.cpp
 	impl/objects/PlayListFile.cpp
 	impl/objects/PlayQueue.cpp
 	impl/objects/Podcast.cpp

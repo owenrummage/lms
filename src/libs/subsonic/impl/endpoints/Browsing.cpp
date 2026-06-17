@@ -30,6 +30,7 @@
 #include "database/objects/ArtistInfo.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
@@ -379,14 +380,9 @@ namespace lms::api::subsonic
 
         auto transaction{ context.getDbSession().createReadTransaction() };
 
-        const ClusterType::pointer clusterType{ ClusterType::find(context.getDbSession(), "GENRE") };
-        if (clusterType)
-        {
-            const auto clusters{ clusterType->getClusters() };
-
-            for (const Cluster::pointer& cluster : clusters)
-                genresNode.addArrayChild("genre", createGenreNode(context, cluster));
-        }
+        db::Genre::find(context.getDbSession(), db::Genre::FindParameters{}.setSortMethod(db::GenreSortMethod::Name), [&](const db::Genre::pointer& genre) {
+            genresNode.addArrayChild("genre", createGenreNode(context, genre));
+        });
 
         return response;
     }

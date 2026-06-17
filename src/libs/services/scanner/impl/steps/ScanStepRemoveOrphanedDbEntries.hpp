@@ -36,6 +36,10 @@ namespace lms::scanner
 
         void removeOrphanedClusters(ScanContext& context);
         void removeOrphanedClusterTypes(ScanContext& context);
+        void removeOrphanedGenres(ScanContext& context);
+        void removeOrphanedGroupings(ScanContext& context);
+        void removeOrphanedLanguages(ScanContext& context);
+        void removeOrphanedMoods(ScanContext& context);
         void removeOrphanedArtists(ScanContext& context);
         void removeOrphanedMediums(ScanContext& context);
         void removeOrphanedReleases(ScanContext& context);

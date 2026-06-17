@@ -35,7 +35,7 @@ namespace lms::db
 {
     namespace
     {
-        static constexpr Version LMS_DATABASE_VERSION{ 107 };
+        static constexpr Version LMS_DATABASE_VERSION{ 108 };
     }
 
     VersionInfo::VersionInfo()
@@ -1774,6 +1774,127 @@ FROM track)");
         utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track RENAME COLUMN recording_mbid_new TO recording_mbid)");
     }
 
+    void migrateFromV107(Session& session)
+    {
+        // Extract Genre, Mood, Language and Grouping from Cluster (keep it for user tags)
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "genre" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "name" text not null,
+  "track_count" integer not null default 0,
+  "release_count" integer not null default 0
+))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "track_genre" (
+  "track_id" bigint,
+  "genre_id" bigint,
+  primary key ("track_id", "genre_id"),
+  constraint "fk_track_genre_track" foreign key ("track_id") references "track" ("id") on delete cascade deferrable initially deferred,
+  constraint "fk_track_genre_genre" foreign key ("genre_id") references "genre" ("id") on delete cascade deferrable initially deferred
+))");
+
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO genre (version, name, track_count, release_count)
+SELECT 0, c.name, c.track_count, c.release_count FROM cluster c
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+WHERE ct.name = 'GENRE')");
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_genre (track_id, genre_id)
+SELECT tc.track_id, g.id FROM track_cluster tc
+INNER JOIN cluster c ON c.id = tc.cluster_id
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+INNER JOIN genre g ON g.name = c.name
+WHERE ct.name = 'GENRE')");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_genre_genre" ON "track_genre" ("genre_id"))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_genre_track" ON "track_genre" ("track_id"))");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "mood" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "name" text not null
+))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "track_mood" (
+  "track_id" bigint,
+  "mood_id" bigint,
+  primary key ("track_id", "mood_id"),
+  constraint "fk_track_mood_track" foreign key ("track_id") references "track" ("id") on delete cascade deferrable initially deferred,
+  constraint "fk_track_mood_mood" foreign key ("mood_id") references "mood" ("id") on delete cascade deferrable initially deferred
+))");
+
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO mood (version, name)
+SELECT 0, c.name FROM cluster c
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+WHERE ct.name = 'MOOD')");
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_mood (track_id, mood_id)
+SELECT tc.track_id, m.id FROM track_cluster tc
+INNER JOIN cluster c ON c.id = tc.cluster_id
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+INNER JOIN mood m ON m.name = c.name
+WHERE ct.name = 'MOOD')");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_mood_mood" ON "track_mood" ("mood_id"))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_mood_track" ON "track_mood" ("track_id"))");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "language" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "name" text not null
+))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "track_language" (
+  "track_id" bigint,
+  "language_id" bigint,
+  primary key ("track_id", "language_id"),
+  constraint "fk_track_language_track" foreign key ("track_id") references "track" ("id") on delete cascade deferrable initially deferred,
+  constraint "fk_track_language_language" foreign key ("language_id") references "language" ("id") on delete cascade deferrable initially deferred
+))");
+
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO language (version, name)
+SELECT 0, c.name FROM cluster c
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+WHERE ct.name = 'LANGUAGE')");
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_language (track_id, language_id)
+SELECT tc.track_id, l.id FROM track_cluster tc
+INNER JOIN cluster c ON c.id = tc.cluster_id
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+INNER JOIN language l ON l.name = c.name
+WHERE ct.name = 'LANGUAGE')");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_language_language" ON "track_language" ("language_id"))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_language_track" ON "track_language" ("track_id"))");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "grouping" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "name" text not null
+))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "track_grouping" (
+  "track_id" bigint,
+  "grouping_id" bigint,
+  primary key ("track_id", "grouping_id"),
+  constraint "fk_track_grouping_track" foreign key ("track_id") references "track" ("id") on delete cascade deferrable initially deferred,
+  constraint "fk_track_grouping_grouping" foreign key ("grouping_id") references "grouping" ("id") on delete cascade deferrable initially deferred
+))");
+
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO grouping (version, name)
+SELECT 0, c.name FROM cluster c
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+WHERE ct.name = 'GROUPING')");
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_grouping (track_id, grouping_id)
+SELECT tc.track_id, g.id FROM track_cluster tc
+INNER JOIN cluster c ON c.id = tc.cluster_id
+INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
+INNER JOIN grouping g ON g.name = c.name
+WHERE ct.name = 'GROUPING')");
+
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_grouping_grouping" ON "track_grouping" ("grouping_id"))");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_grouping_track" ON "track_grouping" ("track_id"))");
+
+        utils::executeCommand(*session.getDboSession(), R"(DELETE FROM track_cluster WHERE cluster_id IN (SELECT c.id FROM cluster c INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id WHERE ct.name IN ('GENRE', 'MOOD', 'LANGUAGE', 'GROUPING')))");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE cluster DROP COLUMN track_count)");
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE cluster DROP COLUMN release_count)");
+        utils::executeCommand(*session.getDboSession(), R"(DELETE FROM cluster WHERE cluster_type_id IN (SELECT id FROM cluster_type WHERE name IN ('GENRE', 'MOOD', 'LANGUAGE', 'GROUPING')))");
+        utils::executeCommand(*session.getDboSession(), R"(DELETE FROM cluster_type WHERE name IN ('GENRE', 'MOOD', 'LANGUAGE', 'GROUPING'))");
+    }
+
     bool doDbMigration(Session& session)
     {
         constexpr std::string_view outdatedMsg{ "Outdated database, please rebuild it (delete the .db file and restart)" };
@@ -1857,6 +1978,7 @@ FROM track)");
             { 104, migrateFromV104 },
             { 105, migrateFromV105 },
             { 106, migrateFromV106 },
+            { 107, migrateFromV107 },
         };
 
         bool migrationPerformed{};

@@ -152,7 +152,7 @@
 <message id="Lms.Admin.ScannerController.step-checking-for-duplicate-files">Checking for duplicate files... {1} files</message>
 <message id="Lms.Admin.ScannerController.step-checking-for-removed-files">Checking for removed files... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-compact">Compacting database...</message>
-<message id="Lms.Admin.ScannerController.step-compute-cluster-stats">Computing stats... {1}%</message>
+<message id="Lms.Admin.ScannerController.step-compute-genre-stats">Computing stats... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-extract-musicnn-embeddings">Extracting MusicNN embeddings: {1} of {2} files ({3}%)</message>
 <message id="Lms.Admin.ScannerController.step-optimize">Optimizing database... {1}%...</message>
 <message id="Lms.Admin.ScannerController.step-reconciliate-artists">Reconciliating artists: {1} entries...</message>
@@ -221,7 +221,19 @@
 <message id="Lms.Explore.duration">Duration</message>
 <message id="Lms.Explore.filter-added">Filter added</message>
 <message id="Lms.Explore.filters">Filters</message>
+<message id="Lms.Explore.genre">
+	<plural case="0">Genre</plural>
+	<plural case="1">Genres</plural>
+</message>
+<message id="Lms.Explore.grouping">
+	<plural case="0">Grouping</plural>
+	<plural case="1">Groupings</plural>
+</message>
 <message id="Lms.Explore.label">Label</message>
+<message id="Lms.Explore.language">
+	<plural case="0">Language</plural>
+	<plural case="1">Languages</plural>
+</message>
 <message id="Lms.Explore.lyricist">
 	<plural case="0">Lyricist</plural>
 	<plural case="1">Lyricists</plural>
@@ -230,6 +242,10 @@
 <message id="Lms.Explore.mixer">
 	<plural case="0">Mixer</plural>
 	<plural case="1">Mixers</plural>
+</message>
+<message id="Lms.Explore.mood">
+	<plural case="0">Mood</plural>
+	<plural case="1">Moods</plural>
 </message>
 <message id="Lms.Explore.most-played">Most played</message>
 <message id="Lms.Explore.musicbrainz-artist">MusicBrainz Artist</message>

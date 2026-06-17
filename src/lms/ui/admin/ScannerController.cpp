@@ -244,8 +244,8 @@ namespace lms::ui
             _stepStatus->setText(Wt::WString::tr("Lms.Admin.ScannerController.step-compact"));
             break;
 
-        case ScanStep::ComputeClusterStats:
-            _stepStatus->setText(Wt::WString::tr("Lms.Admin.ScannerController.step-compute-cluster-stats")
+        case ScanStep::ComputeGenreStats:
+            _stepStatus->setText(Wt::WString::tr("Lms.Admin.ScannerController.step-compute-genre-stats")
                                      .arg(stepStats.progress()));
             break;
 

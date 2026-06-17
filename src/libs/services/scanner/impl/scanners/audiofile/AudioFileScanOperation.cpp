@@ -35,8 +35,12 @@
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/Track.hpp"
@@ -308,6 +312,62 @@ namespace lms::scanner
             return dbMedium;
         }
 
+        std::vector<db::Genre::pointer> getOrCreateGenres(db::Session& session, std::span<const std::string> names)
+        {
+            std::vector<db::Genre::pointer> genres;
+            genres.reserve(names.size());
+            for (const std::string& name : names)
+            {
+                db::Genre::pointer genre{ db::Genre::find(session, name) };
+                if (!genre)
+                    genre = session.create<db::Genre>(name);
+                genres.push_back(genre);
+            }
+            return genres;
+        }
+
+        std::vector<db::Grouping::pointer> getOrCreateGroupings(db::Session& session, std::span<const std::string> names)
+        {
+            std::vector<db::Grouping::pointer> groupings;
+            groupings.reserve(names.size());
+            for (const std::string& name : names)
+            {
+                db::Grouping::pointer grouping{ db::Grouping::find(session, name) };
+                if (!grouping)
+                    grouping = session.create<db::Grouping>(name);
+                groupings.push_back(grouping);
+            }
+            return groupings;
+        }
+
+        std::vector<db::Language::pointer> getOrCreateLanguages(db::Session& session, std::span<const std::string> names)
+        {
+            std::vector<db::Language::pointer> languages;
+            languages.reserve(names.size());
+            for (const std::string& name : names)
+            {
+                db::Language::pointer language{ db::Language::find(session, name) };
+                if (!language)
+                    language = session.create<db::Language>(name);
+                languages.push_back(language);
+            }
+            return languages;
+        }
+
+        std::vector<db::Mood::pointer> getOrCreateMoods(db::Session& session, std::span<const std::string> names)
+        {
+            std::vector<db::Mood::pointer> moods;
+            moods.reserve(names.size());
+            for (const std::string& name : names)
+            {
+                db::Mood::pointer mood{ db::Mood::find(session, name) };
+                if (!mood)
+                    mood = session.create<db::Mood>(name);
+                moods.push_back(mood);
+            }
+            return moods;
+        }
+
         std::vector<db::Cluster::pointer> getOrCreateClusters(db::Session& session, const Track& track)
         {
             std::vector<db::Cluster::pointer> clusters;
@@ -326,12 +386,6 @@ namespace lms::scanner
                     clusters.push_back(cluster);
                 }
             } };
-
-            // TODO: migrate these fields in dedicated tables in DB
-            getOrCreateClusters("GENRE", track.genres);
-            getOrCreateClusters("MOOD", track.moods);
-            getOrCreateClusters("LANGUAGE", track.languages);
-            getOrCreateClusters("GROUPING", track.groupings);
 
             for (const auto& [tag, values] : track.userExtraTags)
                 getOrCreateClusters(tag, values);
@@ -778,6 +832,10 @@ namespace lms::scanner
             createTrackArtistLinks(dbSession, track, db::TrackArtistLinkType::Performer, role, performers, allowFallback);
 
         track.modify()->setClusters(getOrCreateClusters(dbSession, _file->track));
+        track.modify()->setGenres(getOrCreateGenres(dbSession, _file->track.genres));
+        track.modify()->setGroupings(getOrCreateGroupings(dbSession, _file->track.groupings));
+        track.modify()->setLanguages(getOrCreateLanguages(dbSession, _file->track.languages));
+        track.modify()->setMoods(getOrCreateMoods(dbSession, _file->track.moods));
         track.modify()->setName(title);
         track.modify()->setTrackNumber(_file->track.position);
         track.modify()->setDate(_file->track.date);

@@ -30,8 +30,12 @@
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/TrackEmbeddedImage.hpp"
@@ -107,6 +111,34 @@ namespace lms::db
                 oss << " GROUP BY t.id HAVING COUNT(*) = " << params.filters.clusters.size() << ")";
 
                 query.where(oss.str());
+            }
+
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t.id")
+                    .where("t_g.genre_id = ?")
+                    .bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t.id")
+                    .where("t_gr.grouping_id = ?")
+                    .bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t.id")
+                    .where("t_l.language_id = ?")
+                    .bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t.id")
+                    .where("t_m.mood_id = ?")
+                    .bind(params.filters.mood);
             }
 
             if (params.artist.isValid() || !params.artistName.empty())
@@ -446,6 +478,62 @@ namespace lms::db
         return utils::fetchQueryResults(query);
     }
 
+    std::vector<Genre::pointer> Track::getGenres() const
+    {
+        return utils::fetchQueryResults<Genre::pointer>(_genres.find());
+    }
+
+    std::vector<GenreId> Track::getGenreIds() const
+    {
+        assert(session());
+
+        const auto query{ session()->query<GenreId>("SELECT t_g.genre_id FROM track_genre t_g").where("t_g.track_id = ?").bind(getId()) };
+
+        return utils::fetchQueryResults(query);
+    }
+
+    std::vector<Grouping::pointer> Track::getGroupings() const
+    {
+        return utils::fetchQueryResults<Grouping::pointer>(_groupings.find());
+    }
+
+    std::vector<GroupingId> Track::getGroupingIds() const
+    {
+        assert(session());
+
+        const auto query{ session()->query<GroupingId>("SELECT t_gr.grouping_id FROM track_grouping t_gr").where("t_gr.track_id = ?").bind(getId()) };
+
+        return utils::fetchQueryResults(query);
+    }
+
+    std::vector<Language::pointer> Track::getLanguages() const
+    {
+        return utils::fetchQueryResults<Language::pointer>(_languages.find());
+    }
+
+    std::vector<LanguageId> Track::getLanguageIds() const
+    {
+        assert(session());
+
+        const auto query{ session()->query<LanguageId>("SELECT t_l.language_id FROM track_language t_l").where("t_l.track_id = ?").bind(getId()) };
+
+        return utils::fetchQueryResults(query);
+    }
+
+    std::vector<Mood::pointer> Track::getMoods() const
+    {
+        return utils::fetchQueryResults<Mood::pointer>(_moods.find());
+    }
+
+    std::vector<MoodId> Track::getMoodIds() const
+    {
+        assert(session());
+
+        const auto query{ session()->query<MoodId>("SELECT t_m.mood_id FROM track_mood t_m").where("t_m.track_id = ?").bind(getId()) };
+
+        return utils::fetchQueryResults(query);
+    }
+
     ObjectPtr<MediaLibrary> Track::getMediaLibrary() const
     {
         return _mediaLibrary;
@@ -564,6 +652,34 @@ namespace lms::db
         _clusters.clear();
         for (const ObjectPtr<Cluster>& cluster : clusters)
             _clusters.insert(getDboPtr(cluster));
+    }
+
+    void Track::setGenres(std::span<const ObjectPtr<Genre>> genres)
+    {
+        _genres.clear();
+        for (const ObjectPtr<Genre>& genre : genres)
+            _genres.insert(getDboPtr(genre));
+    }
+
+    void Track::setGroupings(std::span<const ObjectPtr<Grouping>> groupings)
+    {
+        _groupings.clear();
+        for (const ObjectPtr<Grouping>& grouping : groupings)
+            _groupings.insert(getDboPtr(grouping));
+    }
+
+    void Track::setLanguages(std::span<const ObjectPtr<Language>> languages)
+    {
+        _languages.clear();
+        for (const ObjectPtr<Language>& language : languages)
+            _languages.insert(getDboPtr(language));
+    }
+
+    void Track::setMoods(std::span<const ObjectPtr<Mood>> moods)
+    {
+        _moods.clear();
+        for (const ObjectPtr<Mood>& mood : moods)
+            _moods.insert(getDboPtr(mood));
     }
 
     void Track::clearLyrics()

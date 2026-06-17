@@ -30,7 +30,11 @@
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
 #include "database/objects/Cluster.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
 #include "database/objects/Image.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/ScanSettings.hpp"
@@ -173,6 +177,50 @@ namespace lms::ui::utils
         } };
 
         return createFilter(Wt::WString::fromUTF8(std::string{ cluster->getName() }), Wt::WString::fromUTF8(std::string{ cluster->getType()->getName() }), getStyleClass(cluster), canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterGenre(db::GenreId genreId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Genre::pointer genre{ db::Genre::find(LmsApp->getDbSession(), genreId) };
+        if (!genre)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ genre->getName() }), Wt::WString::trn("Lms.Explore.genre", 1), "bg-info text-dark", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterGrouping(db::GroupingId groupingId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Grouping::pointer grouping{ db::Grouping::find(LmsApp->getDbSession(), groupingId) };
+        if (!grouping)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ grouping->getName() }), Wt::WString::trn("Lms.Explore.grouping", 1), "bg-secondary", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterLanguage(db::LanguageId languageId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Language::pointer language{ db::Language::find(LmsApp->getDbSession(), languageId) };
+        if (!language)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ language->getName() }), Wt::WString::trn("Lms.Explore.language", 1), "bg-primary", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterMood(db::MoodId moodId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Mood::pointer mood{ db::Mood::find(LmsApp->getDbSession(), moodId) };
+        if (!mood)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ mood->getName() }), Wt::WString::trn("Lms.Explore.mood", 1), "bg-warning text-dark", canDelete);
     }
 
     std::unique_ptr<Wt::WContainerWidget> createFilterClustersForTrack(db::Track::pointer track, Filters& filters)

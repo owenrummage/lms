@@ -23,6 +23,10 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 
 #include "database/Session.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/User.hpp"
 
@@ -53,7 +57,11 @@ namespace lms::db
                 || params.filters.codec.has_value()
                 || params.filters.label.isValid()
                 || params.filters.releaseType.isValid()
-                || params.trackArtistLinkType.has_value())
+                || params.trackArtistLinkType.has_value()
+                || params.filters.genre.isValid()
+                || params.filters.grouping.isValid()
+                || params.filters.language.isValid()
+                || params.filters.mood.isValid())
             {
                 query.join("track t ON t.id = t_a_l.track_id");
 
@@ -73,6 +81,30 @@ namespace lms::db
                 {
                     query.join("release_release_type r_r_t ON r_r_t.release_id = t.release_id");
                     query.where("r_r_t.release_type_id = ?").bind(params.filters.releaseType);
+                }
+
+                if (params.filters.genre.isValid())
+                {
+                    query.join("track_genre t_g ON t_g.track_id = t.id");
+                    query.where("t_g.genre_id = ?").bind(params.filters.genre);
+                }
+
+                if (params.filters.grouping.isValid())
+                {
+                    query.join("track_grouping t_gr ON t_gr.track_id = t.id");
+                    query.where("t_gr.grouping_id = ?").bind(params.filters.grouping);
+                }
+
+                if (params.filters.language.isValid())
+                {
+                    query.join("track_language t_l ON t_l.track_id = t.id");
+                    query.where("t_l.language_id = ?").bind(params.filters.language);
+                }
+
+                if (params.filters.mood.isValid())
+                {
+                    query.join("track_mood t_m ON t_m.track_id = t.id");
+                    query.where("t_m.mood_id = ?").bind(params.filters.mood);
                 }
             }
 
@@ -156,6 +188,30 @@ namespace lms::db
                 query.where("r_r_t.release_type_id = ?").bind(params.filters.releaseType);
             }
 
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t.id");
+                query.where("t_g.genre_id = ?").bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t.id");
+                query.where("t_gr.grouping_id = ?").bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t.id");
+                query.where("t_l.language_id = ?").bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t.id");
+                query.where("t_m.mood_id = ?").bind(params.filters.mood);
+            }
+
             if (!params.filters.clusters.empty())
             {
                 std::ostringstream oss;
@@ -213,6 +269,30 @@ namespace lms::db
             {
                 query.join("release_release_type r_r_t ON r_r_t.release_id = t.release_id");
                 query.where("r_r_t.release_type_id = ?").bind(params.filters.releaseType);
+            }
+
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t.id");
+                query.where("t_g.genre_id = ?").bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t.id");
+                query.where("t_gr.grouping_id = ?").bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t.id");
+                query.where("t_l.language_id = ?").bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t.id");
+                query.where("t_m.mood_id = ?").bind(params.filters.mood);
             }
 
             if (!params.filters.clusters.empty())

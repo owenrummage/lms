@@ -8,10 +8,14 @@ add_executable(test-database
 	Common.cpp
 	DatabaseTest.cpp
 	Directory.cpp
+	Genre.cpp
+	Grouping.cpp
 	Image.cpp
+	Language.cpp
 	Listen.cpp
 	Medium.cpp
 	Migration.cpp
+	Mood.cpp
 	PlayListFile.cpp
 	Podcast.cpp
 	RatedArtist.cpp

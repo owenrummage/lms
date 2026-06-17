@@ -165,7 +165,7 @@
 </message>
 <message id="Lms.Admin.ScannerController.step-checking-for-removed-files">Sprawdzanie plików... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-compact">Prasowanie bazy danych...</message>
-<message id="Lms.Admin.ScannerController.step-compute-cluster-stats">Obliczanie statystyk... {1}%</message>
+<message id="Lms.Admin.ScannerController.step-compute-genre-stats">Obliczanie statystyk... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-extract-musicnn-embeddings">Ekstrakcja embeddingów MusicNN: {1} z {2} plików ({3}%)</message>
 <message id="Lms.Admin.ScannerController.step-optimize">Optymalizowanie bazy danych... {1}%...</message>
 <message id="Lms.Admin.ScannerController.step-reconciliate-artists">Uzgodnianie artystów: {1} wpisów...</message>
@@ -240,7 +240,22 @@
 <message id="Lms.Explore.duration">Długość</message>
 <message id="Lms.Explore.filter-added">Filtr dodany</message>
 <message id="Lms.Explore.filters">Filtry</message>
+<message id="Lms.Explore.genre">
+	<plural case="0">Gatunek</plural>
+	<plural case="1">Gatunki</plural>
+	<plural case="2">Gatunków</plural>
+</message>
+<message id="Lms.Explore.grouping">
+	<plural case="0">Grupowanie</plural>
+	<plural case="1">Grupowania</plural>
+	<plural case="2">Grupowań</plural>
+</message>
 <message id="Lms.Explore.label">Wytwórnia</message>
+<message id="Lms.Explore.language">
+	<plural case="0">Język</plural>
+	<plural case="1">Języki</plural>
+	<plural case="2">Języków</plural>
+</message>
 <message id="Lms.Explore.lyricist">
 	<plural case="0">Tekściarz</plural>
 	<plural case="1">Tekściarze</plural>
@@ -251,6 +266,11 @@
 	<plural case="0">Mikser</plural>
 	<plural case="1">Mikserzy</plural>
 	<plural case="2">Mikserów</plural>
+</message>
+<message id="Lms.Explore.mood">
+	<plural case="0">Nastrój</plural>
+	<plural case="1">Nastroje</plural>
+	<plural case="2">Nastrojów</plural>
 </message>
 <message id="Lms.Explore.most-played">Najczęściej odtwarzane</message>
 <message id="Lms.Explore.musicbrainz-artist">Artysta w MusicBrainz</message>

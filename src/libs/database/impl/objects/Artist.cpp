@@ -26,6 +26,10 @@
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/User.hpp"
@@ -55,6 +59,10 @@ namespace lms::db
                 || params.trackArtistLinkType.has_value()
                 || params.track.isValid()
                 || params.filters.clusters.size() == 1
+                || params.filters.genre.isValid()
+                || params.filters.grouping.isValid()
+                || params.filters.language.isValid()
+                || params.filters.mood.isValid()
                 || params.filters.codec.has_value()
                 || params.filters.label.isValid()
                 || params.filters.releaseType.isValid())
@@ -160,6 +168,34 @@ namespace lms::db
                 oss << " GROUP BY t_a_l.track_id,t_a_l.artist_id HAVING COUNT(DISTINCT t_c.cluster_id) = " << params.filters.clusters.size() << ")";
 
                 query.where(oss.str());
+            }
+
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t_a_l.track_id")
+                    .where("t_g.genre_id = ?")
+                    .bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t_a_l.track_id")
+                    .where("t_gr.grouping_id = ?")
+                    .bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t_a_l.track_id")
+                    .where("t_l.language_id = ?")
+                    .bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t_a_l.track_id")
+                    .where("t_m.mood_id = ?")
+                    .bind(params.filters.mood);
             }
 
             if (params.track.isValid())

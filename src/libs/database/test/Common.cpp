@@ -59,8 +59,6 @@ namespace lms::db::tests
 
     void DatabaseFixture::testDatabaseEmpty()
     {
-        using namespace db;
-
         auto transaction{ session.createReadTransaction() };
 
         EXPECT_TRUE(session.areAllTablesEmpty());

@@ -152,7 +152,7 @@
 <message id="Lms.Admin.ScannerController.step-checking-for-duplicate-files">Controllo duplicati... {1} files</message>
 <message id="Lms.Admin.ScannerController.step-checking-for-removed-files">Controllo file... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-compact">Compattazione del database...</message>
-<message id="Lms.Admin.ScannerController.step-compute-cluster-stats">Calcolo statistiche... {1}%</message>
+<message id="Lms.Admin.ScannerController.step-compute-genre-stats">Calcolo statistiche... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-extract-musicnn-embeddings">Estrazione degli embeddings MusicNN: {1} di {2} file ({3}%)</message>
 <message id="Lms.Admin.ScannerController.step-optimize">Ottimizzazione del database... {1}%...</message>
 <message id="Lms.Admin.ScannerController.step-reconciliate-artists">Riconciliazione artisti: {1} voci...</message>
@@ -221,7 +221,19 @@
 <message id="Lms.Explore.duration">Durata</message>
 <message id="Lms.Explore.filter-added">Filtro aggiunto</message>
 <message id="Lms.Explore.filters">Filtri</message>
+<message id="Lms.Explore.genre">
+	<plural case="0">Genere</plural>
+	<plural case="1">Generi</plural>
+</message>
+<message id="Lms.Explore.grouping">
+	<plural case="0">Raggruppamento</plural>
+	<plural case="1">Raggruppamenti</plural>
+</message>
 <message id="Lms.Explore.label">Etichetta</message>
+<message id="Lms.Explore.language">
+	<plural case="0">Lingua</plural>
+	<plural case="1">Lingue</plural>
+</message>
 <message id="Lms.Explore.lyricist">
 	<plural case="0">Paroliere</plural>
 	<plural case="1">Parolieri</plural>
@@ -230,6 +242,10 @@
 <message id="Lms.Explore.mixer">
 	<plural case="0">Tecnico del mixaggio</plural>
 	<plural case="1">Tecnici del mixaggio</plural>
+</message>
+<message id="Lms.Explore.mood">
+	<plural case="0">Umore</plural>
+	<plural case="1">Umori</plural>
 </message>
 <message id="Lms.Explore.most-played">Più ascoltati</message>
 <message id="Lms.Explore.musicbrainz-artist">Artista MusicBrainz</message>

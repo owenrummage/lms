@@ -45,8 +45,12 @@
 #include "database/objects/ClusterId.hpp"
 #include "database/objects/DirectoryId.hpp"
 #include "database/objects/Filters.hpp"
+#include "database/objects/GenreId.hpp"
+#include "database/objects/GroupingId.hpp"
+#include "database/objects/LanguageId.hpp"
 #include "database/objects/MediaLibraryId.hpp"
 #include "database/objects/MediumId.hpp"
+#include "database/objects/MoodId.hpp"
 #include "database/objects/ReleaseId.hpp"
 #include "database/objects/TrackEmbeddedImageId.hpp"
 #include "database/objects/TrackId.hpp"
@@ -62,6 +66,10 @@ namespace lms::db
     class Cluster;
     class ClusterType;
     class Directory;
+    class Genre;
+    class Grouping;
+    class Language;
+    class Mood;
     class TrackEmbeddedImageLink;
     class MediaLibrary;
     class Medium;
@@ -270,6 +278,10 @@ namespace lms::db
         void setRelease(ObjectPtr<Release> release) { _release = getDboPtr(release); }
         void setMedium(ObjectPtr<Medium> medium) { _medium = getDboPtr(medium); }
         void setClusters(const std::vector<ObjectPtr<Cluster>>& clusters);
+        void setGenres(std::span<const ObjectPtr<Genre>> genres);
+        void setGroupings(std::span<const ObjectPtr<Grouping>> groupings);
+        void setLanguages(std::span<const ObjectPtr<Language>> languages);
+        void setMoods(std::span<const ObjectPtr<Mood>> moods);
         void clearLyrics();
         void clearEmbeddedLyrics();
         void addLyrics(const ObjectPtr<TrackLyrics>& lyrics);
@@ -330,6 +342,14 @@ namespace lms::db
         ObjectPtr<Medium> getMedium() const { return _medium; }
         std::vector<ObjectPtr<Cluster>> getClusters() const;
         std::vector<ClusterId> getClusterIds() const;
+        std::vector<ObjectPtr<Genre>> getGenres() const;
+        std::vector<GenreId> getGenreIds() const;
+        std::vector<ObjectPtr<Grouping>> getGroupings() const;
+        std::vector<GroupingId> getGroupingIds() const;
+        std::vector<ObjectPtr<Language>> getLanguages() const;
+        std::vector<LanguageId> getLanguageIds() const;
+        std::vector<ObjectPtr<Mood>> getMoods() const;
+        std::vector<MoodId> getMoodIds() const;
         ObjectPtr<MediaLibrary> getMediaLibrary() const;
         ObjectPtr<Directory> getDirectory() const;
         ObjectPtr<Artwork> getPreferredArtwork() const;
@@ -378,6 +398,10 @@ namespace lms::db
             Wt::Dbo::belongsTo(a, _preferredMediaArtwork, "preferred_media_artwork", Wt::Dbo::OnDeleteSetNull);
             Wt::Dbo::hasMany(a, _trackArtistLinks, Wt::Dbo::ManyToOne, "track");
             Wt::Dbo::hasMany(a, _clusters, Wt::Dbo::ManyToMany, "track_cluster", "", Wt::Dbo::OnDeleteCascade);
+            Wt::Dbo::hasMany(a, _genres, Wt::Dbo::ManyToMany, "track_genre", "", Wt::Dbo::OnDeleteCascade);
+            Wt::Dbo::hasMany(a, _groupings, Wt::Dbo::ManyToMany, "track_grouping", "", Wt::Dbo::OnDeleteCascade);
+            Wt::Dbo::hasMany(a, _languages, Wt::Dbo::ManyToMany, "track_language", "", Wt::Dbo::OnDeleteCascade);
+            Wt::Dbo::hasMany(a, _moods, Wt::Dbo::ManyToMany, "track_mood", "", Wt::Dbo::OnDeleteCascade);
             Wt::Dbo::hasMany(a, _trackLyrics, Wt::Dbo::ManyToOne, "track");
             Wt::Dbo::hasMany(a, _embeddedImageLinks, Wt::Dbo::ManyToOne, "track");
         }
@@ -429,6 +453,10 @@ namespace lms::db
         Wt::Dbo::ptr<Artwork> _preferredMediaArtwork;
         Wt::Dbo::collection<Wt::Dbo::ptr<TrackArtistLink>> _trackArtistLinks;
         Wt::Dbo::collection<Wt::Dbo::ptr<Cluster>> _clusters;
+        Wt::Dbo::collection<Wt::Dbo::ptr<Genre>> _genres;
+        Wt::Dbo::collection<Wt::Dbo::ptr<Grouping>> _groupings;
+        Wt::Dbo::collection<Wt::Dbo::ptr<Language>> _languages;
+        Wt::Dbo::collection<Wt::Dbo::ptr<Mood>> _moods;
         Wt::Dbo::collection<Wt::Dbo::ptr<TrackLyrics>> _trackLyrics;
         Wt::Dbo::collection<Wt::Dbo::ptr<TrackEmbeddedImageLink>> _embeddedImageLinks;
     };

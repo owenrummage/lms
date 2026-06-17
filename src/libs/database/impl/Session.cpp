@@ -30,10 +30,14 @@
 #include "database/objects/AuthToken.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
 #include "database/objects/Image.hpp"
+#include "database/objects/Language.hpp"
 #include "database/objects/Listen.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/PlayListFile.hpp"
 #include "database/objects/PlayQueue.hpp"
 #include "database/objects/Podcast.hpp"
@@ -81,6 +85,10 @@ namespace lms::db
         _session.mapClass<AuthToken>("auth_token");
         _session.mapClass<Cluster>("cluster");
         _session.mapClass<ClusterType>("cluster_type");
+        _session.mapClass<Genre>("genre");
+        _session.mapClass<Grouping>("grouping");
+        _session.mapClass<Language>("language");
+        _session.mapClass<Mood>("mood");
         _session.mapClass<Country>("country");
         _session.mapClass<Directory>("directory");
         _session.mapClass<Image>("image");
@@ -209,6 +217,11 @@ namespace lms::db
             utils::executeCommand(_session, "CREATE INDEX IF NOT EXISTS cluster_id_idx ON cluster(id)");
             utils::executeCommand(_session, "CREATE INDEX IF NOT EXISTS cluster_cluster_type_idx ON cluster(cluster_type_id)");
             utils::executeCommand(_session, "CREATE INDEX IF NOT EXISTS cluster_type_name_idx ON cluster_type(name)");
+
+            utils::executeCommand(_session, "CREATE UNIQUE INDEX IF NOT EXISTS genre_name_idx ON genre(name)");
+            utils::executeCommand(_session, "CREATE UNIQUE INDEX IF NOT EXISTS grouping_name_idx ON grouping(name)");
+            utils::executeCommand(_session, "CREATE UNIQUE INDEX IF NOT EXISTS language_name_idx ON language(name)");
+            utils::executeCommand(_session, "CREATE UNIQUE INDEX IF NOT EXISTS mood_name_idx ON mood(name)");
 
             utils::executeCommand(_session, "CREATE INDEX IF NOT EXISTS country_id_idx ON country(id)");
             utils::executeCommand(_session, "CREATE INDEX IF NOT EXISTS country_name_idx ON country(name COLLATE NOCASE)");

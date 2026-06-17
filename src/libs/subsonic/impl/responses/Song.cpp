@@ -31,10 +31,12 @@
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
 #include "database/objects/Artwork.hpp"
-#include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/Track.hpp"
@@ -162,17 +164,10 @@ namespace lms::api::subsonic
         if (const Wt::WDateTime dateTime{ core::Service<feedback::IFeedbackService>::get()->getStarredDateTime(context.getUser()->getId(), track->getId()) }; dateTime.isValid())
             trackResponse.setAttribute("starred", core::stringUtils::toISO8601String(dateTime));
 
-        // Report the first GENRE for this track
-        std::vector<db::Cluster::pointer> genres;
-        {
-            db::Cluster::FindParameters params;
-            params.setTrack(track->getId());
-            params.setClusterTypeName("GENRE");
-
-            genres = db::Cluster::find(context.getDbSession(), params).results;
-            if (!genres.empty())
-                trackResponse.setAttribute("genre", genres.front()->getName());
-        }
+        // Report the first genre for this track
+        const auto genres{ track->getGenres() };
+        if (!genres.empty())
+            trackResponse.setAttribute("genre", genres.front()->getName());
 
         // OpenSubsonic specific fields (must always be set)
         if (!context.isOpenSubsonicEnabled())
@@ -223,19 +218,13 @@ namespace lms::api::subsonic
         if (release)
             trackResponse.setAttribute("displayAlbumArtist", release->getArtistDisplayName());
 
-        auto addClusters{ [&](Response::Node::Key field, std::string_view clusterTypeName) {
-            trackResponse.createEmptyArrayValue(field);
+        trackResponse.createEmptyArrayValue("moods");
+        for (const auto& mood : track->getMoods())
+            trackResponse.addArrayValue("moods", mood->getName());
 
-            db::Cluster::FindParameters params;
-            params.setTrack(track->getId());
-            params.setClusterTypeName(clusterTypeName);
-
-            for (const auto& cluster : db::Cluster::find(context.getDbSession(), params).results)
-                trackResponse.addArrayValue(field, cluster->getName());
-        } };
-
-        addClusters("moods", "MOOD");
-        addClusters("groupings", "GROUPING");
+        trackResponse.createEmptyArrayValue("groupings");
+        for (const auto& grouping : track->getGroupings())
+            trackResponse.addArrayValue("groupings", grouping->getName());
 
         // Genres
         trackResponse.createEmptyArrayChild("genres");

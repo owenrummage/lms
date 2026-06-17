@@ -152,7 +152,7 @@
 <message id="Lms.Admin.ScannerController.step-checking-for-duplicate-files">Vérification des fichiers dupliqués... {1} fichiers</message>
 <message id="Lms.Admin.ScannerController.step-checking-for-removed-files">Vérification des fichiers supprimés... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-compact">Compactage de la base de données...</message>
-<message id="Lms.Admin.ScannerController.step-compute-cluster-stats">Calcul des statistiques... {1}%</message>
+<message id="Lms.Admin.ScannerController.step-compute-genre-stats">Calcul des statistiques... {1}%</message>
 <message id="Lms.Admin.ScannerController.step-extract-musicnn-embeddings">Extraction des embeddings MusicNN : {1} sur {2} fichiers ({3}%)</message>
 <message id="Lms.Admin.ScannerController.step-optimize">Optimisation de la base de données... {1}%...</message>
 <message id="Lms.Admin.ScannerController.step-reconciliate-artists">Reconciliation des artistes: {1} entrées...</message>
@@ -221,7 +221,19 @@
 <message id="Lms.Explore.duration">Durée</message>
 <message id="Lms.Explore.filter-added">Filtre ajouté</message>
 <message id="Lms.Explore.filters">Filtres</message>
+<message id="Lms.Explore.genre">
+	<plural case="0">Genre</plural>
+	<plural case="1">Genres</plural>
+</message>
+<message id="Lms.Explore.grouping">
+	<plural case="0">Regroupement</plural>
+	<plural case="1">Regroupements</plural>
+</message>
 <message id="Lms.Explore.label">Label</message>
+<message id="Lms.Explore.language">
+	<plural case="0">Langue</plural>
+	<plural case="1">Langues</plural>
+</message>
 <message id="Lms.Explore.lyricist">
 	<plural case="0">Parolier</plural>
 	<plural case="1">Paroliers</plural>
@@ -230,6 +242,10 @@
 <message id="Lms.Explore.mixer">
 	<plural case="0">Mixeur</plural>
 	<plural case="1">Mixeurs</plural>
+</message>
+<message id="Lms.Explore.mood">
+	<plural case="0">Ambiance</plural>
+	<plural case="1">Ambiances</plural>
 </message>
 <message id="Lms.Explore.most-played">Plus joués</message>
 <message id="Lms.Explore.musicbrainz-artist">MusicBrainz Artist</message>
