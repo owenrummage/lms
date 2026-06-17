@@ -768,8 +768,7 @@ namespace lms::db
 
         std::ostringstream oss;
         oss << "SELECT a from artist a"
-               " INNER JOIN track_artist_link t_a_l ON a.id = t_a_l.artist_id"
-               " INNER JOIN track t ON t.id = t_a_l.track_id";
+               " INNER JOIN track_artist_link t_a_l ON a.id = t_a_l.artist_id";
 
         if (!linkTypes.empty())
         {
@@ -780,6 +779,7 @@ namespace lms::db
             {
                 if (!first)
                     oss << ", ";
+
                 oss << "?";
                 first = false;
             }
@@ -790,7 +790,7 @@ namespace lms::db
         for (TrackArtistLinkType type : linkTypes)
             query.bind(type);
 
-        query.where("t.id = ?").bind(getId());
+        query.where("t_a_l.track_id = ?").bind(getId());
         query.groupBy("t_a_l.artist_id");
         query.orderBy("t_a_l.id");
 
@@ -802,30 +802,30 @@ namespace lms::db
         assert(self());
         assert(session());
 
-        std::ostringstream oss;
-        oss << "SELECT t_a_l.artist_id FROM track_artist_link t_a_l"
-               " INNER JOIN track t ON t.id = t_a_l.track_id";
+        auto query{ session()->query<ArtistId>("SELECT t_a_l.artist_id FROM track_artist_link t_a_l") };
 
         if (!linkTypes.empty())
         {
-            oss << " AND t_a_l.type IN (";
+            std::ostringstream oss;
+            oss << "t_a_l.type IN (";
 
             bool first{ true };
             for ([[maybe_unused]] TrackArtistLinkType type : linkTypes)
             {
                 if (!first)
                     oss << ", ";
+
                 oss << "?";
                 first = false;
             }
             oss << ")";
+
+            query.where(oss.str());
+            for (TrackArtistLinkType type : linkTypes)
+                query.bind(type);
         }
 
-        auto query{ session()->query<ArtistId>(oss.str()) };
-        for (TrackArtistLinkType type : linkTypes)
-            query.bind(type);
-
-        query.where("t.id = ?").bind(getId());
+        query.where("t_a_l.track_id = ?").bind(getId());
         query.groupBy("t_a_l.artist_id");
         query.orderBy("t_a_l.id");
 
