@@ -1794,9 +1794,10 @@ FROM track)");
 ))");
 
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO genre (version, name, track_count, release_count)
-SELECT 0, c.name, c.track_count, c.release_count FROM cluster c
+SELECT 0, c.name, SUM(c.track_count), SUM(c.release_count) FROM cluster c
 INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
-WHERE ct.name = 'GENRE')");
+WHERE ct.name = 'GENRE'
+GROUP BY c.name)");
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_genre (track_id, genre_id)
 SELECT tc.track_id, g.id FROM track_cluster tc
 INNER JOIN cluster c ON c.id = tc.cluster_id
@@ -1821,7 +1822,7 @@ WHERE ct.name = 'GENRE')");
 ))");
 
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO mood (version, name)
-SELECT 0, c.name FROM cluster c
+SELECT DISTINCT 0, c.name FROM cluster c
 INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
 WHERE ct.name = 'MOOD')");
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_mood (track_id, mood_id)
@@ -1848,7 +1849,7 @@ WHERE ct.name = 'MOOD')");
 ))");
 
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO language (version, name)
-SELECT 0, c.name FROM cluster c
+SELECT DISTINCT 0, c.name FROM cluster c
 INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
 WHERE ct.name = 'LANGUAGE')");
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_language (track_id, language_id)
@@ -1875,7 +1876,7 @@ WHERE ct.name = 'LANGUAGE')");
 ))");
 
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO grouping (version, name)
-SELECT 0, c.name FROM cluster c
+SELECT DISTINCT 0, c.name FROM cluster c
 INNER JOIN cluster_type ct ON ct.id = c.cluster_type_id
 WHERE ct.name = 'GROUPING')");
         utils::executeCommand(*session.getDboSession(), R"(INSERT INTO track_grouping (track_id, grouping_id)
