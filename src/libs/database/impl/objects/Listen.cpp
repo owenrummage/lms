@@ -470,10 +470,11 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l").join("track t ON l.track_id = t.id").where("t.release_id = ?").bind(releaseId).where("l.user_id = ?").bind(userId).where("l.backend = ?").bind(backend).orderBy("l.date_time DESC").limit(1));
     }
 
-    Listen::pointer Listen::getMostRecentListen(Session& session, UserId userId, ScrobblingBackend backend, TrackId trackId)
+    Listen::pointer Listen::getMostRecentListen(Session& session, UserId userId, TrackId trackId)
     {
         session.checkReadTransaction();
+
         // TODO not pending remove?
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l").where("l.track_id = ?").bind(trackId).where("l.user_id = ?").bind(userId).where("l.backend = ?").bind(backend).orderBy("l.date_time DESC").limit(1));
+        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l").join("user u ON u.id = l.user_id").where("l.track_id = ?").bind(trackId).where("l.user_id = ?").bind(userId).where("l.backend = u.scrobbling_backend").orderBy("l.date_time DESC").limit(1));
     }
 } // namespace lms::db
