@@ -41,17 +41,17 @@ namespace lms::api::subsonic
 
     namespace utils
     {
-        std::string joinArtistNames(const std::vector<Artist::pointer>& artists)
+        std::string joinArtistNames(const std::vector<TrackArtistLink::pointer>& links)
         {
-            if (artists.size() == 1)
-                return artists.front()->getName();
+            if (links.size() == 1)
+                return std::string{ links.front()->getArtistName() };
 
             std::vector<std::string> names;
-            names.resize(artists.size());
+            names.resize(links.size());
 
-            std::transform(std::cbegin(artists), std::cend(artists), std::begin(names),
-                           [](const Artist::pointer& artist) {
-                               return artist->getName();
+            std::transform(std::cbegin(links), std::cend(links), std::begin(names),
+                           [](const TrackArtistLink::pointer& link) {
+                               return std::string{ link->getArtistName() };
                            });
 
             return core::stringUtils::joinStrings(names, ", ");

@@ -134,16 +134,24 @@ namespace lms::api::subsonic
             trackResponse.setAttribute("coverArt", idToString(coverArtId));
         }
 
-        const std::vector<db::Artist::pointer>& artists{ track->getArtists({ db::TrackArtistLinkType::Artist }) };
-        if (!artists.empty())
+        std::vector<db::TrackArtistLink::pointer> artistLinks;
+        std::vector<db::TrackArtistLink::pointer> trackArtistLinks;
+        track->visitArtistLinks([&](const db::TrackArtistLink::pointer& link) {
+            artistLinks.push_back(link);
+
+            if (link->getType() == db::TrackArtistLinkType::Artist)
+                trackArtistLinks.push_back(link);
+        });
+
+        if (!trackArtistLinks.empty())
         {
             if (!track->getArtistDisplayName().empty())
                 trackResponse.setAttribute("artist", track->getArtistDisplayName());
             else
-                trackResponse.setAttribute("artist", utils::joinArtistNames(artists));
+                trackResponse.setAttribute("artist", utils::joinArtistNames(trackArtistLinks));
 
-            if (artists.size() == 1)
-                trackResponse.setAttribute("artistId", idToString(artists.front()->getId()));
+            if (trackArtistLinks.size() == 1)
+                trackResponse.setAttribute("artistId", idToString(trackArtistLinks.front()->getArtistId()));
         }
 
         const db::Release::pointer release{ track->getRelease() };
@@ -195,7 +203,8 @@ namespace lms::api::subsonic
             trackResponse.createEmptyArrayChild("artists");
             trackResponse.createEmptyArrayChild("contributors");
 
-            track->visitArtistLinks([&](const db::TrackArtistLink::pointer& artistLink) {
+            for (const auto& artistLink : artistLinks)
+            {
                 switch (artistLink->getType())
                 {
                 case db::TrackArtistLinkType::Artist:
@@ -204,7 +213,7 @@ namespace lms::api::subsonic
                 default:
                     trackResponse.addArrayChild("contributors", createContributorNode(artistLink));
                 }
-            });
+            }
 
             if (release)
             {
