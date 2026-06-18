@@ -136,15 +136,12 @@ namespace lms::api::subsonic
 
         albumNode.setAttribute("playCount", core::Service<scrobbling::IScrobblingService>::get()->getCount(context.getUser()->getId(), release->getId()));
 
-        // Report the first genre for this release
-        {
-            Genre::FindParameters p;
-            p.setRelease(release->getId());
-            p.setRange(Range{ 0, 1 });
-            const auto genres{ Genre::find(context.getDbSession(), p).results };
-            if (!genres.empty())
-                albumNode.setAttribute("genre", genres.front()->getName());
-        }
+        Genre::FindParameters genreParams;
+        genreParams.setRelease(release->getId());
+        genreParams.setSortMethod(GenreSortMethod::TrackCountDesc);
+        const auto genres{ Genre::find(context.getDbSession(), genreParams).results };
+        if (!genres.empty())
+            albumNode.setAttribute("genre", genres.front()->getName());
 
         if (const Wt::WDateTime dateTime{ core::Service<feedback::IFeedbackService>::get()->getStarredDateTime(context.getUser()->getId(), release->getId()) }; dateTime.isValid())
             albumNode.setAttribute("starred", core::stringUtils::toISO8601String(dateTime));
@@ -189,15 +186,9 @@ namespace lms::api::subsonic
             });
         }
 
-        // Genres
         albumNode.createEmptyArrayChild("genres");
-        {
-            Genre::FindParameters params;
-            params.setRelease(release->getId());
-            Genre::find(context.getDbSession(), params, [&](const Genre::pointer& genre) {
-                albumNode.addArrayChild("genres", createItemGenreNode(genre->getName()));
-            });
-        }
+        for (const auto& genre : genres)
+            albumNode.addArrayChild("genres", createItemGenreNode(genre->getName()));
 
         if (id3)
         {
