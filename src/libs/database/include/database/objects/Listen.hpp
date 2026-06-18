@@ -150,8 +150,8 @@ namespace lms::db
         static std::size_t getCount(Session& session, UserId userId, TrackId trackId);   // for the current backend
         static std::size_t getCount(Session& session, UserId userId, ReleaseId trackId); // for the current backend
 
-        static pointer getMostRecentListen(Session& session, UserId userId, ScrobblingBackend backend, ReleaseId releaseId);
-        static pointer getMostRecentListen(Session& session, UserId userId, TrackId trackId); // uses current scrobbling backend
+        static pointer getMostRecentListen(Session& session, UserId userId, ReleaseId releaseId); // uses current scrobbling backend
+        static pointer getMostRecentListen(Session& session, UserId userId, TrackId trackId);     // uses current scrobbling backend
 
         SyncState getSyncState() const { return _syncState; }
         ObjectPtr<User> getUser() const { return _user; }

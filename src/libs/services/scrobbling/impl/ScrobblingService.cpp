@@ -223,14 +223,10 @@ namespace lms::scrobbling
 
     Wt::WDateTime ScrobblingService::getLastListenDateTime(db::UserId userId, db::ReleaseId releaseId)
     {
-        const auto backend{ getUserBackend(userId) };
-        if (!backend)
-            return {};
-
         Session& session{ _db.getTLSSession() };
         auto transaction{ session.createReadTransaction() };
 
-        const db::Listen::pointer listen{ db::Listen::getMostRecentListen(session, userId, *backend, releaseId) };
+        const db::Listen::pointer listen{ db::Listen::getMostRecentListen(session, userId, releaseId) };
         return listen ? listen->getDateTime() : Wt::WDateTime{};
     }
 

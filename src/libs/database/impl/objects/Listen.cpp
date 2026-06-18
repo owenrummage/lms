@@ -462,12 +462,25 @@ namespace lms::db
                                                  .bind(releaseId));
     }
 
-    Listen::pointer Listen::getMostRecentListen(Session& session, UserId userId, ScrobblingBackend backend, ReleaseId releaseId)
+    Listen::pointer Listen::getMostRecentListen(Session& session, UserId userId, ReleaseId releaseId)
     {
         session.checkReadTransaction();
 
         // TODO not pending remove?
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l").join("track t ON l.track_id = t.id").where("t.release_id = ?").bind(releaseId).where("l.user_id = ?").bind(userId).where("l.backend = ?").bind(backend).orderBy("l.date_time DESC").limit(1));
+
+        // clang-format off
+        auto query{ session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l")
+                        .join("user u ON u.id = l.user_id")
+                        .join("track t ON l.track_id = t.id")
+                        .where("t.release_id = ?").bind(releaseId)
+                        .where("l.user_id = ?").bind(userId)
+                        .where("l.backend = u.scrobbling_backend")
+                        .orderBy("l.date_time DESC")
+                        .limit(1)
+        };
+        // clang-format on
+
+        return utils::fetchQuerySingleResult(query);
     }
 
     Listen::pointer Listen::getMostRecentListen(Session& session, UserId userId, TrackId trackId)
@@ -475,6 +488,18 @@ namespace lms::db
         session.checkReadTransaction();
 
         // TODO not pending remove?
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l").join("user u ON u.id = l.user_id").where("l.track_id = ?").bind(trackId).where("l.user_id = ?").bind(userId).where("l.backend = u.scrobbling_backend").orderBy("l.date_time DESC").limit(1));
+
+        // clang-format off
+        auto query{ session.getDboSession()->query<Wt::Dbo::ptr<Listen>>("SELECT l from listen l")
+                        .join("user u ON u.id = l.user_id")
+                        .where("l.track_id = ?").bind(trackId)
+                        .where("l.user_id = ?").bind(userId)
+                        .where("l.backend = u.scrobbling_backend")
+                        .orderBy("l.date_time DESC")
+                        .limit(1)
+        };
+        // clang-format on
+
+        return utils::fetchQuerySingleResult(query);
     }
 } // namespace lms::db
