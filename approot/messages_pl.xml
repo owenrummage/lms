@@ -186,6 +186,13 @@
 <message id="Lms.Admin.DebugTools.Db.export-query-profiling">Eksportuj dane profilowania zapytań</message>
 <message id="Lms.Admin.DebugTools.Db.db">Baza danych</message>
 
+<!--PcmDecodingStats-->
+<message id="Lms.Admin.DebugTools.PcmDecodingStats.pcm-decoding-stats">Statystyki dekodowania PCM</message>
+<message id="Lms.Admin.DebugTools.PcmDecodingStats.run">Uruchom benchmark</message>
+<message id="Lms.Admin.DebugTools.PcmDecodingStats.download">Pobierz wyniki</message>
+<message id="Lms.Admin.DebugTools.PcmDecodingStats.running">Trwa…</message>
+<message id="Lms.Admin.DebugTools.PcmDecodingStats.benchmark-completed">Test wydajności dekodowania PCM zakończony w {1}</message>
+
 <!--Tracing-->
 <message id="Lms.Admin.DebugTools.Tracing.export-current-buffer">Eksportuj ślady</message>
 <message id="Lms.Admin.DebugTools.Tracing.tracing">Śledzenie</message>

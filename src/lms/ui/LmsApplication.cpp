@@ -40,7 +40,6 @@
 #include "database/objects/Release.hpp"
 #include "database/objects/TrackList.hpp"
 #include "database/objects/User.hpp"
-#include "database/profiling/IQueryProfiler.hpp"
 #include "services/artwork/IArtworkService.hpp"
 #include "services/auth/IAuthTokenService.hpp"
 #include "services/auth/IEnvService.hpp"
@@ -448,13 +447,7 @@ namespace lms::ui
             navbar->bindNew<Wt::WAnchor>("scan-settings", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scan-settings" }, Wt::WString::tr("Lms.Admin.menu-scan-settings"));
             navbar->bindNew<Wt::WAnchor>("scanner", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scanner" }, Wt::WString::tr("Lms.Admin.menu-scanner"));
             navbar->bindNew<Wt::WAnchor>("users", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/users" }, Wt::WString::tr("Lms.Admin.menu-users"));
-            // Hide the entry if no debug service is enabled
-            if (core::Service<core::tracing::ITraceLogger>::get()
-                || core::Service<db::IQueryProfiler>::get())
-            {
-                navbar->setCondition("if-debug-tools", true);
-                navbar->bindNew<Wt::WAnchor>("debug-tools", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/debug-tools" }, Wt::WString::tr("Lms.Admin.menu-debug-tools"));
-            }
+            navbar->bindNew<Wt::WAnchor>("debug-tools", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/debug-tools" }, Wt::WString::tr("Lms.Admin.menu-debug-tools"));
         }
 
         PathRouter* mainRouter{ main->bindNew<PathRouter>("contents") };
