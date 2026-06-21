@@ -124,7 +124,7 @@ namespace lms::scanner
 
             settings->skipSingleReleasePlayLists = scanSettings->getSkipSingleReleasePlayLists();
             settings->allowArtistMBIDFallback = scanSettings->getAllowMBIDArtistMerge();
-            settings->artistImageFallbackToRelease = scanSettings->getArtistImageFallbackToReleaseField();
+            settings->artistImageFallbackToRelease = scanSettings->getArtistImageFallbackToRelease();
 
             settings->extractMusicNNEmbeddings = scanSettings->getRecommendationEngineType() == db::ScanSettings::RecommendationEngineType::AudioSimilarity;
             settings->musicnnModelPath = core::Service<core::IConfig>::get()->getPath("musicnn-model-path", "/usr/share/lms/models/MSD_musicnn_embedding.onnx");
