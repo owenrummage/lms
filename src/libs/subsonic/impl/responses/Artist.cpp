@@ -24,14 +24,12 @@
 #include "core/String.hpp"
 
 #include "database/objects/Artist.hpp"
-#include "database/objects/Artwork.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/User.hpp"
 #include "services/feedback/IFeedbackService.hpp"
 
-#include "CoverArtId.hpp"
 #include "RequestContext.hpp"
 #include "SubsonicId.hpp"
 
@@ -69,11 +67,8 @@ namespace lms::api::subsonic
 
         Response::Node artistNode{ createMinimalArtistNode(artist) };
 
-        if (const auto artwork{ artist->getPreferredArtwork() })
-        {
-            CoverArtId coverArtId{ artwork->getId(), artwork->getLastWrittenTime().toTime_t() };
-            artistNode.setAttribute("coverArt", idToString(coverArtId));
-        }
+        if (const db::ArtworkId artworkId{ artist->getPreferredArtworkId() }; artworkId.isValid())
+            artistNode.setAttribute("coverArt", idToString(artworkId));
 
         bool hasAlbums{};
         {

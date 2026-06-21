@@ -39,7 +39,6 @@
 #include "services/artwork/IArtworkService.hpp"
 #include "services/transcoding/ITranscodeService.hpp"
 
-#include "CoverArtId.hpp"
 #include "ParameterParsing.hpp"
 #include "RequestContext.hpp"
 #include "SubsonicId.hpp"
@@ -359,13 +358,13 @@ namespace lms::api::subsonic
     void handleGetCoverArt(RequestContext& context, const Wt::Http::Request& /*request*/, Wt::Http::Response& response)
     {
         // Mandatory params
-        const CoverArtId coverArtId{ getMandatoryParameterAs<CoverArtId>(context.getParameters(), "id") };
+        const db::ArtworkId artworkId{ getMandatoryParameterAs<db::ArtworkId>(context.getParameters(), "id") };
 
         std::optional<std::size_t> size{ getParameterAs<std::size_t>(context.getParameters(), "size") };
         if (size)
             *size = std::clamp(*size, std::size_t{ 32 }, std::size_t{ 2048 });
 
-        std::shared_ptr<image::IEncodedImage> image{ core::Service<artwork::IArtworkService>::get()->getImage(coverArtId.id, size) };
+        std::shared_ptr<image::IEncodedImage> image{ core::Service<artwork::IArtworkService>::get()->getImage(artworkId, size) };
         if (!image)
         {
             response.setStatus(404);

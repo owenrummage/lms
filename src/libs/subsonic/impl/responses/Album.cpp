@@ -24,7 +24,6 @@
 #include "core/String.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
-#include "database/objects/Artwork.hpp"
 #include "database/objects/Directory.hpp"
 #include "database/objects/Genre.hpp"
 #include "database/objects/Grouping.hpp"
@@ -37,7 +36,6 @@
 #include "services/feedback/IFeedbackService.hpp"
 #include "services/scrobbling/IScrobblingService.hpp"
 
-#include "CoverArtId.hpp"
 #include "RequestContext.hpp"
 #include "SubsonicId.hpp"
 #include "responses/Artist.hpp"
@@ -91,11 +89,8 @@ namespace lms::api::subsonic
 
         albumNode.setAttribute("created", core::stringUtils::toISO8601String(release->getAddedTime()));
 
-        if (const auto artwork{ release->getPreferredArtwork() })
-        {
-            CoverArtId coverArtId{ artwork->getId(), artwork->getLastWrittenTime().toTime_t() };
-            albumNode.setAttribute("coverArt", idToString(coverArtId));
-        }
+        if (const db::ArtworkId artworkId{ release->getPreferredArtworkId() }; artworkId.isValid())
+            albumNode.setAttribute("coverArt", idToString(artworkId));
 
         if (const auto originalYear{ release->getOriginalYear() })
             albumNode.setAttribute("year", *originalYear);

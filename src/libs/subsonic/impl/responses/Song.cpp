@@ -30,7 +30,6 @@
 
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
-#include "database/objects/Artwork.hpp"
 #include "database/objects/Directory.hpp"
 #include "database/objects/Genre.hpp"
 #include "database/objects/Grouping.hpp"
@@ -45,7 +44,6 @@
 #include "services/feedback/IFeedbackService.hpp"
 #include "services/scrobbling/IScrobblingService.hpp"
 
-#include "CoverArtId.hpp"
 #include "RequestContext.hpp"
 #include "SubsonicId.hpp"
 #include "responses/Artist.hpp"
@@ -124,15 +122,9 @@ namespace lms::api::subsonic
             trackResponse.setAttribute("transcodedContentType", core::getMimeType(std::filesystem::path{ "." + fileSuffix }));
         }
 
-        auto artwork{ track->getPreferredMediaArtwork() };
-        if (!artwork)
-            artwork = track->getPreferredArtwork();
-
-        if (artwork)
-        {
-            CoverArtId coverArtId{ artwork->getId(), artwork->getLastWrittenTime().toTime_t() };
-            trackResponse.setAttribute("coverArt", idToString(coverArtId));
-        }
+        const db::ArtworkId artworkId{ track->getPreferredMediaArtworkId().isValid() ? track->getPreferredMediaArtworkId() : track->getPreferredArtworkId() };
+        if (artworkId.isValid())
+            trackResponse.setAttribute("coverArt", idToString(artworkId));
 
         std::vector<db::TrackArtistLink::pointer> artistLinks;
         std::vector<db::TrackArtistLink::pointer> trackArtistLinks;
