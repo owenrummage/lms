@@ -392,11 +392,18 @@ namespace lms::audio::ffmpeg
         for (std::size_t i{}; i < outputChannelBuffers.size(); ++i)
             outData[i] = static_cast<std::uint8_t*>(static_cast<void*>(outputChannelBuffers[i].data()));
 
+        std::array<const std::uint8_t*, AV_NUM_DATA_POINTERS> inData{};
+        if (inputFrame)
+        {
+            for (int i{}; i < AV_NUM_DATA_POINTERS; ++i)
+                inData[i] = inputFrame->data[i];
+        }
+
         const int outSampleCount{ ::swr_convert(
             _resampleContext.get(),
             outData.data(),
             static_cast<int>(maxSamplesPerChannel),
-            inputFrame ? reinterpret_cast<const std::uint8_t* const*>(inputFrame->data) : nullptr,
+            inputFrame ? inData.data() : nullptr,
             inputFrame ? inputFrame->nb_samples : 0) };
 
         if (outSampleCount < 0)
