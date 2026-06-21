@@ -77,8 +77,8 @@ namespace lms::recommendation::tests
     TEST(SameArtistConstraint, zeroScoreWhenNoSharedArtist)
     {
         const TrackMetadataMap meta{
-            { T1, { .releaseId = {}, .artistIds = { A1 } } },
-            { T2, { .releaseId = {}, .artistIds = { A2 } } },
+            { T1, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
+            { T2, { .releaseId = {}, .artistIds = { A2 }, .recordingMBID = {} } },
         };
         const SameArtistConstraint constraint{ meta };
         const std::vector<db::TrackId> selected{ T2 };
@@ -89,8 +89,8 @@ namespace lms::recommendation::tests
     TEST(SameArtistConstraint, fullScoreWhenMostRecentMatchesArtist)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = {}, .artistIds = { A1 } } },
-            { T2, { .releaseId = {}, .artistIds = { A1 } } },
+            { T1, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
+            { T2, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
         };
         const SameArtistConstraint constraint{ meta };
         const std::vector<db::TrackId> selected{ T2 };
@@ -102,9 +102,9 @@ namespace lms::recommendation::tests
     TEST(SameArtistConstraint, halfScoreWhenSecondMostRecentMatchesArtist)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = {}, .artistIds = { A1 } } },
-            { T2, { .releaseId = {}, .artistIds = { A2 } } },
-            { T3, { .releaseId = {}, .artistIds = { A1 } } },
+            { T1, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
+            { T2, { .releaseId = {}, .artistIds = { A2 }, .recordingMBID = {} } },
+            { T3, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
         };
         const SameArtistConstraint constraint{ meta };
 
@@ -117,9 +117,9 @@ namespace lms::recommendation::tests
     TEST(SameArtistConstraint, trackOutsideWindowIsIgnored)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = {}, .artistIds = { A1 } } },
-            { T2, { .releaseId = {}, .artistIds = { A2 } } },
-            { T3, { .releaseId = {}, .artistIds = { A1 } } },
+            { T1, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
+            { T2, { .releaseId = {}, .artistIds = { A2 }, .recordingMBID = {} } },
+            { T3, { .releaseId = {}, .artistIds = { A1 }, .recordingMBID = {} } },
         };
         const SameArtistConstraint constraint{ meta, /*window=*/1 };
 
@@ -140,8 +140,8 @@ namespace lms::recommendation::tests
     TEST(SameReleaseConstraint, zeroScoreWhenNoSharedRelease)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = R1, .artistIds = {} } },
-            { T2, { .releaseId = R2, .artistIds = {} } },
+            { T1, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
+            { T2, { .releaseId = R2, .artistIds = {}, .recordingMBID = {} } },
         };
         const SameReleaseConstraint constraint{ meta };
         const std::vector<db::TrackId> selected{ T2 };
@@ -152,8 +152,8 @@ namespace lms::recommendation::tests
     TEST(SameReleaseConstraint, fullScoreWhenMostRecentMatchesRelease)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = R1, .artistIds = {} } },
-            { T2, { .releaseId = R1, .artistIds = {} } },
+            { T1, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
+            { T2, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
         };
         const SameReleaseConstraint constraint{ meta };
         const std::vector<db::TrackId> selected{ T2 };
@@ -164,8 +164,8 @@ namespace lms::recommendation::tests
     TEST(SameReleaseConstraint, zeroScoreWhenCandidateHasNoRelease)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = {}, .artistIds = {} } },
-            { T2, { .releaseId = R1, .artistIds = {} } },
+            { T1, { .releaseId = {}, .artistIds = {}, .recordingMBID = {} } },
+            { T2, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
         };
         const SameReleaseConstraint constraint{ meta };
         const std::vector<db::TrackId> selected{ T2 };
@@ -193,8 +193,8 @@ namespace lms::recommendation::tests
     TEST(TrackCandidateEvaluator, softConstraintScoreIsWeighted)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = R1, .artistIds = {} } },
-            { T2, { .releaseId = R1, .artistIds = {} } },
+            { T1, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
+            { T2, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
         };
         TrackCandidateEvaluator evaluator;
         evaluator.addSoftConstraint(std::make_unique<SameReleaseConstraint>(meta), 2.F);
@@ -208,8 +208,8 @@ namespace lms::recommendation::tests
     TEST(TrackCandidateEvaluator, multipleSoftConstraintsAreAccumulated)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = R1, .artistIds = { A1 } } },
-            { T2, { .releaseId = R1, .artistIds = { A1 } } },
+            { T1, { .releaseId = R1, .artistIds = { A1 }, .recordingMBID = {} } },
+            { T2, { .releaseId = R1, .artistIds = { A1 }, .recordingMBID = {} } },
         };
         TrackCandidateEvaluator evaluator;
         evaluator.addSoftConstraint(std::make_unique<SameReleaseConstraint>(meta), 1.F);
@@ -224,8 +224,8 @@ namespace lms::recommendation::tests
     TEST(TrackCandidateEvaluator, hardConstraintPassesEvenWithSoftConstraints)
     {
         TrackMetadataMap meta{
-            { T1, { .releaseId = R1, .artistIds = {} } },
-            { T2, { .releaseId = R1, .artistIds = {} } },
+            { T1, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
+            { T2, { .releaseId = R1, .artistIds = {}, .recordingMBID = {} } },
         };
         TrackCandidateEvaluator evaluator;
         evaluator.addHardConstraint(std::make_unique<DuplicateTrackConstraint>());
