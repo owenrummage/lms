@@ -21,9 +21,9 @@
 
 #include <algorithm>
 #include <chrono>
-#include <span>
 #include <cmath>
-#include <numeric>
+#include <iomanip>
+#include <limits>
 #include <sstream>
 #include <vector>
 
@@ -48,8 +48,8 @@ namespace lms::ui
         class PcmDecodingStatsResource : public Wt::WResource
         {
         public:
-            PcmDecodingStatsResource(std::span<const PcmDecodingBenchmark::CodecResult> results, std::chrono::milliseconds elapsed, std::string filename)
-                : _results{ results.begin(), results.end() }
+            PcmDecodingStatsResource(std::vector<PcmDecodingBenchmark::CodecResult> results, std::chrono::milliseconds elapsed, std::string filename)
+                : _results{ std::move(results) }
                 , _elapsed{ elapsed }
                 , _filename{ std::move(filename) }
             {
@@ -75,9 +75,14 @@ namespace lms::ui
                 const std::string cdp{ encodeHttpHeaderField("filename", _filename) };
                 response.addHeader("Content-Disposition", "attachment; " + cdp);
 
+                response.out() << std::fixed << std::setprecision(1);
                 response.out() << "PCM decoding bench (elapsed: " << std::chrono::duration_cast<std::chrono::seconds>(_elapsed).count() << "s)\n\n";
 
-                std::vector<float> allRtFactors;
+                std::size_t totalTracks{};
+                float globalMin{ std::numeric_limits<float>::max() };
+                float globalMax{ std::numeric_limits<float>::lowest() };
+                float weightedMeanSum{};
+
                 for (const PcmDecodingBenchmark::CodecResult& r : _results)
                 {
                     response.out() << "=== " << r.codecName << " (" << r.tracks.size() << " track(s)) ===\n";
@@ -88,32 +93,39 @@ namespace lms::ui
                         response.out() << "  " << t.path
                                        << "  bitrate=" << t.bitrate / 1000 << " kbps"
                                        << "  duration=" << durationSec / 60 << "m" << durationSec % 60 << "s"
-                                       << "  real_time_factor=" << static_cast<long>(t.realTimeFactor) << "x"
-                                       << "  speed=" << static_cast<long>(t.speedKBs) << " KB/s\n";
-                        allRtFactors.push_back(t.realTimeFactor);
+                                       << "  real_time_factor=" << t.realTimeFactor << "x"
+                                       << "  speed=" << t.speedKBs << " KB/s\n";
                     }
 
                     response.out() << "  real_time_factor summary:"
-                                   << " min=" << static_cast<long>(r.minRealTimeFactor) << "x"
-                                   << " max=" << static_cast<long>(r.maxRealTimeFactor) << "x"
-                                   << " mean=" << static_cast<long>(r.meanRealTimeFactor) << "x"
-                                   << " stddev=" << static_cast<long>(r.stdDevRealTimeFactor) << "x\n\n";
+                                   << " min=" << r.minRealTimeFactor << "x"
+                                   << " max=" << r.maxRealTimeFactor << "x"
+                                   << " mean=" << r.meanRealTimeFactor << "x"
+                                   << " stddev=" << r.stdDevRealTimeFactor << "x\n\n";
+
+                    totalTracks += r.tracks.size();
+                    globalMin = std::min(globalMin, r.minRealTimeFactor);
+                    globalMax = std::max(globalMax, r.maxRealTimeFactor);
+                    weightedMeanSum += r.meanRealTimeFactor * static_cast<float>(r.tracks.size());
                 }
 
-                if (!allRtFactors.empty())
+                if (totalTracks > 0)
                 {
-                    const float mean{ std::accumulate(allRtFactors.begin(), allRtFactors.end(), 0.F) / static_cast<float>(allRtFactors.size()) };
-                    const float variance{ std::accumulate(allRtFactors.begin(), allRtFactors.end(), 0.F, [mean](float acc, float v) {
-                                              return acc + (v - mean) * (v - mean);
-                                          }) / static_cast<float>(allRtFactors.size()) };
+                    const float globalMean{ weightedMeanSum / static_cast<float>(totalTracks) };
 
-                    response.out() << "=== OVERALL (" << allRtFactors.size() << " track(s)) ===\n";
-                    const auto [minIt, maxIt]{ std::minmax_element(allRtFactors.begin(), allRtFactors.end()) };
+                    float weightedVarianceSum{};
+                    for (const PcmDecodingBenchmark::CodecResult& r : _results)
+                    {
+                        const float d{ r.meanRealTimeFactor - globalMean };
+                        weightedVarianceSum += static_cast<float>(r.tracks.size()) * (r.stdDevRealTimeFactor * r.stdDevRealTimeFactor + d * d);
+                    }
+
+                    response.out() << "=== OVERALL (" << totalTracks << " track(s)) ===\n";
                     response.out() << "  real_time_factor summary:"
-                                   << " min=" << static_cast<long>(*minIt) << "x"
-                                   << " max=" << static_cast<long>(*maxIt) << "x"
-                                   << " mean=" << static_cast<long>(mean) << "x"
-                                   << " stddev=" << static_cast<long>(std::sqrtf(variance)) << "x\n";
+                                   << " min=" << globalMin << "x"
+                                   << " max=" << globalMax << "x"
+                                   << " mean=" << globalMean << "x"
+                                   << " stddev=" << std::sqrt(weightedVarianceSum / static_cast<float>(totalTracks)) << "x\n";
                 }
             }
 
@@ -190,7 +202,7 @@ namespace lms::ui
     void PcmDecodingStats::setupDownloadButton()
     {
         auto& bench{ PcmDecodingBenchmark::instance() };
-        auto resource{ std::make_shared<PcmDecodingStatsResource>(bench.getResults(), bench.getElapsed(), std::string{ bench.getReportFilename() } ) };
+        auto resource{ std::make_shared<PcmDecodingStatsResource>(bench.getResults(), bench.getElapsed(), bench.getReportFilename()) };
 
         Wt::WLink link{ resource };
         link.setTarget(Wt::LinkTarget::NewWindow);

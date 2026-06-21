@@ -23,7 +23,6 @@
 #include <filesystem>
 #include <functional>
 #include <mutex>
-#include <span>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -40,7 +39,12 @@ namespace lms::ui
     class PcmDecodingBenchmark
     {
     public:
-        enum class State { Idle, Running, Completed };
+        enum class State
+        {
+            Idle,
+            Running,
+            Completed
+        };
 
         struct TrackDecodeResult
         {
@@ -64,9 +68,9 @@ namespace lms::ui
         static PcmDecodingBenchmark& instance();
 
         State getState() const;
-        std::span<const CodecResult> getResults() const { return _results; }
-        std::chrono::milliseconds getElapsed() const { return _elapsed; }
-        std::string_view getReportFilename() const { return _reportFilename; }
+        std::vector<CodecResult> getResults() const;
+        std::chrono::milliseconds getElapsed() const;
+        std::string getReportFilename() const;
 
         void start(db::IDb& db);
 

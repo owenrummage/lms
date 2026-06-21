@@ -162,22 +162,23 @@ namespace lms::ui
                 if (trackResults.empty())
                     return;
 
-                std::vector<float> rtFactors;
-                rtFactors.reserve(trackResults.size());
-                for (const auto& t : trackResults)
-                    rtFactors.push_back(t.realTimeFactor);
-
-                const float mean{ std::accumulate(rtFactors.begin(), rtFactors.end(), 0.F) / static_cast<float>(rtFactors.size()) };
-                const float variance{ std::accumulate(rtFactors.begin(), rtFactors.end(), 0.F, [mean](float acc, float v) {
-                                          return acc + (v - mean) * (v - mean);
-                                      }) / static_cast<float>(rtFactors.size()) };
-
-                const auto [minIt, maxIt]{ std::minmax_element(rtFactors.begin(), rtFactors.end()) };
+                const std::size_t n{ trackResults.size() };
+                const float mean{ std::accumulate(trackResults.begin(), trackResults.end(), 0.F, [](float acc, const PcmDecodingBenchmark::TrackDecodeResult& t) {
+                                      return acc + t.realTimeFactor;
+                                  })
+                                  / static_cast<float>(n) };
+                const float variance{ std::accumulate(trackResults.begin(), trackResults.end(), 0.F, [mean](float acc, const PcmDecodingBenchmark::TrackDecodeResult& t) {
+                                          return acc + (t.realTimeFactor - mean) * (t.realTimeFactor - mean);
+                                      })
+                                      / static_cast<float>(n) };
+                const auto [minIt, maxIt]{ std::minmax_element(trackResults.begin(), trackResults.end(), [](const PcmDecodingBenchmark::TrackDecodeResult& a, const PcmDecodingBenchmark::TrackDecodeResult& b) {
+                    return a.realTimeFactor < b.realTimeFactor;
+                }) };
                 allResults.push_back(PcmDecodingBenchmark::CodecResult{
                     .codecName = std::string{ codecDesc.name.str() },
                     .tracks = std::move(trackResults),
-                    .minRealTimeFactor = *minIt,
-                    .maxRealTimeFactor = *maxIt,
+                    .minRealTimeFactor = minIt->realTimeFactor,
+                    .maxRealTimeFactor = maxIt->realTimeFactor,
                     .meanRealTimeFactor = mean,
                     .stdDevRealTimeFactor = std::sqrt(variance),
                 });
@@ -199,6 +200,24 @@ namespace lms::ui
         return _state;
     }
 
+    std::vector<PcmDecodingBenchmark::CodecResult> PcmDecodingBenchmark::getResults() const
+    {
+        std::scoped_lock lock{ _mutex };
+        return _results;
+    }
+
+    std::chrono::milliseconds PcmDecodingBenchmark::getElapsed() const
+    {
+        std::scoped_lock lock{ _mutex };
+        return _elapsed;
+    }
+
+    std::string PcmDecodingBenchmark::getReportFilename() const
+    {
+        std::scoped_lock lock{ _mutex };
+        return _reportFilename;
+    }
+
     void PcmDecodingBenchmark::start(db::IDb& db)
     {
         {
@@ -208,7 +227,7 @@ namespace lms::ui
 
                 if (_state == State::Running)
                     return;
-                
+
                 _reportFilename = "LMS_pcm_decoding_stats_" + core::stringUtils::toISO8601String(Wt::WDateTime::currentDateTime()) + ".txt";
                 prevState = _state;
                 _state = State::Running;
@@ -250,7 +269,11 @@ namespace lms::ui
 
     void PcmDecodingBenchmark::postStateToAllSessions(State oldState, State newState)
     {
-        Wt::WServer::instance()->postAll([this, oldState, newState] {
+        auto* server{ Wt::WServer::instance() };
+        if (!server)
+            return;
+
+        server->postAll([this, oldState, newState] {
             if (!LmsApp)
                 return;
 
