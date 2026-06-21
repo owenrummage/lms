@@ -24,6 +24,7 @@
 #include <sstream>
 
 #include <Wt/WAnchor.h>
+#include <Wt/WContainerWidget.h>
 #include <Wt/WText.h>
 
 #include "core/String.hpp"
@@ -135,11 +136,15 @@ namespace lms::ui::utils
 
     std::unique_ptr<Wt::WInteractWidget> createFilter(const Wt::WString& name, const Wt::WString& tooltip, std::string_view colorStyleClass, bool canDelete)
     {
-        auto res{ std::make_unique<Wt::WText>(Wt::WString{ canDelete ? "<i class=\"fa fa-times-circle\"></i> " : "" } + name, Wt::TextFormat::XHTML) };
-
+        auto res{ std::make_unique<Wt::WContainerWidget>() };
+        res->setInline(true);
         res->setStyleClass("Lms-badge-cluster badge me-1 " + std::string{ colorStyleClass }); // HACK
         res->setToolTip(tooltip, Wt::TextFormat::Plain);
-        res->setInline(true);
+
+        if (canDelete)
+            res->addNew<Wt::WText>("<i class=\"fa fa-times-circle\"></i> ", Wt::TextFormat::XHTML);
+
+        res->addNew<Wt::WText>(name, Wt::TextFormat::Plain);
 
         return res;
     }
