@@ -93,7 +93,7 @@ namespace lms::scrobbling::lastFm::utils
         Wt::Json::Object root;
         if (!Wt::Json::parse(std::string{ msgBody }, root, error))
         {
-            LOG(ERROR, "Cannot parse auth.getToken response: " << error.what());
+            LMS_LOG_LASTFM(ERROR, "Cannot parse auth.getToken response: " << error.what());
             return {};
         }
 
@@ -106,7 +106,7 @@ namespace lms::scrobbling::lastFm::utils
         Wt::Json::Object root;
         if (!Wt::Json::parse(std::string{ msgBody }, root, error))
         {
-            LOG(ERROR, "Cannot parse auth.getSession response: " << error.what());
+            LMS_LOG_LASTFM(ERROR, "Cannot parse auth.getSession response: " << error.what());
             return {};
         }
 
@@ -117,7 +117,7 @@ namespace lms::scrobbling::lastFm::utils
         }
         catch (const Wt::WException& e)
         {
-            LOG(ERROR, "Cannot extract session key: " << e.what());
+            LMS_LOG_LASTFM(ERROR, "Cannot extract session key: " << e.what());
             return {};
         }
     }

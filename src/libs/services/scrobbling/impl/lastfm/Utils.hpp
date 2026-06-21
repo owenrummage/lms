@@ -27,7 +27,7 @@
 
 #include "database/objects/UserId.hpp"
 
-#define LOG(sev, message) LMS_LOG(SCROBBLING, sev, "[lastfm] " << message)
+#define LMS_LOG_LASTFM(sev, message) LMS_LOG(SCROBBLING, sev, "[lastfm] " << message)
 
 namespace lms::db
 {

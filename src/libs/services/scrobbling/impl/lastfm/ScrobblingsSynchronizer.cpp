@@ -62,7 +62,7 @@ namespace lms::scrobbling::lastFm
             const std::string artistName{ track->getArtistDisplayName() };
             if (artistName.empty())
             {
-                LOG(DEBUG, "Track '" << track->getAbsoluteFilePath() << "' cannot be scrobbled: no artist name");
+                LMS_LOG_LASTFM(DEBUG, "Track '" << track->getAbsoluteFilePath() << "' cannot be scrobbled: no artist name");
                 return std::nullopt;
             }
 
@@ -118,7 +118,7 @@ namespace lms::scrobbling::lastFm
         , _submitPeriod{ core::Service<core::IConfig>::get()->getULong("lastfm-submit-period-hours", 1) }
         , _client{ client }
     {
-        LOG(INFO, "Starting Last.fm scrobblings synchronizer, submit period = " << _submitPeriod.count() << " hours");
+        LMS_LOG_LASTFM(INFO, "Starting Last.fm scrobblings synchronizer, submit period = " << _submitPeriod.count() << " hours");
         if (_submitPeriod.count() > 0)
             scheduleSubmit(std::chrono::seconds{ 30 });
     }
@@ -141,14 +141,14 @@ namespace lms::scrobbling::lastFm
         const utils::LastFmCredentials creds{ utils::getLastFmCredentials(_db.getTLSSession(), listen.userId) };
         if (creds.apiKey.empty() || creds.apiSecret.empty() || creds.sessionKey.empty())
         {
-            LOG(DEBUG, "Missing Last.fm credentials for user, skipping");
+            LMS_LOG_LASTFM(DEBUG, "Missing Last.fm credentials for user, skipping");
             return;
         }
 
         const std::optional<TrackInfo> info{ getTrackInfo(_db.getTLSSession(), listen) };
         if (!info)
         {
-            LOG(DEBUG, "Cannot build scrobble params: skipping");
+            LMS_LOG_LASTFM(DEBUG, "Cannot build scrobble params: skipping");
             return;
         }
 
@@ -244,7 +244,7 @@ namespace lms::scrobbling::lastFm
             const utils::LastFmCredentials creds{ utils::getLastFmCredentials(_db.getTLSSession(), userId) };
             if (creds.apiKey.empty() || creds.apiSecret.empty() || creds.sessionKey.empty())
             {
-                LOG(DEBUG, "Missing Last.fm credentials for user, skipping");
+                LMS_LOG_LASTFM(DEBUG, "Missing Last.fm credentials for user, skipping");
                 continue;
             }
 
@@ -280,7 +280,7 @@ namespace lms::scrobbling::lastFm
         if (validListens.empty())
             return;
 
-        LOG(DEBUG, "Sending scrobble batch of " << validListens.size() << " listens");
+        LMS_LOG_LASTFM(DEBUG, "Sending scrobble batch of " << validListens.size() << " listens");
 
         params["api_key"] = creds.apiKey;
         params["sk"] = creds.sessionKey;
@@ -304,7 +304,7 @@ namespace lms::scrobbling::lastFm
 
     void ScrobblingsSynchronizer::scheduleSubmit(std::chrono::seconds fromNow)
     {
-        LOG(DEBUG, "Scheduled pending retry in " << fromNow.count() << " seconds");
+        LMS_LOG_LASTFM(DEBUG, "Scheduled pending retry in " << fromNow.count() << " seconds");
         _submitTimer.expires_after(fromNow);
         _submitTimer.async_wait(boost::asio::bind_executor(_strand, [this](const boost::system::error_code& ec) {
             if (ec == boost::asio::error::operation_aborted)

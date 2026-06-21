@@ -45,7 +45,7 @@ namespace lms::scrobbling::lastFm
 
             const bool res{ track->getDuration() >= std::chrono::seconds{ 30 } && (playedDuration >= std::chrono::minutes{ 4 } || playedDuration >= track->getDuration() / 2) };
             if (!res)
-                LOG(DEBUG, "Track cannot be scrobbled: played duration too short (" << playedDuration.count() << "s, total = " << std::chrono::duration_cast<std::chrono::seconds>(track->getDuration()).count() << "s)");
+                LMS_LOG_LASTFM(DEBUG, "Track cannot be scrobbled: played duration too short (" << playedDuration.count() << "s, total = " << std::chrono::duration_cast<std::chrono::seconds>(track->getDuration()).count() << "s)");
 
             return res;
         }
@@ -57,12 +57,12 @@ namespace lms::scrobbling::lastFm
         , _client{ core::http::createClient(ioContext, core::Service<core::IConfig>::get()->getString("lastfm-api-base-url", "https://ws.audioscrobbler.com")) }
         , _synchronizer{ ioContext, db, *_client }
     {
-        LOG(INFO, "Starting Last.fm backend");
+        LMS_LOG_LASTFM(INFO, "Starting Last.fm backend");
     }
 
     LastFmBackend::~LastFmBackend()
     {
-        LOG(INFO, "Stopped Last.fm backend");
+        LMS_LOG_LASTFM(INFO, "Stopped Last.fm backend");
     }
 
     void LastFmBackend::listenStarted(const Listen& listen)
@@ -106,7 +106,7 @@ namespace lms::scrobbling::lastFm
             const std::string token{ utils::parseAuthToken(msg.body()) };
             if (token.empty())
             {
-                LOG(WARNING, "auth.getToken: failed to parse token");
+                LMS_LOG_LASTFM(WARNING, "auth.getToken: failed to parse token");
                 onFailure();
                 return;
             }
@@ -120,7 +120,7 @@ namespace lms::scrobbling::lastFm
             onSuccess(authUrl);
         };
         request.onFailureFunc = [onFailure = std::move(onFailure)] {
-            LOG(WARNING, "auth.getToken: HTTP request failed");
+            LMS_LOG_LASTFM(WARNING, "auth.getToken: HTTP request failed");
             onFailure();
         };
         _client->sendGETRequest(std::move(request));
@@ -136,7 +136,7 @@ namespace lms::scrobbling::lastFm
             auto it{ _pendingAuths.find(userId) };
             if (it == _pendingAuths.end())
             {
-                LOG(WARNING, "continueLastFmLink: no pending auth for user");
+                LMS_LOG_LASTFM(WARNING, "continueLastFmLink: no pending auth for user");
                 onFailure();
                 return;
             }
@@ -157,7 +157,7 @@ namespace lms::scrobbling::lastFm
             const std::string sessionKey{ utils::parseSessionKey(msg.body()) };
             if (sessionKey.empty())
             {
-                LOG(WARNING, "auth.getSession: failed to parse session key");
+                LMS_LOG_LASTFM(WARNING, "auth.getSession: failed to parse session key");
                 onFailure();
                 return;
             }
@@ -178,11 +178,11 @@ namespace lms::scrobbling::lastFm
                 _pendingAuths.erase(userId);
             }
 
-            LOG(INFO, "Last.fm account linked for user " << userId.toString());
+            LMS_LOG_LASTFM(INFO, "Last.fm account linked for user " << userId.toString());
             onSuccess();
         };
         request.onFailureFunc = [onFailure = std::move(onFailure)] {
-            LOG(WARNING, "auth.getSession: HTTP request failed");
+            LMS_LOG_LASTFM(WARNING, "auth.getSession: HTTP request failed");
             onFailure();
         };
 
