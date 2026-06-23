@@ -24,6 +24,7 @@
 #include "core/Exception.hpp"
 #include "core/ILogger.hpp"
 #include "core/ITraceLogger.hpp"
+#include "core/String.hpp"
 
 #include "database/Session.hpp"
 #include "database/objects/ScanSettings.hpp"
@@ -1754,7 +1755,37 @@ FROM track)");
             LMS_LOG(DB, INFO, "Migrating '" << column << "' from table '" << table << "'...");
 
             utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " ADD COLUMN " + std::string{ column } + "_new BLOB");
-            utils::executeCommand(dboSession, "UPDATE " + std::string{ table } + " SET " + std::string{ column } + "_new = CASE WHEN " + std::string{ column } + " != '' THEN unhex(replace(" + std::string{ column } + ", '-', '')) ELSE NULL END");
+
+            // Fetch all non-empty MBIDs and convert to blobs
+            using Row = std::tuple<long long, std::string>;
+            std::vector<std::pair<long long, std::vector<unsigned char>>> rows;
+            const auto queryResults{ dboSession.query<Row>("SELECT id, " + std::string{ column } + " FROM " + std::string{ table } + " WHERE " + std::string{ column } + " != ''") };
+            std::string hexStr;
+            hexStr.reserve(32);
+            utils::forEachQueryResult(queryResults, [&](const Row& row) {
+                hexStr.clear();
+                const auto& uuid{ std::get<1>(row) };
+                for (char c : uuid)
+                {
+                    if (c != '-')
+                        hexStr.push_back(c);
+                }
+                const auto blob{ core::stringUtils::stringFromHex(hexStr) };
+                if (blob && blob->size() == 16)
+                    rows.emplace_back(std::get<0>(row), std::vector<unsigned char>{ blob->begin(), blob->end() });
+            });
+
+            // Update with prepared statement loop
+            Wt::Dbo::Transaction transaction{ dboSession };
+            auto update{ transaction.connection()->prepareStatement("UPDATE " + std::string{ table } + " SET " + std::string{ column } + "_new = ? WHERE id = ?") };
+            for (const auto& [id, blob] : rows)
+            {
+                update->bind(0, blob);
+                update->bind(1, id);
+                update->execute();
+                update->reset();
+            }
+
             utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " DROP COLUMN " + std::string{ column });
             utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " RENAME COLUMN " + std::string{ column } + "_new TO " + std::string{ column });
         };
