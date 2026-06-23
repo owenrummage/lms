@@ -16,6 +16,7 @@ A [demo instance](http://lms-demo.poupon.dev) is available. Note the administrat
 * [ListenBrainz](https://listenbrainz.org) support for:
   * Scrobbling and synchronizing listens
   * Synchronizing 'love' feedbacks
+* [Last.fm](https://www.last.fm) support for scrobbling listens
 * Recommendation engine
 * Multi-library support
 * ReplayGain support
