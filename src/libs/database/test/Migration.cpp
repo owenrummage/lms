@@ -383,7 +383,6 @@ VALUES
             EXPECT_FALSE(UIState::find(session, UIStateId{}));
             EXPECT_FALSE(User::find(session, UserId{}));
 
-            // Verify UUID MBID round-trip through V107 migration (TEXT → BLOB)
             const auto artistMBID{ core::UUID::fromString("550e8400-e29b-41d4-a716-446655440000") };
             ASSERT_TRUE(artistMBID);
             const auto artist{ Artist::find(session, *artistMBID) };

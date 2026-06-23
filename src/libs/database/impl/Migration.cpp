@@ -90,10 +90,14 @@ namespace lms::db::Migration
     {
         void dropIndexes(Session& session)
         {
+            LMS_LOG(DB, INFO, "Droping all indexes...");
+
             // Make sure we remove all the previoulsy created index, the createIndexesIfNeeded will recreate them all
             std::vector<std::string> indexeNames{ utils::fetchQueryResults(session.getDboSession()->query<std::string>(R"(SELECT name FROM sqlite_master WHERE type = 'index' AND name LIKE '%_idx')")) };
             for (const auto& indexName : indexeNames)
                 utils::executeCommand(*session.getDboSession(), "DROP INDEX " + indexName);
+
+            LMS_LOG(DB, INFO, "Indexes dropped!");
         }
 
         void migrateFromV33(Session& session)
@@ -1738,46 +1742,34 @@ FROM track)");
 
     void migrateFromV106(Session& session)
     {
-        dropIndexes(session);
+        auto& dboSession{ *session.getDboSession() };
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS artist_name_mbid_idx");
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS artist_mbid_idx");
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS release_mbid_idx");
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS release_group_mbid_idx");
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS track_mbid_idx");
+        utils::executeCommand(dboSession, "DROP INDEX IF EXISTS track_recording_mbid_idx");
 
-        // Convert the 5 MBID TEXT columns to BLOB (16 raw bytes)
-        // unhex() returns NULL for non-hex input, so malformed values become NULL
+        auto convertMBIDColumn = [&](std::string_view table, std::string_view column) {
+            LMS_LOG(DB, INFO, "Migrating '" << column << "' from table '" << table << "'...");
 
-        // artist.mbid
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist ADD COLUMN mbid_new BLOB)");
-        utils::executeCommand(*session.getDboSession(), R"(UPDATE artist SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist DROP COLUMN mbid)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE artist RENAME COLUMN mbid_new TO mbid)");
+            utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " ADD COLUMN " + std::string{ column } + "_new BLOB");
+            utils::executeCommand(dboSession, "UPDATE " + std::string{ table } + " SET " + std::string{ column } + "_new = CASE WHEN " + std::string{ column } + " != '' THEN unhex(replace(" + std::string{ column } + ", '-', '')) ELSE NULL END");
+            utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " DROP COLUMN " + std::string{ column });
+            utils::executeCommand(dboSession, "ALTER TABLE " + std::string{ table } + " RENAME COLUMN " + std::string{ column } + "_new TO " + std::string{ column });
+        };
 
-        // release.mbid
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release ADD COLUMN mbid_new BLOB)");
-        utils::executeCommand(*session.getDboSession(), R"(UPDATE release SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release DROP COLUMN mbid)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release RENAME COLUMN mbid_new TO mbid)");
-
-        // release.group_mbid
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release ADD COLUMN group_mbid_new BLOB)");
-        utils::executeCommand(*session.getDboSession(), R"(UPDATE release SET group_mbid_new = CASE WHEN group_mbid != '' THEN unhex(replace(group_mbid, '-', '')) ELSE NULL END)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release DROP COLUMN group_mbid)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE release RENAME COLUMN group_mbid_new TO group_mbid)");
-
-        // track.mbid
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track ADD COLUMN mbid_new BLOB)");
-        utils::executeCommand(*session.getDboSession(), R"(UPDATE track SET mbid_new = CASE WHEN mbid != '' THEN unhex(replace(mbid, '-', '')) ELSE NULL END)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track DROP COLUMN mbid)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track RENAME COLUMN mbid_new TO mbid)");
-
-        // track.recording_mbid
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track ADD COLUMN recording_mbid_new BLOB)");
-        utils::executeCommand(*session.getDboSession(), R"(UPDATE track SET recording_mbid_new = CASE WHEN recording_mbid != '' THEN unhex(replace(recording_mbid, '-', '')) ELSE NULL END)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track DROP COLUMN recording_mbid)");
-        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE track RENAME COLUMN recording_mbid_new TO recording_mbid)");
+        convertMBIDColumn("artist", "mbid");
+        convertMBIDColumn("release", "mbid");
+        convertMBIDColumn("release", "group_mbid");
+        convertMBIDColumn("track", "mbid");
+        convertMBIDColumn("track", "recording_mbid");
     }
 
     void migrateFromV107(Session& session)
     {
         // Extract Genre, Mood, Language and Grouping from Cluster (keep it for user tags)
-
+        LMS_LOG(DB, INFO, "Migrating genre...");
         utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "genre" (
   "id" integer primary key autoincrement,
   "version" integer not null,
@@ -1808,6 +1800,7 @@ WHERE ct.name = 'GENRE')");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_genre_genre" ON "track_genre" ("genre_id"))");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_genre_track" ON "track_genre" ("track_id"))");
 
+        LMS_LOG(DB, INFO, "Migrating mood...");
         utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "mood" (
   "id" integer primary key autoincrement,
   "version" integer not null,
@@ -1835,6 +1828,7 @@ WHERE ct.name = 'MOOD')");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_mood_mood" ON "track_mood" ("mood_id"))");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_mood_track" ON "track_mood" ("track_id"))");
 
+        LMS_LOG(DB, INFO, "Migrating language...");
         utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "language" (
   "id" integer primary key autoincrement,
   "version" integer not null,
@@ -1862,6 +1856,7 @@ WHERE ct.name = 'LANGUAGE')");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_language_language" ON "track_language" ("language_id"))");
         utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX "track_language_track" ON "track_language" ("track_id"))");
 
+        LMS_LOG(DB, INFO, "Migrating grouping...");
         utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE IF NOT EXISTS "grouping" (
   "id" integer primary key autoincrement,
   "version" integer not null,
@@ -1982,12 +1977,11 @@ WHERE ct.name = 'GROUPING')");
             { 107, migrateFromV107 },
         };
 
-        bool migrationPerformed{};
-        {
-            LMS_SCOPED_TRACE_OVERVIEW("Database", "Migration");
-            auto transaction{ session.createWriteTransaction() };
+        LMS_SCOPED_TRACE_OVERVIEW("Database", "Migration");
 
-            Version version;
+        Version version{};
+        {
+            auto transaction{ session.createWriteTransaction() };
             try
             {
                 version = VersionInfo::getOrCreate(session)->getVersion();
@@ -2004,23 +1998,27 @@ WHERE ct.name = 'GROUPING')");
 
             if (version < migrationFunctions.begin()->first)
                 throw core::LmsException{ outdatedMsg };
+        }
 
-            while (version < LMS_DATABASE_VERSION)
+        bool migrationPerformed{};
+        while (version < LMS_DATABASE_VERSION)
+        {
+            LMS_SCOPED_TRACE_DETAILED("Database", "MigrationStep");
+            LMS_LOG(DB, INFO, "Migrating database from version " << version << " to " << version + 1 << "...");
+
+            auto itMigrationFunc{ migrationFunctions.find(version) };
+            if (itMigrationFunc == std::cend(migrationFunctions))
+                throw core::LmsException{ "No code found to upgrade database!" };
+
             {
-                LMS_SCOPED_TRACE_DETAILED("Database", "MigrationStep");
-                LMS_LOG(DB, INFO, "Migrating database from version " << version << " to " << version + 1 << "...");
-
-                auto itMigrationFunc{ migrationFunctions.find(version) };
-                if (itMigrationFunc == std::cend(migrationFunctions))
-                    throw core::LmsException{ "No code found to upgrade database!" };
-
+                auto transaction{ session.createWriteTransaction() };
                 itMigrationFunc->second(session);
-
-                VersionInfo::get(session).modify()->setVersion(++version);
-
-                LMS_LOG(DB, INFO, "Migration complete to version " << version);
-                migrationPerformed = true;
+                VersionInfo::get(session).modify()->setVersion(version + 1);
             }
+            ++version;
+
+            LMS_LOG(DB, INFO, "Migration complete to version " << version);
+            migrationPerformed = true;
         }
 
         return migrationPerformed;
