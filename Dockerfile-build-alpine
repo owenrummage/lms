@@ -3,6 +3,7 @@ FROM --platform=$BUILDPLATFORM alpine:3.24
 
 ARG BUILD_PACKAGES="\
 	clang \
+	llvm \
 	make \
 	cmake \
 	lld \
