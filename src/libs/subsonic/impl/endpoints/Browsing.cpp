@@ -30,6 +30,7 @@
 #include "database/objects/ArtistInfo.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
@@ -379,14 +380,9 @@ namespace lms::api::subsonic
 
         auto transaction{ context.getDbSession().createReadTransaction() };
 
-        const ClusterType::pointer clusterType{ ClusterType::find(context.getDbSession(), "GENRE") };
-        if (clusterType)
-        {
-            const auto clusters{ clusterType->getClusters() };
-
-            for (const Cluster::pointer& cluster : clusters)
-                genresNode.addArrayChild("genre", createGenreNode(context, cluster));
-        }
+        db::Genre::find(context.getDbSession(), db::Genre::FindParameters{}.setSortMethod(db::GenreSortMethod::Name), [&](const db::Genre::pointer& genre) {
+            genresNode.addArrayChild("genre", createGenreNode(context, genre));
+        });
 
         return response;
     }
@@ -561,10 +557,10 @@ namespace lms::api::subsonic
                 switch (context.getResponseFormat())
                 {
                 case ResponseFormat::json:
-                    artistInfoNode.setAttribute("musicBrainzId", artistMBID->getAsString());
+                    artistInfoNode.setAttribute("musicBrainzId", artistMBID->toString());
                     break;
                 case ResponseFormat::xml:
-                    artistInfoNode.createChild("musicBrainzId").setValue(artistMBID->getAsString());
+                    artistInfoNode.createChild("musicBrainzId").setValue(artistMBID->toString());
                     break;
                 }
             }
@@ -696,7 +692,7 @@ namespace lms::api::subsonic
             if (track)
             {
                 Response::Node& sonicMatchNode{ response.createArrayNode("sonicMatch") };
-                sonicMatchNode.setAttribute("similarity", 1.0F - similarTrack.distance);
+                sonicMatchNode.setAttribute("similarity", 1.0F - similarTrack.distanceToFirst);
                 sonicMatchNode.addChild("entry", createSongNode(context, track, context.getUser()));
             }
         }
@@ -727,7 +723,7 @@ namespace lms::api::subsonic
             if (track)
             {
                 Response::Node& sonicMatchNode{ response.createArrayNode("sonicMatch") };
-                sonicMatchNode.setAttribute("similarity", 1.0F - pathTrack.distance);
+                sonicMatchNode.setAttribute("similarity", 1.0F - pathTrack.distanceToFirst);
                 sonicMatchNode.addChild("entry", createSongNode(context, track, context.getUser()));
             }
         }

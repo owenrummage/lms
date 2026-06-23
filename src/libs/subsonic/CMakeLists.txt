@@ -34,7 +34,6 @@ add_library(lmssubsonic STATIC
 	impl/responses/ReplayGain.cpp
 	impl/responses/Song.cpp
 	impl/responses/User.cpp
-	impl/CoverArtId.cpp
 	impl/RequestContext.cpp
 	impl/ResponseFormat.cpp
 	impl/ProtocolVersion.cpp

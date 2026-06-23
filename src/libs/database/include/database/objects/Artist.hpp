@@ -141,8 +141,8 @@ namespace lms::db
         // Accessors
         const std::string& getName() const { return _name; }
         const std::string& getSortName() const { return _sortName; }
-        std::optional<core::UUID> getMBID() const;
-        bool hasMBID() const;
+        std::optional<core::UUID> getMBID() const { return _mbid; }
+        bool hasMBID() const { return _mbid.has_value(); }
         ObjectPtr<Artwork> getPreferredArtwork() const;
         ArtworkId getPreferredArtworkId() const;
 
@@ -152,7 +152,7 @@ namespace lms::db
         std::vector<std::vector<ObjectPtr<Cluster>>> getClusterGroups(std::span<const ClusterTypeId> clusterTypeIds, std::size_t size) const;
 
         void setName(std::string_view name);
-        void setMBID(const std::optional<core::UUID>& mbid) { _mbid = mbid ? mbid->getAsString() : ""; }
+        void setMBID(const std::optional<core::UUID>& mbid) { _mbid = mbid; }
         void setSortName(std::string_view sortName);
         void setPreferredArtwork(ObjectPtr<Artwork> artwork);
 
@@ -174,7 +174,7 @@ namespace lms::db
 
         std::string _name;
         std::string _sortName;
-        std::string _mbid; // Musicbrainz Identifier
+        std::optional<core::UUID> _mbid;
 
         Wt::Dbo::ptr<Artwork> _preferredArtwork;
     };

@@ -104,21 +104,13 @@ namespace lms::db
         // Accessors
         std::string_view getName() const { return _name; }
         ObjectPtr<ClusterType> getType() const { return _clusterType; }
-        std::size_t getTrackCount() const { return _trackCount; }
         RangeResults<TrackId> getTracks(std::optional<Range> range = std::nullopt) const;
-        std::size_t getReleasesCount() const { return _releaseCount; };
-
-        void setReleaseCount(std::size_t releaseCount) { _releaseCount = releaseCount; }
-        void setTrackCount(std::size_t trackCount) { _trackCount = trackCount; }
         void addTrack(ObjectPtr<Track> track);
 
         template<class Action>
         void persist(Action& a)
         {
             Wt::Dbo::field(a, _name, "name");
-            // cached field since queries are too long
-            Wt::Dbo::field(a, _trackCount, "track_count");
-            Wt::Dbo::field(a, _releaseCount, "release_count");
 
             Wt::Dbo::belongsTo(a, _clusterType, "cluster_type", Wt::Dbo::OnDeleteCascade);
             Wt::Dbo::hasMany(a, _tracks, Wt::Dbo::ManyToMany, "track_cluster", "", Wt::Dbo::OnDeleteCascade);
@@ -130,8 +122,6 @@ namespace lms::db
         static pointer create(Session& session, ObjectPtr<ClusterType> type, std::string_view name);
 
         std::string _name;
-        int _trackCount{};
-        int _releaseCount{};
 
         Wt::Dbo::ptr<ClusterType> _clusterType;
         Wt::Dbo::collection<Wt::Dbo::ptr<Track>> _tracks;

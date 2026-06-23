@@ -26,7 +26,7 @@
 #include "database/Session.hpp"
 
 #include "audio-similarity/musicnn/MusicNNEmbeddingEngine.hpp"
-#include "clusters/ClustersEngine.hpp"
+#include "tags/TagsEngine.hpp"
 
 namespace lms::recommendation
 {
@@ -57,7 +57,7 @@ namespace lms::recommendation
             switch (type)
             {
             case db::ScanSettings::RecommendationEngineType::Clusters:
-                return std::make_unique<ClusterEngine>(db);
+                return std::make_unique<TagsEngine>(db);
             case db::ScanSettings::RecommendationEngineType::AudioSimilarity:
                 return std::make_unique<MusicNNEmbeddingEngine>(db);
             case db::ScanSettings::RecommendationEngineType::None:

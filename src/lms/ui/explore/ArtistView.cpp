@@ -31,6 +31,10 @@
 #include "database/objects/ArtistInfo.hpp"
 #include "database/objects/ArtworkId.hpp"
 #include "database/objects/Cluster.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ScanSettings.hpp"
 #include "database/objects/Track.hpp"
@@ -56,6 +60,8 @@ namespace lms::ui
 {
     namespace
     {
+        constexpr std::size_t maxTagCloudItems{ 3 };
+
         std::optional<db::ArtistId> extractArtistIdFromInternalPath()
         {
             if (wApp->internalPathMatches("/artist/mbid/"))
@@ -137,6 +143,38 @@ namespace lms::ui
         Wt::WContainerWidget* clusterContainers{ bindNew<Wt::WContainerWidget>("clusters") };
 
         {
+            db::Genre::find(LmsApp->getDbSession(), db::Genre::FindParameters{}.setArtist(_artistId).setSortMethod(db::GenreSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItems }), [&](const db::Genre::pointer& genre) {
+                const db::GenreId genreId{ genre->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterGenre(genreId)) };
+                entry->clicked().connect([this, genreId] {
+                    _filters.set(genreId);
+                });
+            });
+
+            db::Grouping::find(LmsApp->getDbSession(), db::Grouping::FindParameters{}.setArtist(_artistId).setSortMethod(db::GroupingSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItems }), [&](const db::Grouping::pointer& grouping) {
+                const db::GroupingId groupingId{ grouping->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterGrouping(groupingId)) };
+                entry->clicked().connect([this, groupingId] {
+                    _filters.set(groupingId);
+                });
+            });
+
+            db::Language::find(LmsApp->getDbSession(), db::Language::FindParameters{}.setArtist(_artistId).setSortMethod(db::LanguageSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItems }), [&](const db::Language::pointer& language) {
+                const db::LanguageId languageId{ language->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterLanguage(languageId)) };
+                entry->clicked().connect([this, languageId] {
+                    _filters.set(languageId);
+                });
+            });
+
+            db::Mood::find(LmsApp->getDbSession(), db::Mood::FindParameters{}.setArtist(_artistId).setSortMethod(db::MoodSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItems }), [&](const db::Mood::pointer& mood) {
+                const db::MoodId moodId{ mood->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterMood(moodId)) };
+                entry->clicked().connect([this, moodId] {
+                    _filters.set(moodId);
+                });
+            });
+
             auto clusterTypes{ db::ClusterType::findIds(LmsApp->getDbSession()).results };
             auto clusterGroups{ artist->getClusterGroups(clusterTypes, 3) };
 
@@ -393,7 +431,7 @@ namespace lms::ui
         if (mbid)
         {
             setCondition("if-has-mbid", true);
-            bindString("mbid-link", std::string{ "https://musicbrainz.org/artist/" } + std::string{ mbid->getAsString() });
+            bindString("mbid-link", "https://musicbrainz.org/artist/" + mbid->toString());
         }
     }
 

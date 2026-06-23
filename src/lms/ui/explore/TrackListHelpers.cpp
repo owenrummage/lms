@@ -28,6 +28,10 @@
 #include "database/Session.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackArtistLink.hpp"
@@ -41,6 +45,7 @@
 #include "ModalManager.hpp"
 #include "Utils.hpp"
 #include "common/Template.hpp"
+#include "explore/Filters.hpp"
 #include "explore/PlayQueueController.hpp"
 #include "resource/ArtworkResource.hpp"
 #include "resource/DownloadResource.hpp"
@@ -100,6 +105,66 @@ namespace lms::ui::TrackListHelpers
         {
             trackInfo->setCondition("if-has-copyright", true);
             trackInfo->bindWidget("copyright", std::move(copyrightWidget));
+        }
+
+        {
+            Wt::WContainerWidget* genreContainer{ trackInfo->bindNew<Wt::WContainerWidget>("genres") };
+            for (const db::Genre::pointer& genre : track->getGenres())
+            {
+                const db::GenreId genreId{ genre->getId() };
+                Wt::WInteractWidget* entry{ genreContainer->addWidget(utils::createFilterGenre(genreId)) };
+                entry->clicked().connect([&filters, genreId] { filters.set(genreId); });
+            }
+            if (const int count{ genreContainer->count() }; count > 0)
+            {
+                trackInfo->bindString("genres-label", Wt::WString::trn("Lms.Explore.genre", count));
+                trackInfo->setCondition("if-has-genres", true);
+            }
+        }
+
+        {
+            Wt::WContainerWidget* groupingContainer{ trackInfo->bindNew<Wt::WContainerWidget>("groupings") };
+            for (const db::Grouping::pointer& grouping : track->getGroupings())
+            {
+                const db::GroupingId groupingId{ grouping->getId() };
+                Wt::WInteractWidget* entry{ groupingContainer->addWidget(utils::createFilterGrouping(groupingId)) };
+                entry->clicked().connect([&filters, groupingId] { filters.set(groupingId); });
+            }
+            if (const int count{ groupingContainer->count() }; count > 0)
+            {
+                trackInfo->bindString("groupings-label", Wt::WString::trn("Lms.Explore.grouping", count));
+                trackInfo->setCondition("if-has-groupings", true);
+            }
+        }
+
+        {
+            Wt::WContainerWidget* languageContainer{ trackInfo->bindNew<Wt::WContainerWidget>("languages") };
+            for (const db::Language::pointer& language : track->getLanguages())
+            {
+                const db::LanguageId languageId{ language->getId() };
+                Wt::WInteractWidget* entry{ languageContainer->addWidget(utils::createFilterLanguage(languageId)) };
+                entry->clicked().connect([&filters, languageId] { filters.set(languageId); });
+            }
+            if (const int count{ languageContainer->count() }; count > 0)
+            {
+                trackInfo->bindString("languages-label", Wt::WString::trn("Lms.Explore.language", count));
+                trackInfo->setCondition("if-has-languages", true);
+            }
+        }
+
+        {
+            Wt::WContainerWidget* moodContainer{ trackInfo->bindNew<Wt::WContainerWidget>("moods") };
+            for (const db::Mood::pointer& mood : track->getMoods())
+            {
+                const db::MoodId moodId{ mood->getId() };
+                Wt::WInteractWidget* entry{ moodContainer->addWidget(utils::createFilterMood(moodId)) };
+                entry->clicked().connect([&filters, moodId] { filters.set(moodId); });
+            }
+            if (const int count{ moodContainer->count() }; count > 0)
+            {
+                trackInfo->bindString("moods-label", Wt::WString::trn("Lms.Explore.mood", count));
+                trackInfo->setCondition("if-has-moods", true);
+            }
         }
 
         Wt::WContainerWidget* clusterContainer{ trackInfo->bindWidget("clusters", utils::createFilterClustersForTrack(track, filters)) };

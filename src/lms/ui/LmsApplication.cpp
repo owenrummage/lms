@@ -19,6 +19,8 @@
 
 #include "LmsApplication.hpp"
 
+#include <Wt/WConfig.h>
+
 #include <Wt/WAnchor.h>
 #include <Wt/WEnvironment.h>
 #include <Wt/WLineEdit.h>
@@ -38,7 +40,6 @@
 #include "database/objects/Release.hpp"
 #include "database/objects/TrackList.hpp"
 #include "database/objects/User.hpp"
-#include "database/profiling/IQueryProfiler.hpp"
 #include "services/artwork/IArtworkService.hpp"
 #include "services/auth/IAuthTokenService.hpp"
 #include "services/auth/IEnvService.hpp"
@@ -117,7 +118,7 @@ namespace lms::ui
             return res;
         }
 
-        Wt::WLocale createLocale(const std::string& name)
+        Wt::WLocale createLocale(const std::string& name, [[maybe_unused]] const std::string& timeZoneName)
         {
             Wt::WLocale locale{ name };
             locale.setDecimalPoint(Wt::WString::tr("Lms.locale.decimal-point").toUTF8());
@@ -126,6 +127,19 @@ namespace lms::ui
             locale.setTimeFormat(Wt::WString::tr("Lms.locale.time-format").toUTF8());
             locale.setDateTimeFormat(Wt::WString::tr("Lms.locale.date-time-format").toUTF8());
 
+#ifdef WT_DATE_TZ_USE_STD
+            if (!timeZoneName.empty())
+            {
+                try
+                {
+                    locale.setTimeZone(std::chrono::locate_zone(timeZoneName));
+                }
+                catch (const std::runtime_error&)
+                {
+                    // unknown zone, display stays UTC
+                }
+            }
+#endif
             return locale;
         }
 
@@ -224,7 +238,7 @@ namespace lms::ui
 
         setTitle();
         setLocalizedStrings(getOrCreateMessageBundle());
-        setLocale(createLocale(Wt::WLocale::currentLocale().name()));
+        setLocale(createLocale(Wt::WLocale::currentLocale().name(), environment().timeZoneName()));
 
         // Handle Media Scanner events and other session events
         enableUpdates(true);
@@ -325,7 +339,7 @@ namespace lms::ui
 
         setUserInfo(userId, strongAuth);
 
-        LMS_LOG(UI, INFO, "User '" << getUserLoginName() << "' logged in from '" << environment().clientAddress() << "', user agent = " << environment().userAgent() << ", locale = '" << locale().name() << "'");
+        LMS_LOG(UI, INFO, "User '" << getUserLoginName() << "' logged in from '" << environment().clientAddress() << "', user agent = " << environment().userAgent() << ", locale = '" << locale().name() << "', timezone = '" << environment().timeZoneName() << "'");
 
         _appManager.registerApplication(*this);
         _appManager.applicationRegistered.connect(this, [this](LmsApplication& otherApplication) {
@@ -433,13 +447,7 @@ namespace lms::ui
             navbar->bindNew<Wt::WAnchor>("scan-settings", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scan-settings" }, Wt::WString::tr("Lms.Admin.menu-scan-settings"));
             navbar->bindNew<Wt::WAnchor>("scanner", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scanner" }, Wt::WString::tr("Lms.Admin.menu-scanner"));
             navbar->bindNew<Wt::WAnchor>("users", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/users" }, Wt::WString::tr("Lms.Admin.menu-users"));
-            // Hide the entry if no debug service is enabled
-            if (core::Service<core::tracing::ITraceLogger>::get()
-                || core::Service<db::IQueryProfiler>::get())
-            {
-                navbar->setCondition("if-debug-tools", true);
-                navbar->bindNew<Wt::WAnchor>("debug-tools", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/debug-tools" }, Wt::WString::tr("Lms.Admin.menu-debug-tools"));
-            }
+            navbar->bindNew<Wt::WAnchor>("debug-tools", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/debug-tools" }, Wt::WString::tr("Lms.Admin.menu-debug-tools"));
         }
 
         PathRouter* mainRouter{ main->bindNew<PathRouter>("contents") };
@@ -547,9 +555,14 @@ namespace lms::ui
         }
     }
 
-    void LmsApplication::post(std::function<void()> func)
+    void LmsApplication::post(const std::string& sessionId, const std::function<void()>& func)
     {
-        Wt::WServer::instance()->post(LmsApp->sessionId(), std::move(func));
+        Wt::WServer::instance()->post(sessionId, func);
+    }
+
+    void LmsApplication::post(const std::function<void()>& func)
+    {
+        post(sessionId(), func);
     }
 
     void LmsApplication::setTitle(const Wt::WString& title)

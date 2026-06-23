@@ -92,8 +92,11 @@ namespace lms::scanner
                 const std::filesystem::directory_entry fileEntry{ p, ec };
                 if (ec)
                 {
-                    // TODO store error?
-                    LMS_LOG(DBUPDATER, ERROR, "Error while checking file " << p << ": " << ec.message());
+                    // no_such_file_or_directory may be triggered if the mount point changed
+                    if (ec == std::errc::no_such_file_or_directory)
+                        LMS_LOG(DBUPDATER, DEBUG, "Removing " << p << ": missing");
+                    else
+                        LMS_LOG(DBUPDATER, ERROR, "Error while checking file " << p << ": " << ec.message());
                     return false;
                 }
 

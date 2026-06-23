@@ -29,8 +29,12 @@
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackArtistLink.hpp"
@@ -46,6 +50,7 @@
 #include "traits/IdTypeTraits.hpp"
 #include "traits/PartialDateTimeTraits.hpp"
 #include "traits/StringViewTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 DBO_INSTANTIATE_TEMPLATES(lms::db::Country)
 DBO_INSTANTIATE_TEMPLATES(lms::db::Label)
@@ -76,7 +81,11 @@ namespace lms::db
                 || params.originalDateRange
                 || params.trackArtist.isValid()
                 || params.filters.clusters.size() == 1
+                || params.filters.genre.isValid()
+                || params.filters.grouping.isValid()
+                || params.filters.language.isValid()
                 || params.filters.mediaLibrary.isValid()
+                || params.filters.mood.isValid()
                 || params.filters.codec.has_value()
                 || params.directory.isValid()
                 || params.parentDirectory.isValid())
@@ -214,11 +223,39 @@ namespace lms::db
                 query.where(oss.str());
             }
 
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t.id")
+                    .where("t_g.genre_id = ?")
+                    .bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t.id")
+                    .where("t_gr.grouping_id = ?")
+                    .bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t.id")
+                    .where("t_l.language_id = ?")
+                    .bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t.id")
+                    .where("t_m.mood_id = ?")
+                    .bind(params.filters.mood);
+            }
+
             if (params.filters.codec.has_value())
                 query.where("t.codec = ?").bind(detail::getDbCodec(params.filters.codec.value()));
 
             if (params.releaseGroupMBID)
-                query.where("group_mbid = ?").bind(params.releaseGroupMBID->getAsString());
+                query.where("group_mbid = ?").bind(*params.releaseGroupMBID);
 
             switch (params.sortMethod)
             {
@@ -454,7 +491,7 @@ namespace lms::db
 
     Release::Release(const std::string& name, const std::optional<core::UUID>& MBID)
         : _name{ std::string(name, 0, _maxNameLength) }
-        , _MBID{ MBID ? MBID->getAsString() : "" }
+        , _MBID{ MBID }
     {
     }
 
@@ -467,7 +504,7 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Release>>("SELECT r from release r").where("r.mbid = ?").bind(mbid.getAsString()));
+        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Release>>("SELECT r from release r").where("r.mbid = ?").bind(mbid));
     }
 
     Release::pointer Release::find(Session& session, ReleaseId id)

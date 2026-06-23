@@ -127,7 +127,7 @@ namespace lms::feedback::listenBrainz
             request.message.addHeader("Authorization", "Token " + listenBrainzToken);
 
             Wt::Json::Object root;
-            root["recording_mbid"] = Wt::Json::Value{ std::string{ recordingMBID->getAsString() } };
+            root["recording_mbid"] = Wt::Json::Value{ recordingMBID->toString() };
             root["score"] = Wt::Json::Value{ static_cast<int>(type) };
 
             request.message.addBodyText(Wt::Json::serialize(root));

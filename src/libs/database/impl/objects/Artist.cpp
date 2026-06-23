@@ -26,6 +26,10 @@
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
 #include "database/objects/Directory.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/User.hpp"
@@ -35,6 +39,7 @@
 #include "objects/detail/Types.hpp"
 #include "traits/IdTypeTraits.hpp"
 #include "traits/StringViewTraits.hpp"
+#include "traits/UUIDTraits.hpp"
 
 DBO_INSTANTIATE_TEMPLATES(lms::db::Artist)
 
@@ -54,6 +59,10 @@ namespace lms::db
                 || params.trackArtistLinkType.has_value()
                 || params.track.isValid()
                 || params.filters.clusters.size() == 1
+                || params.filters.genre.isValid()
+                || params.filters.grouping.isValid()
+                || params.filters.language.isValid()
+                || params.filters.mood.isValid()
                 || params.filters.codec.has_value()
                 || params.filters.label.isValid()
                 || params.filters.releaseType.isValid())
@@ -161,6 +170,34 @@ namespace lms::db
                 query.where(oss.str());
             }
 
+            if (params.filters.genre.isValid())
+            {
+                query.join("track_genre t_g ON t_g.track_id = t_a_l.track_id")
+                    .where("t_g.genre_id = ?")
+                    .bind(params.filters.genre);
+            }
+
+            if (params.filters.grouping.isValid())
+            {
+                query.join("track_grouping t_gr ON t_gr.track_id = t_a_l.track_id")
+                    .where("t_gr.grouping_id = ?")
+                    .bind(params.filters.grouping);
+            }
+
+            if (params.filters.language.isValid())
+            {
+                query.join("track_language t_l ON t_l.track_id = t_a_l.track_id")
+                    .where("t_l.language_id = ?")
+                    .bind(params.filters.language);
+            }
+
+            if (params.filters.mood.isValid())
+            {
+                query.join("track_mood t_m ON t_m.track_id = t_a_l.track_id")
+                    .where("t_m.mood_id = ?")
+                    .bind(params.filters.mood);
+            }
+
             if (params.track.isValid())
                 query.where("t_a_l.track_id = ?").bind(params.track);
 
@@ -214,7 +251,7 @@ namespace lms::db
     } // namespace
 
     Artist::Artist(const std::string& name, const std::optional<core::UUID>& mbid)
-        : _mbid{ mbid ? mbid->getAsString() : "" }
+        : _mbid{ mbid }
     {
         setName(name);
     }
@@ -240,7 +277,11 @@ namespace lms::db
         if (library.isValid())
         {
             // Faster than using joins
-            query.where("EXISTS (SELECT 1 FROM track_artist_link t_a_l JOIN track t ON t.id = t_a_l.track_id WHERE t_a_l.artist_id = a.id AND t.media_library_id = ?)").bind(library);
+            query.where(
+                     "EXISTS (SELECT 1 FROM track_artist_link t_a_l JOIN track t ON t.id = t_a_l.track_id WHERE t_a_l.artist_id = a.id AND t.media_library_id = ?)"
+                     " OR EXISTS (SELECT 1 FROM release_artist_link r_a_l JOIN release r ON r.id = r_a_l.release_id JOIN track t ON t.release_id = r.id WHERE r_a_l.artist_id = a.id AND t.media_library_id = ?)")
+                .bind(library)
+                .bind(library);
         }
 
         utils::forEachQueryResult(query, [&](const Artist::pointer& artist) {
@@ -273,7 +314,7 @@ namespace lms::db
     Artist::pointer Artist::find(Session& session, const core::UUID& mbid)
     {
         session.checkReadTransaction();
-        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.mbid = ?").bind(std::string{ mbid.getAsString() }));
+        return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.mbid = ?").bind(mbid));
     }
 
     Artist::pointer Artist::find(Session& session, ArtistId id)
@@ -380,17 +421,6 @@ AND NOT EXISTS (
             utils::executeCommand(*session.getDboSession(), "UPDATE artist SET preferred_artwork_id = ? WHERE id = ?", artworkId, artistId);
         else
             utils::executeCommand(*session.getDboSession(), "UPDATE artist SET preferred_artwork_id = NULL WHERE id = ?", artistId);
-    }
-
-    std::optional<core::UUID> Artist::getMBID() const
-    {
-        return core::UUID::fromString(_mbid);
-    }
-
-    bool Artist::hasMBID() const
-    {
-        // TODO optim this
-        return getMBID().has_value();
     }
 
     ObjectPtr<Artwork> Artist::getPreferredArtwork() const

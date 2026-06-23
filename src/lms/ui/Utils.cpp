@@ -24,13 +24,18 @@
 #include <sstream>
 
 #include <Wt/WAnchor.h>
+#include <Wt/WContainerWidget.h>
 #include <Wt/WText.h>
 
 #include "core/String.hpp"
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
 #include "database/objects/Cluster.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
 #include "database/objects/Image.hpp"
+#include "database/objects/Language.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/ScanSettings.hpp"
@@ -59,7 +64,7 @@ namespace lms::ui::utils
         Wt::WLink createArtistLink(const db::Artist::pointer& artist)
         {
             if (const auto mbid{ artist->getMBID() })
-                return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/mbid/" + std::string{ mbid->getAsString() } };
+                return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/mbid/" + mbid->toString() };
             else
                 return Wt::WLink{ Wt::LinkType::InternalPath, "/artist/" + artist->getId().toString() };
         }
@@ -131,11 +136,15 @@ namespace lms::ui::utils
 
     std::unique_ptr<Wt::WInteractWidget> createFilter(const Wt::WString& name, const Wt::WString& tooltip, std::string_view colorStyleClass, bool canDelete)
     {
-        auto res{ std::make_unique<Wt::WText>(Wt::WString{ canDelete ? "<i class=\"fa fa-times-circle\"></i> " : "" } + name, Wt::TextFormat::XHTML) };
-
+        auto res{ std::make_unique<Wt::WContainerWidget>() };
+        res->setInline(true);
         res->setStyleClass("Lms-badge-cluster badge me-1 " + std::string{ colorStyleClass }); // HACK
         res->setToolTip(tooltip, Wt::TextFormat::Plain);
-        res->setInline(true);
+
+        if (canDelete)
+            res->addNew<Wt::WText>("<i class=\"fa fa-times-circle\"></i> ", Wt::TextFormat::XHTML);
+
+        res->addNew<Wt::WText>(name, Wt::TextFormat::Plain);
 
         return res;
     }
@@ -173,6 +182,50 @@ namespace lms::ui::utils
         } };
 
         return createFilter(Wt::WString::fromUTF8(std::string{ cluster->getName() }), Wt::WString::fromUTF8(std::string{ cluster->getType()->getName() }), getStyleClass(cluster), canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterGenre(db::GenreId genreId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Genre::pointer genre{ db::Genre::find(LmsApp->getDbSession(), genreId) };
+        if (!genre)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ genre->getName() }), Wt::WString::trn("Lms.Explore.genre", 1), "bg-info text-dark", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterGrouping(db::GroupingId groupingId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Grouping::pointer grouping{ db::Grouping::find(LmsApp->getDbSession(), groupingId) };
+        if (!grouping)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ grouping->getName() }), Wt::WString::trn("Lms.Explore.grouping", 1), "bg-secondary", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterLanguage(db::LanguageId languageId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Language::pointer language{ db::Language::find(LmsApp->getDbSession(), languageId) };
+        if (!language)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ language->getName() }), Wt::WString::trn("Lms.Explore.language", 1), "bg-primary", canDelete);
+    }
+
+    std::unique_ptr<Wt::WInteractWidget> createFilterMood(db::MoodId moodId, bool canDelete)
+    {
+        auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+        const db::Mood::pointer mood{ db::Mood::find(LmsApp->getDbSession(), moodId) };
+        if (!mood)
+            return {};
+
+        return createFilter(Wt::WString::fromUTF8(std::string{ mood->getName() }), Wt::WString::trn("Lms.Explore.mood", 1), "bg-warning text-dark", canDelete);
     }
 
     std::unique_ptr<Wt::WContainerWidget> createFilterClustersForTrack(db::Track::pointer track, Filters& filters)
@@ -229,7 +282,7 @@ namespace lms::ui::utils
     Wt::WLink createReleaseLink(db::Release::pointer release)
     {
         if (const auto mbid{ release->getMBID() })
-            return Wt::WLink{ Wt::LinkType::InternalPath, "/release/mbid/" + std::string{ mbid->getAsString() } };
+            return Wt::WLink{ Wt::LinkType::InternalPath, "/release/mbid/" + mbid->toString() };
 
         return Wt::WLink{ Wt::LinkType::InternalPath, "/release/" + release->getId().toString() };
     }

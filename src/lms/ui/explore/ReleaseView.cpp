@@ -35,7 +35,11 @@
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
 #include "database/objects/Cluster.hpp"
+#include "database/objects/Genre.hpp"
+#include "database/objects/Grouping.hpp"
+#include "database/objects/Language.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ScanSettings.hpp"
 #include "database/objects/Track.hpp"
@@ -273,10 +277,44 @@ namespace lms::ui
         refreshReleaseArtists(release);
         refreshArtwork(release->getPreferredArtworkId());
 
+        constexpr std::size_t maxTagCloudItemCount{ 3 };
+
         Wt::WContainerWidget* clusterContainers{ bindNew<Wt::WContainerWidget>("clusters") };
         {
+            db::Genre::find(session, db::Genre::FindParameters{}.setRelease(release->getId()).setSortMethod(db::GenreSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItemCount }), [&](const db::Genre::pointer& genre) {
+                const db::GenreId genreId{ genre->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterGenre(genreId)) };
+                entry->clicked().connect([this, genreId] {
+                    _filters.set(genreId);
+                });
+            });
+
+            db::Grouping::find(session, db::Grouping::FindParameters{}.setRelease(release->getId()).setSortMethod(db::GroupingSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItemCount }), [&](const db::Grouping::pointer& grouping) {
+                const db::GroupingId groupingId{ grouping->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterGrouping(groupingId)) };
+                entry->clicked().connect([this, groupingId] {
+                    _filters.set(groupingId);
+                });
+            });
+
+            db::Language::find(session, db::Language::FindParameters{}.setRelease(release->getId()).setSortMethod(db::LanguageSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItemCount }), [&](const db::Language::pointer& language) {
+                const db::LanguageId languageId{ language->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterLanguage(languageId)) };
+                entry->clicked().connect([this, languageId] {
+                    _filters.set(languageId);
+                });
+            });
+
+            db::Mood::find(session, db::Mood::FindParameters{}.setRelease(release->getId()).setSortMethod(db::MoodSortMethod::TrackCountDesc).setRange(db::Range{ 0, maxTagCloudItemCount }), [&](const db::Mood::pointer& mood) {
+                const db::MoodId moodId{ mood->getId() };
+                Wt::WInteractWidget* entry{ clusterContainers->addWidget(utils::createFilterMood(moodId)) };
+                entry->clicked().connect([this, moodId] {
+                    _filters.set(moodId);
+                });
+            });
+
             const auto clusterTypeIds{ db::ClusterType::findIds(session).results };
-            const auto clusterGroups{ release->getClusterGroups(clusterTypeIds, 3) };
+            const auto clusterGroups{ release->getClusterGroups(clusterTypeIds, maxTagCloudItemCount) };
 
             for (const auto& clusters : clusterGroups)
             {
@@ -554,7 +592,7 @@ namespace lms::ui
         if (mbid)
         {
             setCondition("if-has-mbid", true);
-            bindString("mbid-link", std::string{ "https://musicbrainz.org/release/" } + std::string{ mbid->getAsString() });
+            bindString("mbid-link", "https://musicbrainz.org/release/" + mbid->toString());
         }
     }
 

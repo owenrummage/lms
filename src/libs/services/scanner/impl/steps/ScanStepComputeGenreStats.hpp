@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Emeric Poupon
+ * Copyright (C) 2023 Emeric Poupon
  *
  * This file is part of LMS.
  *
@@ -19,25 +19,19 @@
 
 #pragma once
 
-#include <ctime>
+#include "ScanStepBase.hpp"
 
-#include "core/String.hpp"
-#include "database/objects/ArtworkId.hpp"
-
-namespace lms::api::subsonic
+namespace lms::scanner
 {
-    struct CoverArtId
+    class ScanStepComputeGenreStats : public ScanStepBase
     {
-        db::ArtworkId id;
-        std::time_t timestamp;
+    public:
+        using ScanStepBase::ScanStepBase;
+
+    private:
+        ScanStep getStep() const override { return ScanStep::ComputeGenreStats; }
+        core::LiteralString getStepName() const override { return "Compute genre stats"; }
+        bool needProcess(const ScanContext& context) const override;
+        void process(ScanContext& context) override;
     };
-
-    std::string idToString(CoverArtId coverId);
-} // namespace lms::api::subsonic
-
-// Used to parse parameters
-namespace lms::core::stringUtils
-{
-    template<>
-    std::optional<api::subsonic::CoverArtId> readAs(std::string_view str);
-} // namespace lms::core::stringUtils
+} // namespace lms::scanner

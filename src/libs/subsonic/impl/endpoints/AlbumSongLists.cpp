@@ -25,7 +25,7 @@
 #include "database/Session.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
-#include "database/objects/Cluster.hpp"
+#include "database/objects/Genre.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/User.hpp"
@@ -87,18 +87,15 @@ namespace lms::api::subsonic
                 // Mandatory param
                 const std::string genre{ getMandatoryParameterAs<std::string>(context.getParameters(), "genre") };
 
-                if (const ClusterType::pointer clusterType{ ClusterType::find(context.getDbSession(), "GENRE") })
+                if (const Genre::pointer genreObj{ Genre::find(context.getDbSession(), genre) })
                 {
-                    if (const Cluster::pointer cluster{ clusterType->getCluster(genre) })
-                    {
-                        Release::FindParameters params;
-                        params.filters.setMediaLibrary(mediaLibraryId);
-                        params.filters.setClusters(std::initializer_list<ClusterId>{ cluster->getId() });
-                        params.setSortMethod(ReleaseSortMethod::Name);
-                        params.setRange(range);
+                    Release::FindParameters params;
+                    params.filters.setMediaLibrary(mediaLibraryId);
+                    params.filters.setGenre(genreObj->getId());
+                    params.setSortMethod(ReleaseSortMethod::Name);
+                    params.setRange(range);
 
-                        releases = Release::findIds(context.getDbSession(), params);
-                    }
+                    releases = Release::findIds(context.getDbSession(), params);
                 }
             }
             else if (type == "byYear")
@@ -273,19 +270,15 @@ namespace lms::api::subsonic
 
         auto transaction{ context.getDbSession().createReadTransaction() };
 
-        auto clusterType{ ClusterType::find(context.getDbSession(), "GENRE") };
-        if (!clusterType)
-            throw RequestedDataNotFoundError{};
-
-        auto cluster{ clusterType->getCluster(genre) };
-        if (!cluster)
+        const Genre::pointer genreObj{ Genre::find(context.getDbSession(), genre) };
+        if (!genreObj)
             throw RequestedDataNotFoundError{};
 
         Response response{ Response::createOkResponse(context.getServerProtocolVersion()) };
         Response::Node& songsByGenreNode{ response.createNode("songsByGenre") };
 
         Track::FindParameters params;
-        params.filters.setClusters(std::initializer_list<ClusterId>{ cluster->getId() });
+        params.filters.setGenre(genreObj->getId());
         params.filters.setMediaLibrary(mediaLibrary);
         params.setRange(Range{ offset, count });
 

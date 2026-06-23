@@ -1207,7 +1207,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            const auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, release.getId()) };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
             EXPECT_FALSE(listen);
         }
 
@@ -1217,7 +1217,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            const auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, release.getId()) };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime1);
         }
@@ -1228,7 +1228,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            const auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, release.getId()) };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime1);
         }
@@ -1239,9 +1239,66 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            const auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, release.getId()) };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime3);
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getMostRecentRelease_byUserBackend)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        ScopedRelease release{ session, "MyRelease" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            track.get().modify()->setRelease(release.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_FALSE(Listen::getMostRecentListen(session, user->getId(), release.getId()));
+        }
+
+        const Wt::WDateTime dateTime1{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen1{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime1 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime1);
+        }
+
+        const Wt::WDateTime dateTime2{ Wt::WDate{ 1999, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen2{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime2 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime1);
+        }
+
+        const Wt::WDateTime dateTime3{ Wt::WDate{ 2001, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen3{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime3 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), release.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime3);
+        }
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.get().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_FALSE(Listen::getMostRecentListen(session, user->getId(), release.getId()));
         }
     }
 
@@ -1592,7 +1649,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, track.getId()) };
+            auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
             EXPECT_FALSE(listen);
         }
 
@@ -1602,7 +1659,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, track.getId()) };
+            auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime1);
         }
@@ -1613,7 +1670,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, track.getId()) };
+            auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime1);
         }
@@ -1624,7 +1681,7 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
 
-            auto listen{ Listen::getMostRecentListen(session, user->getId(), ScrobblingBackend::Internal, track.getId()) };
+            auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
             EXPECT_TRUE(listen);
             EXPECT_EQ(listen->getDateTime(), dateTime3);
         }
@@ -1695,6 +1752,57 @@ namespace lms::db::tests
             ASSERT_EQ(tracks.results.size(), 2);
             EXPECT_EQ(tracks.results[0], track2.getId());
             EXPECT_EQ(tracks.results[1], track1.getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getMostRecentTrack_byUserBackend)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_FALSE(Listen::getMostRecentListen(session, user->getId(), track.getId()));
+        }
+
+        const Wt::WDateTime dateTime1{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen1{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime1 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime1);
+        }
+
+        const Wt::WDateTime dateTime2{ Wt::WDate{ 1999, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen2{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime2 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime1);
+        }
+
+        const Wt::WDateTime dateTime3{ Wt::WDate{ 2001, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen3{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime3 };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto listen{ Listen::getMostRecentListen(session, user->getId(), track.getId()) };
+            ASSERT_TRUE(listen);
+            EXPECT_EQ(listen->getDateTime(), dateTime3);
+        }
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.get().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_FALSE(Listen::getMostRecentListen(session, user->getId(), track.getId()));
         }
     }
 

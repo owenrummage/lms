@@ -160,7 +160,7 @@ namespace lms::ui
 
                 setValue(SkipSingleReleasePlayListsField, scanSettings->getSkipSingleReleasePlayLists());
                 setValue(AllowMBIDArtistMergeField, scanSettings->getAllowMBIDArtistMerge());
-                setValue(ArtistImageFallbackToReleaseField, scanSettings->getArtistImageFallbackToReleaseField());
+                setValue(ArtistImageFallbackToReleaseField, scanSettings->getArtistImageFallbackToRelease());
 
                 auto recommendationEngineTypeRow{ _recommendationEngineTypeModel->getRowFromValue(scanSettings->getRecommendationEngineType()) };
                 if (recommendationEngineTypeRow)
@@ -210,7 +210,7 @@ namespace lms::ui
 
                 {
                     const bool artistImageFallbackToRelease{ Wt::asNumber(value(ArtistImageFallbackToReleaseField)) != 0 };
-                    scanSettings.modify()->setArtistImageFallbackToReleaseField(artistImageFallbackToRelease);
+                    scanSettings.modify()->setArtistImageFallbackToRelease(artistImageFallbackToRelease);
                 }
 
                 {

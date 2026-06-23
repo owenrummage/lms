@@ -27,7 +27,11 @@
 namespace lms::db::tests
 {
     using ScopedArtwork = ScopedEntity<db::Artwork>;
+    using ScopedGenre = ScopedEntity<db::Genre>;
+    using ScopedGrouping = ScopedEntity<db::Grouping>;
     using ScopedImage = ScopedEntity<db::Image>;
+    using ScopedLanguage = ScopedEntity<db::Language>;
+    using ScopedMood = ScopedEntity<db::Mood>;
 
     TEST_F(DatabaseFixture, Track)
     {
@@ -588,6 +592,35 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
             EXPECT_EQ(track->getPreferredArtwork(), Artwork::pointer{});
             EXPECT_EQ(track->getPreferredMediaArtwork(), Artwork::pointer{});
+        }
+    }
+
+    TEST_F(DatabaseFixture, Track_combinedTagFilters)
+    {
+        ScopedTrack track1{ session };
+        ScopedTrack track2{ session };
+        ScopedGenre genre{ session, "Rock" };
+        ScopedMood mood{ session, "Energetic" };
+        ScopedGrouping grouping{ session, "Compilation" };
+        ScopedLanguage language{ session, "eng" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            track1.get().modify()->setGenres(std::array{ genre.get() });
+            track1.get().modify()->setMoods(std::array{ mood.get() });
+            track1.get().modify()->setGroupings(std::array{ grouping.get() });
+            track1.get().modify()->setLanguages(std::array{ language.get() });
+            track2.get().modify()->setGenres(std::array{ genre.get() });
+            track2.get().modify()->setMoods(std::array{ mood.get() });
+            track2.get().modify()->setGroupings(std::array{ grouping.get() });
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            const auto results{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGenre(genre.getId()).setMood(mood.getId()).setGrouping(grouping.getId()).setLanguage(language.getId()))) };
+            ASSERT_EQ(results.results.size(), 1);
+            EXPECT_EQ(results.results.front(), track1.getId());
         }
     }
 } // namespace lms::db::tests

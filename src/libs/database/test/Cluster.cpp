@@ -723,4 +723,38 @@ namespace lms::db::tests
         }
     }
 
+    TEST_F(DatabaseFixture, Cluster_findByTrackAndTypeName)
+    {
+        ScopedTrack track{ session };
+        ScopedClusterType genreType{ session, "GENRE" };
+        ScopedClusterType moodType{ session, "MOOD" };
+        ScopedCluster genre1{ session, genreType.lockAndGet(), "Rock" };
+        ScopedCluster genre2{ session, genreType.lockAndGet(), "Pop" };
+        ScopedCluster mood{ session, moodType.lockAndGet(), "Happy" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            genre1.get().modify()->addTrack(track.get());
+            genre2.get().modify()->addTrack(track.get());
+            mood.get().modify()->addTrack(track.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            const auto genres{ Cluster::find(session, Cluster::FindParameters{}.setTrack(track.getId()).setClusterTypeName("GENRE")) };
+            ASSERT_EQ(genres.results.size(), 2);
+
+            const auto moods{ Cluster::find(session, Cluster::FindParameters{}.setTrack(track.getId()).setClusterTypeName("MOOD")) };
+            ASSERT_EQ(moods.results.size(), 1);
+            EXPECT_EQ(moods.results.front()->getId(), mood.getId());
+
+            const auto all{ Cluster::find(session, Cluster::FindParameters{}.setTrack(track.getId())) };
+            EXPECT_EQ(all.results.size(), 3);
+
+            const auto none{ Cluster::find(session, Cluster::FindParameters{}.setTrack(track.getId()).setClusterTypeName("GROUPING")) };
+            EXPECT_EQ(none.results.size(), 0);
+        }
+    }
+
 } // namespace lms::db::tests
