@@ -128,14 +128,14 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM grouping"));
     }
 
-    RangeResults<GroupingId> Grouping::findIds(Session& session, const FindParameters& params)
+    std::vector<GroupingId> Grouping::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<GroupingId>(session, params) };
         return utils::execRangeQuery<GroupingId>(query, params.range);
     }
 
-    RangeResults<Grouping::pointer> Grouping::find(Session& session, const FindParameters& params)
+    std::vector<Grouping::pointer> Grouping::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Grouping>>(session, params) };
@@ -165,7 +165,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Grouping>().where("name = ?").bind(name));
     }
 
-    RangeResults<GroupingId> Grouping::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<GroupingId> Grouping::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<GroupingId>("SELECT g.id FROM grouping g WHERE NOT EXISTS (SELECT 1 FROM track_grouping t_gr WHERE t_gr.grouping_id = g.id)") };

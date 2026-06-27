@@ -128,14 +128,14 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM mood"));
     }
 
-    RangeResults<MoodId> Mood::findIds(Session& session, const FindParameters& params)
+    std::vector<MoodId> Mood::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<MoodId>(session, params) };
         return utils::execRangeQuery<MoodId>(query, params.range);
     }
 
-    RangeResults<Mood::pointer> Mood::find(Session& session, const FindParameters& params)
+    std::vector<Mood::pointer> Mood::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Mood>>(session, params) };
@@ -165,7 +165,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Mood>().where("name = ?").bind(name));
     }
 
-    RangeResults<MoodId> Mood::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<MoodId> Mood::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<MoodId>("SELECT m.id FROM mood m WHERE NOT EXISTS (SELECT 1 FROM track_mood t_m WHERE t_m.mood_id = m.id)") };

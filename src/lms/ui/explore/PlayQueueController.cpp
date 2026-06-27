@@ -49,8 +49,8 @@ namespace lms::ui
 
                 const auto tracks{ db::Track::findIds(session, params) };
 
-                res.reserve(res.size() + tracks.results.size());
-                res.insert(std::end(res), std::cbegin(tracks.results), std::cend(tracks.results));
+                res.reserve(res.size() + tracks.size());
+                res.insert(std::end(res), std::cbegin(tracks), std::cend(tracks));
 
                 if (res.size() == maxTrackCount)
                     break;
@@ -77,8 +77,8 @@ namespace lms::ui
 
                 const auto tracks{ db::Track::findIds(session, params) };
 
-                res.reserve(res.size() + tracks.results.size());
-                res.insert(std::end(res), std::cbegin(tracks.results), std::cend(tracks.results));
+                res.reserve(res.size() + tracks.size());
+                res.insert(std::end(res), std::cbegin(tracks), std::cend(tracks));
 
                 if (res.size() == maxTrackCount)
                     break;
@@ -103,7 +103,7 @@ namespace lms::ui
 
             const auto tracks{ db::Track::findIds(session, params) };
 
-            return tracks.results;
+            return tracks;
         }
 
         std::vector<db::TrackId> getTrackListTracks(db::Session& session, db::TrackListId trackListId, const Filters& filters, std::size_t maxTrackCount)
@@ -118,7 +118,7 @@ namespace lms::ui
             params.setRange(db::Range{ 0, maxTrackCount });
             params.setSortMethod(db::TrackSortMethod::TrackList);
 
-            return db::Track::findIds(session, params).results;
+            return db::Track::findIds(session, params);
         }
     } // namespace
 

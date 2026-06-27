@@ -226,8 +226,8 @@ namespace lms::scrobbling::lastFm
                 .setSyncState(db::SyncState::PendingAdd)
                 .setRange(db::Range{ 0, maxBatchSize * 10 });
 
-            const db::RangeResults results{ db::Listen::find(session, params) };
-            for (const db::ListenId listenId : results.results)
+            const auto results{ db::Listen::find(session, params) };
+            for (const db::ListenId listenId : results)
             {
                 const db::Listen::pointer dbListen{ db::Listen::find(session, listenId) };
 

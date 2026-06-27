@@ -235,7 +235,7 @@ namespace lms::ui::utils
         std::unique_ptr<Wt::WContainerWidget> clusterContainer{ std::make_unique<Wt::WContainerWidget>() };
 
         // TODO: optimize this
-        const auto clusterTypes{ ClusterType::findIds(LmsApp->getDbSession()).results };
+        const auto clusterTypes{ ClusterType::findIds(LmsApp->getDbSession()) };
         const auto clusterGroups{ track->getClusterGroups(clusterTypes, 3) };
 
         for (const auto& clusters : clusterGroups)

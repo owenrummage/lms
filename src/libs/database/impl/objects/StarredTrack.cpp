@@ -78,7 +78,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT 1 from starred_track").where("track_id = ?").bind(trackId).where("user_id = ?").bind(userId).where("backend = ?").bind(backend));
     }
 
-    RangeResults<StarredTrackId> StarredTrack::find(Session& session, const FindParameters& params)
+    std::vector<StarredTrackId> StarredTrack::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 

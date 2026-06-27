@@ -82,12 +82,12 @@ namespace lms::db
         Mood() = default;
 
         static std::size_t getCount(Session& session);
-        static RangeResults<MoodId> findIds(Session& session, const FindParameters& params);
-        static RangeResults<pointer> find(Session& session, const FindParameters& params);
+        static std::vector<MoodId> findIds(Session& session, const FindParameters& params);
+        static std::vector<pointer> find(Session& session, const FindParameters& params);
         static void find(Session& session, const FindParameters& params, std::function<void(const pointer&)> func);
         static pointer find(Session& session, MoodId id);
         static pointer find(Session& session, std::string_view name);
-        static RangeResults<MoodId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<MoodId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
 
         std::string_view getName() const { return _name; }
 

@@ -107,7 +107,7 @@ namespace lms::api::subsonic
         Response::Node playlistNode{ createPlaylistNode(context, trackList) };
 
         auto entries{ trackList->getEntries() };
-        for (const TrackListEntry::pointer& entry : entries.results)
+        for (const TrackListEntry::pointer& entry : entries)
             playlistNode.addArrayChild("entry", createSongNode(context, entry->getTrack(), context.getUser()));
 
         response.addNode("playlist", std::move(playlistNode));
@@ -160,7 +160,7 @@ namespace lms::api::subsonic
         Response::Node playlistNode{ createPlaylistNode(context, trackList) };
 
         auto entries{ trackList->getEntries() };
-        for (const TrackListEntry::pointer& entry : entries.results)
+        for (const TrackListEntry::pointer& entry : entries)
             playlistNode.addArrayChild("entry", createSongNode(context, entry->getTrack(), context.getUser()));
 
         response.addNode("playlist", std::move(playlistNode));

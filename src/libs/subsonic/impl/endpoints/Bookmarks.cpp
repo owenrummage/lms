@@ -41,7 +41,7 @@ namespace lms::api::subsonic
         Response response{ Response::createOkResponse(context.getServerProtocolVersion()) };
         Response::Node& bookmarksNode{ response.createNode("bookmarks") };
 
-        for (const db::TrackBookmarkId bookmarkId : bookmarkIds.results)
+        for (const db::TrackBookmarkId bookmarkId : bookmarkIds)
         {
             const db::TrackBookmark::pointer bookmark{ db::TrackBookmark::find(context.getDbSession(), bookmarkId) };
             Response::Node bookmarkNode{ createBookmarkNode(bookmark) };

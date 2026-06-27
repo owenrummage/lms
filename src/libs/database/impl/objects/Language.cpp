@@ -128,14 +128,14 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM language"));
     }
 
-    RangeResults<LanguageId> Language::findIds(Session& session, const FindParameters& params)
+    std::vector<LanguageId> Language::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<LanguageId>(session, params) };
         return utils::execRangeQuery<LanguageId>(query, params.range);
     }
 
-    RangeResults<Language::pointer> Language::find(Session& session, const FindParameters& params)
+    std::vector<Language::pointer> Language::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Language>>(session, params) };
@@ -165,7 +165,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Language>().where("name = ?").bind(name));
     }
 
-    RangeResults<LanguageId> Language::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<LanguageId> Language::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<LanguageId>("SELECT l.id FROM language l WHERE NOT EXISTS (SELECT 1 FROM track_language t_l WHERE t_l.language_id = l.id)") };

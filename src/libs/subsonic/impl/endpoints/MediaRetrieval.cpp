@@ -248,11 +248,11 @@ namespace lms::api::subsonic
 
         // Choice: we return nothing if there are too many results
         const auto tracks{ db::Track::findIds(context.getDbSession(), params) };
-        if (tracks.results.size() == 1)
+        if (tracks.size() == 1)
         {
             // Choice: we return only the first lyrics if the track has many lyrics
             db::TrackLyrics::FindParameters lyricsParams;
-            lyricsParams.setTrack(tracks.results[0]);
+            lyricsParams.setTrack(tracks[0]);
             lyricsParams.setSortMethod(db::TrackLyricsSortMethod::ExternalFirst);
             lyricsParams.setRange(db::Range{ 0, 1 });
 

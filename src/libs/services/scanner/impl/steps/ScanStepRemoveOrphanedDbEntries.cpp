@@ -155,7 +155,7 @@ namespace lms::scanner
 
         db::Session& session{ _db.getTLSSession() };
 
-        db::RangeResults<IdType> entries;
+        std::vector<IdType> entries;
         while (!_abortScan)
         {
             {
@@ -164,16 +164,16 @@ namespace lms::scanner
                 entries = T::findOrphanIds(session, db::Range{ 0, batchSize });
             };
 
-            if (entries.results.empty())
+            if (entries.empty())
                 break;
 
             {
                 auto transaction{ session.createWriteTransaction() };
 
-                session.destroy<T>(entries.results);
+                session.destroy<T>(entries);
             }
 
-            context.currentStepStats.processedElems += entries.results.size();
+            context.currentStepStats.processedElems += entries.size();
             _progressCallback(context.currentStepStats);
         }
     }

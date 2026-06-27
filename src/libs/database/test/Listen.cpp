@@ -69,7 +69,7 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             auto listens{ Listen::find(session, Listen::FindParameters{}.setUser(user->getId()).setScrobblingBackend(ScrobblingBackend::ListenBrainz)) };
-            EXPECT_EQ(listens.results.size(), 0);
+            EXPECT_EQ(listens.size(), 0);
         }
 
         {
@@ -77,18 +77,17 @@ namespace lms::db::tests
 
             {
                 auto listens{ Listen::find(session, Listen::FindParameters{}.setUser(user->getId()).setScrobblingBackend(ScrobblingBackend::Internal)) };
-                EXPECT_EQ(listens.moreResults, false);
-                ASSERT_EQ(listens.results.size(), 1);
-                EXPECT_EQ(listens.results.front(), listen->getId());
+                ASSERT_EQ(listens.size(), 1);
+                EXPECT_EQ(listens.front(), listen->getId());
             }
 
             {
                 auto listens{ Listen::find(session, Listen::FindParameters{}.setUser(user->getId()).setScrobblingBackend(ScrobblingBackend::Internal).setSyncState(SyncState::PendingAdd)) };
-                EXPECT_EQ(listens.results.size(), 1);
+                EXPECT_EQ(listens.size(), 1);
             }
             {
                 auto listens{ Listen::find(session, Listen::FindParameters{}.setUser(user->getId()).setScrobblingBackend(ScrobblingBackend::Internal).setSyncState(SyncState::Synchronized)) };
-                EXPECT_EQ(listens.results.size(), 0);
+                EXPECT_EQ(listens.size(), 0);
             }
         }
     }
@@ -105,10 +104,10 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             auto listens{ Listen::find(session, Listen::FindParameters{}.setUser(user->getId()).setScrobblingBackend(ScrobblingBackend::Internal)) };
-            ASSERT_EQ(listens.results.size(), 3);
-            EXPECT_EQ(listens.results[0], listen1.getId());
-            EXPECT_EQ(listens.results[1], listen2.getId());
-            EXPECT_EQ(listens.results[2], listen3.getId());
+            ASSERT_EQ(listens.size(), 3);
+            EXPECT_EQ(listens[0], listen1.getId());
+            EXPECT_EQ(listens[1], listen2.getId());
+            EXPECT_EQ(listens[2], listen3.getId());
         }
     }
 
@@ -157,11 +156,9 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             const auto artists{ Listen::getTopArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
-            EXPECT_EQ(artists.moreResults, false);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         ScopedTrack track2{ session };
@@ -179,32 +176,37 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist1->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist1->getId());
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 0);
+            ASSERT_EQ(artists.size(), 0);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
             params.setTrackArtistLinkType(TrackArtistLinkType::Producer);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::Internal);
         }
 
         {
@@ -216,11 +218,10 @@ namespace lms::db::tests
 
                 Listen::ArtistStatsFindParameters params;
                 params.setUser(user->getId());
-                params.setScrobblingBackend(ScrobblingBackend::Internal);
                 params.filters.setClusters(std::initializer_list<ClusterId>{ cluster->getId() });
 
                 auto artists{ Listen::getTopArtists(session, params) };
-                EXPECT_EQ(artists.results.size(), 0);
+                EXPECT_EQ(artists.size(), 0);
             }
         }
     }
@@ -245,10 +246,9 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         ScopedListen listen1{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(1) };
@@ -257,11 +257,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist1->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist1->getId());
         }
 
         ScopedListen listen2{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(2) };
@@ -271,25 +270,22 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 2);
-            EXPECT_EQ(artists.results[0], artist2->getId());
-            EXPECT_EQ(artists.results[1], artist1->getId());
+            ASSERT_EQ(artists.size(), 2);
+            EXPECT_EQ(artists[0], artist2->getId());
+            EXPECT_EQ(artists[1], artist1->getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setRange(Range{ 0, 1 });
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.moreResults, true);
-            EXPECT_EQ(artists.results[0], artist2->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist2->getId());
         }
     }
 
@@ -313,11 +309,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 0);
+            ASSERT_EQ(artists.size(), 0);
         }
         {
             auto transaction{ session.createWriteTransaction() };
@@ -328,12 +323,11 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist.getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist.getId());
         }
     }
 
@@ -352,12 +346,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user.getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             const auto artists{ Listen::getTopArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
-            EXPECT_EQ(artists.moreResults, false);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         {
@@ -372,34 +364,31 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user.getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist->getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user.getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             auto artists{ Listen::getTopArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist->getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user.getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto artists{ Listen::getTopArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
         }
     }
 
@@ -419,11 +408,9 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
 
         ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -433,23 +420,23 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
     }
 
@@ -474,12 +461,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release1.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release1.getId());
         }
         ScopedListen listen2{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime };
         ScopedListen listen3{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -488,13 +473,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 2);
-            EXPECT_EQ(releases.results[0], release2.getId());
-            EXPECT_EQ(releases.results[1], release1.getId());
+            ASSERT_EQ(releases.size(), 2);
+            EXPECT_EQ(releases[0], release2.getId());
+            EXPECT_EQ(releases[1], release1.getId());
         }
         ScopedListen listen4{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime };
         ScopedListen listen5{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -503,13 +486,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 2);
-            EXPECT_EQ(releases.results[0], release1.getId());
-            EXPECT_EQ(releases.results[1], release2.getId());
+            ASSERT_EQ(releases.size(), 2);
+            EXPECT_EQ(releases[0], release1.getId());
+            EXPECT_EQ(releases[1], release2.getId());
         }
     }
 
@@ -533,11 +514,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
         {
             auto transaction{ session.createWriteTransaction() };
@@ -549,12 +529,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            EXPECT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
         }
     }
 
@@ -578,12 +557,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
 
         ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -593,25 +570,21 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto releases{ Listen::getTopReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
     }
 
@@ -626,11 +599,9 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 0);
+            ASSERT_EQ(tracks.size(), 0);
         }
 
         ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -640,23 +611,23 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
     }
 
@@ -672,12 +643,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setArtist(artist->getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 0);
+            ASSERT_EQ(tracks.size(), 0);
         }
 
         ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -687,11 +656,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setArtist(artist->getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            ASSERT_EQ(tracks.results.size(), 0);
+            ASSERT_EQ(tracks.size(), 0);
         }
 
         {
@@ -704,13 +672,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setArtist(artist->getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
         }
     }
 
@@ -727,12 +693,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track1.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track1.getId());
         }
         ScopedListen listen2{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime };
         ScopedListen listen3{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -741,13 +705,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 2);
-            EXPECT_EQ(tracks.results[0], track2.getId());
-            EXPECT_EQ(tracks.results[1], track1.getId());
+            ASSERT_EQ(tracks.size(), 2);
+            EXPECT_EQ(tracks[0], track2.getId());
+            EXPECT_EQ(tracks[1], track1.getId());
         }
         ScopedListen listen4{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime };
         ScopedListen listen5{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime };
@@ -756,13 +718,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 2);
-            EXPECT_EQ(tracks.results[0], track1.getId());
-            EXPECT_EQ(tracks.results[1], track2.getId());
+            ASSERT_EQ(tracks.size(), 2);
+            EXPECT_EQ(tracks[0], track1.getId());
+            EXPECT_EQ(tracks[1], track2.getId());
         }
     }
 
@@ -780,11 +740,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
         {
             auto transaction{ session.createWriteTransaction() };
@@ -796,12 +755,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            EXPECT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
         }
     }
 
@@ -818,12 +776,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user.getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 0);
+            ASSERT_EQ(tracks.size(), 0);
         }
 
         {
@@ -838,25 +794,21 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(library.getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto tracks{ Listen::getTopTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
     }
 
@@ -878,12 +830,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setReleaseArtistsOnly(true);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
-            EXPECT_EQ(artists.moreResults, false);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
@@ -894,12 +844,11 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setReleaseArtistsOnly(true);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist->getId());
         }
     }
 
@@ -919,11 +868,9 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
-            EXPECT_EQ(artists.moreResults, false);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
@@ -934,11 +881,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist->getId());
         }
 
         {
@@ -946,34 +892,38 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setReleaseArtistsOnly(true);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
-            EXPECT_EQ(artists.moreResults, false);
+            EXPECT_EQ(artists.size(), 0);
         }
 
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
+        }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 0);
+            ASSERT_EQ(artists.size(), 0);
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::Internal);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setTrackArtistLinkType(TrackArtistLinkType::Producer);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
         }
         {
             ScopedClusterType clusterType{ session, "MyType" };
@@ -984,11 +934,10 @@ namespace lms::db::tests
 
                 Listen::ArtistStatsFindParameters params;
                 params.setUser(user->getId());
-                params.setScrobblingBackend(ScrobblingBackend::Internal);
                 params.filters.setClusters(std::initializer_list<ClusterId>{ cluster->getId() });
 
                 auto artists{ Listen::getRecentArtists(session, params) };
-                EXPECT_EQ(artists.results.size(), 0);
+                EXPECT_EQ(artists.size(), 0);
             }
         }
     }
@@ -1013,10 +962,9 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
         }
 
         ScopedListen listen1{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(1) };
@@ -1025,11 +973,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist1->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist1->getId());
         }
         ScopedListen listen2{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(2) };
         {
@@ -1037,12 +984,11 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 2);
-            EXPECT_EQ(artists.results[0], artist2->getId());
-            EXPECT_EQ(artists.results[1], artist1->getId());
+            ASSERT_EQ(artists.size(), 2);
+            EXPECT_EQ(artists[0], artist2->getId());
+            EXPECT_EQ(artists[1], artist1->getId());
         }
         ScopedListen listen3{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(-1) };
         {
@@ -1050,13 +996,11 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.setRange(Range{ 0, 1 });
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.moreResults, true);
-            EXPECT_EQ(artists.results[0], artist2->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist2->getId());
         }
     }
 
@@ -1080,11 +1024,10 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 0);
+            ASSERT_EQ(artists.size(), 0);
         }
         {
             auto transaction{ session.createWriteTransaction() };
@@ -1095,12 +1038,11 @@ namespace lms::db::tests
 
             Listen::ArtistStatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist.getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist.getId());
         }
     }
 
@@ -1128,8 +1070,8 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(library.getId());
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            ASSERT_EQ(artists.results.size(), 1);
-            EXPECT_EQ(artists.results[0], artist->getId());
+            ASSERT_EQ(artists.size(), 1);
+            EXPECT_EQ(artists[0], artist->getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
@@ -1138,7 +1080,7 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto artists{ Listen::getRecentArtists(session, params) };
-            EXPECT_EQ(artists.results.size(), 0);
+            EXPECT_EQ(artists.size(), 0);
         }
     }
 
@@ -1158,11 +1100,9 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 0);
+            ASSERT_EQ(releases.size(), 0);
         }
 
         const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
@@ -1173,23 +1113,23 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
+        }
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
         }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
     }
 
@@ -1324,12 +1264,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release2.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release2.getId());
         }
 
         ScopedListen listen2{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(1) };
@@ -1338,13 +1276,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 2);
-            EXPECT_EQ(releases.results[0], release1.getId());
-            EXPECT_EQ(releases.results[1], release2.getId());
+            ASSERT_EQ(releases.size(), 2);
+            EXPECT_EQ(releases[0], release1.getId());
+            EXPECT_EQ(releases[1], release2.getId());
         }
 
         ScopedListen listen3{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(2) };
@@ -1353,13 +1289,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 2);
-            EXPECT_EQ(releases.results[0], release2.getId());
-            EXPECT_EQ(releases.results[1], release1.getId());
+            ASSERT_EQ(releases.size(), 2);
+            EXPECT_EQ(releases[0], release2.getId());
+            EXPECT_EQ(releases[1], release1.getId());
         }
 
         ScopedListen listen4{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(-1) };
@@ -1368,13 +1302,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 2);
-            EXPECT_EQ(releases.results[0], release2.getId());
-            EXPECT_EQ(releases.results[1], release1.getId());
+            ASSERT_EQ(releases.size(), 2);
+            EXPECT_EQ(releases[0], release2.getId());
+            EXPECT_EQ(releases[1], release1.getId());
         }
     }
 
@@ -1395,11 +1327,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
 
         const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
@@ -1410,11 +1341,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
 
         {
@@ -1426,12 +1356,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            EXPECT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
         }
     }
 
@@ -1459,9 +1388,8 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(library.getId());
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            ASSERT_EQ(releases.results.size(), 1);
-            EXPECT_EQ(releases.results[0], release.getId());
+            ASSERT_EQ(releases.size(), 1);
+            EXPECT_EQ(releases[0], release.getId());
         }
         {
             auto transaction{ session.createReadTransaction() };
@@ -1470,8 +1398,7 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto releases{ Listen::getRecentReleases(session, params) };
-            EXPECT_EQ(releases.moreResults, false);
-            EXPECT_EQ(releases.results.size(), 0);
+            EXPECT_EQ(releases.size(), 0);
         }
     }
 
@@ -1485,11 +1412,9 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 0);
+            ASSERT_EQ(tracks.size(), 0);
         }
 
         const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
@@ -1500,24 +1425,24 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
         }
 
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.lockAndGet().modify()->setScrobblingBackend(ScrobblingBackend::ListenBrainz);
+        }
         {
             auto transaction{ session.createReadTransaction() };
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::ListenBrainz);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
     }
 
@@ -1543,9 +1468,8 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(library.getId());
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
         }
 
         {
@@ -1555,8 +1479,7 @@ namespace lms::db::tests
             params.filters.setMediaLibrary(otherLibrary.getId());
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
     }
 
@@ -1701,12 +1624,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track2.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track2.getId());
         }
 
         ScopedListen listen2{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(1) };
@@ -1715,13 +1636,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 2);
-            EXPECT_EQ(tracks.results[0], track1.getId());
-            EXPECT_EQ(tracks.results[1], track2.getId());
+            ASSERT_EQ(tracks.size(), 2);
+            EXPECT_EQ(tracks[0], track1.getId());
+            EXPECT_EQ(tracks[1], track2.getId());
         }
 
         ScopedListen listen3{ session, user.lockAndGet(), track2.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(2) };
@@ -1730,13 +1649,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 2);
-            EXPECT_EQ(tracks.results[0], track2.getId());
-            EXPECT_EQ(tracks.results[1], track1.getId());
+            ASSERT_EQ(tracks.size(), 2);
+            EXPECT_EQ(tracks[0], track2.getId());
+            EXPECT_EQ(tracks[1], track1.getId());
         }
 
         ScopedListen listen4{ session, user.lockAndGet(), track1.lockAndGet(), ScrobblingBackend::Internal, dateTime.addSecs(-1) };
@@ -1745,13 +1662,11 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.moreResults, false);
-            ASSERT_EQ(tracks.results.size(), 2);
-            EXPECT_EQ(tracks.results[0], track2.getId());
-            EXPECT_EQ(tracks.results[1], track1.getId());
+            ASSERT_EQ(tracks.size(), 2);
+            EXPECT_EQ(tracks[0], track2.getId());
+            EXPECT_EQ(tracks[1], track1.getId());
         }
     }
 
@@ -1820,11 +1735,10 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.results.size(), 0);
+            EXPECT_EQ(tracks.size(), 0);
         }
         {
             auto transaction{ session.createWriteTransaction() };
@@ -1836,12 +1750,161 @@ namespace lms::db::tests
 
             Listen::StatsFindParameters params;
             params.setUser(user->getId());
-            params.setScrobblingBackend(ScrobblingBackend::Internal);
             params.filters.setClusters(std::initializer_list<ClusterId>{ cluster.getId() });
 
             auto tracks{ Listen::getRecentTracks(session, params) };
-            EXPECT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results[0], track.getId());
+            EXPECT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks[0], track.getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getTopArtists_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        ScopedArtist artist{ session, "MyArtist" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            session.create<TrackArtistLink>(track.get(), artist.get(), TrackArtistLinkType::Artist);
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<ArtistId> ids;
+            Listen::ArtistStatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getTopArtists(session, params, [&](const Artist::pointer& a) {
+                ids.push_back(a->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], artist->getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getTopReleases_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        ScopedRelease release{ session, "MyRelease" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            track.get().modify()->setRelease(release.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<ReleaseId> ids;
+            Listen::StatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getTopReleases(session, params, [&](const Release::pointer& r) {
+                ids.push_back(r->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], release->getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getTopTracks_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<TrackId> ids;
+            Listen::StatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getTopTracks(session, params, [&](const Track::pointer& t) {
+                ids.push_back(t->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], track->getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getRecentArtists_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        ScopedArtist artist{ session, "MyArtist" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            session.create<TrackArtistLink>(track.get(), artist.get(), TrackArtistLinkType::Artist);
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<ArtistId> ids;
+            Listen::ArtistStatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getRecentArtists(session, params, [&](const Artist::pointer& a) {
+                ids.push_back(a->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], artist->getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getRecentReleases_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        ScopedRelease release{ session, "MyRelease" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            track.get().modify()->setRelease(release.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<ReleaseId> ids;
+            Listen::StatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getRecentReleases(session, params, [&](const Release::pointer& r) {
+                ids.push_back(r->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], release->getId());
+        }
+    }
+
+    TEST_F(DatabaseFixture, Listen_getRecentTracks_callback)
+    {
+        ScopedTrack track{ session };
+        ScopedUser user{ session, "MyUser" };
+        const Wt::WDateTime dateTime{ Wt::WDate{ 2000, 1, 2 }, Wt::WTime{ 12, 0, 1 } };
+        ScopedListen listen{ session, user.lockAndGet(), track.lockAndGet(), ScrobblingBackend::Internal, dateTime };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+
+            std::vector<TrackId> ids;
+            Listen::StatsFindParameters params;
+            params.setUser(user->getId());
+            Listen::getRecentTracks(session, params, [&](const Track::pointer& t) {
+                ids.push_back(t->getId());
+            });
+            ASSERT_EQ(ids.size(), 1);
+            EXPECT_EQ(ids[0], track->getId());
         }
     }
 } // namespace lms::db::tests

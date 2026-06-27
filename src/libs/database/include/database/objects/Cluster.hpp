@@ -91,11 +91,11 @@ namespace lms::db
 
         // Find utility
         static std::size_t getCount(Session& session);
-        static RangeResults<ClusterId> findIds(Session& session, const FindParameters& params);
-        static RangeResults<pointer> find(Session& session, const FindParameters& params);
+        static std::vector<ClusterId> findIds(Session& session, const FindParameters& params);
+        static std::vector<pointer> find(Session& session, const FindParameters& params);
         static void find(Session& session, const FindParameters& params, std::function<void(const pointer& cluster)> _func);
         static pointer find(Session& session, ClusterId id);
-        static RangeResults<ClusterId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<ClusterId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
 
         // May be very slow
         static std::size_t computeTrackCount(Session& session, ClusterId id);
@@ -104,7 +104,7 @@ namespace lms::db
         // Accessors
         std::string_view getName() const { return _name; }
         ObjectPtr<ClusterType> getType() const { return _clusterType; }
-        RangeResults<TrackId> getTracks(std::optional<Range> range = std::nullopt) const;
+        std::vector<TrackId> getTracks(std::optional<Range> range = std::nullopt) const;
         void addTrack(ObjectPtr<Track> track);
 
         template<class Action>
@@ -136,12 +136,12 @@ namespace lms::db
 
         // Getters
         static std::size_t getCount(Session& session);
-        static RangeResults<ClusterTypeId> findIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<ClusterTypeId> findIds(Session& session, std::optional<Range> range = std::nullopt);
         static void find(Session& session, const std::function<void(const pointer&)>& func);
         static pointer find(Session& session, std::string_view name);
         static pointer find(Session& session, ClusterTypeId id);
-        static RangeResults<ClusterTypeId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
-        static RangeResults<ClusterTypeId> findUsed(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<ClusterTypeId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<ClusterTypeId> findUsed(Session& session, std::optional<Range> range = std::nullopt);
 
         static void remove(Session& session, const std::string& name);
 

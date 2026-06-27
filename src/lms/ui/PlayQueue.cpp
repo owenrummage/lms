@@ -144,7 +144,7 @@ namespace lms::ui
                 auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
 
                 db::TrackList::pointer queue{ getQueue() };
-                auto entries{ queue->getEntries().results };
+                auto entries{ queue->getEntries() };
                 core::random::shuffleContainer(entries);
 
                 queue.modify()->clear();
@@ -404,8 +404,8 @@ namespace lms::ui
 
         db::TrackList::pointer queue{ getQueue() };
         auto entries{ queue->getEntries(db::Range{ _trackPos ? *_trackPos + 1 : 0, getCapacity() }) };
-        tracks.reserve(entries.results.size());
-        for (db::TrackListEntry::pointer& entry : entries.results)
+        tracks.reserve(entries.size());
+        for (db::TrackListEntry::pointer& entry : entries)
         {
             tracks.push_back(entry->getTrack()->getId());
             entry.remove();
@@ -466,10 +466,10 @@ namespace lms::ui
 
         const db::TrackList::pointer queue{ getQueue() };
         const auto entries{ queue->getEntries(db::Range{ _entriesContainer->getCount(), _batchSize }) };
-        for (const db::TrackListEntry::pointer& tracklistEntry : entries.results)
+        for (const db::TrackListEntry::pointer& tracklistEntry : entries)
             addEntry(tracklistEntry);
 
-        _entriesContainer->setHasMore(entries.moreResults);
+        _entriesContainer->setHasMore(entries.size() == _batchSize);
     }
 
     void PlayQueue::addEntry(const db::TrackListEntry::pointer& tracklistEntry)

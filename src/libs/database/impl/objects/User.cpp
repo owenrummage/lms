@@ -61,7 +61,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM user"));
     }
 
-    RangeResults<UserId> User::find(Session& session, const FindParameters& params)
+    std::vector<UserId> User::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 

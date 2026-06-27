@@ -150,7 +150,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(query);
     }
 
-    RangeResults<TrackEmbeddedImageId> TrackEmbeddedImage::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<TrackEmbeddedImageId> TrackEmbeddedImage::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 

@@ -134,7 +134,7 @@ namespace lms::api::subsonic
         Genre::FindParameters genreParams;
         genreParams.setRelease(release->getId());
         genreParams.setSortMethod(GenreSortMethod::TrackCountDesc);
-        const auto genres{ Genre::find(context.getDbSession(), genreParams).results };
+        const auto genres{ Genre::find(context.getDbSession(), genreParams) };
         if (!genres.empty())
             albumNode.setAttribute("genre", genres.front()->getName());
 

@@ -77,14 +77,13 @@ namespace lms::db
 
             if (params.starringUser.isValid())
             {
-                assert(params.feedbackBackend);
                 query.join("starred_track s_t ON s_t.track_id = t.id")
+                    .join("user u ON u.id = s_t.user_id")
                     .where("s_t.user_id = ?")
                     .bind(params.starringUser)
-                    .where("s_t.backend = ?")
-                    .bind(*params.feedbackBackend)
                     .where("s_t.sync_state <> ?")
-                    .bind(SyncState::PendingRemove);
+                    .bind(SyncState::PendingRemove)
+                    .where("s_t.backend = u.feedback_backend");
             }
 
             if (params.filters.clusters.size() == 1)
@@ -435,7 +434,7 @@ namespace lms::db
         return utils::fetchQueryResults<Track::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Track>>("SELECT t from track t").where("t.recording_mbid = ?").bind(mbid));
     }
 
-    RangeResults<TrackId> Track::findIdsTrackMBIDDuplicates(Session& session, std::optional<Range> range)
+    std::vector<TrackId> Track::findIdsTrackMBIDDuplicates(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -564,7 +563,7 @@ namespace lms::db
         return _preferredMediaArtwork.id();
     }
 
-    RangeResults<TrackId> Track::findIds(Session& session, const FindParameters& parameters)
+    std::vector<TrackId> Track::findIds(Session& session, const FindParameters& parameters)
     {
         session.checkReadTransaction();
 
@@ -572,7 +571,7 @@ namespace lms::db
         return utils::execRangeQuery<TrackId>(query, parameters.range);
     }
 
-    RangeResults<Track::pointer> Track::find(Session& session, const FindParameters& parameters)
+    std::vector<Track::pointer> Track::find(Session& session, const FindParameters& parameters)
     {
         session.checkReadTransaction();
 
@@ -586,14 +585,6 @@ namespace lms::db
 
         auto query{ createQuery<Wt::Dbo::ptr<Track>>(session, params) };
         utils::forEachQueryRangeResult(query, params.range, func);
-    }
-
-    void Track::find(Session& session, const FindParameters& params, bool& moreResults, const std::function<void(const Track::pointer&)>& func)
-    {
-        session.checkReadTransaction();
-
-        auto query{ createQuery<Wt::Dbo::ptr<Track>>(session, params) };
-        utils::forEachQueryRangeResult(query, params.range, moreResults, func);
     }
 
     std::size_t Track::getCount(Session& session, const FindParameters& params)

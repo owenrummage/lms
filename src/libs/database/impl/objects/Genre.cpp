@@ -128,14 +128,14 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM genre"));
     }
 
-    RangeResults<GenreId> Genre::findIds(Session& session, const FindParameters& params)
+    std::vector<GenreId> Genre::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<GenreId>(session, params) };
         return utils::execRangeQuery<GenreId>(query, params.range);
     }
 
-    RangeResults<Genre::pointer> Genre::find(Session& session, const FindParameters& params)
+    std::vector<Genre::pointer> Genre::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Genre>>(session, params) };
@@ -165,7 +165,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Genre>().where("name = ?").bind(name));
     }
 
-    RangeResults<GenreId> Genre::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<GenreId> Genre::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<GenreId>("SELECT g.id FROM genre g WHERE NOT EXISTS (SELECT 1 FROM track_genre t_g WHERE t_g.genre_id = g.id)") };

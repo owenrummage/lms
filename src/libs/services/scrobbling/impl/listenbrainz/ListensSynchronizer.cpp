@@ -214,12 +214,12 @@ namespace lms::scrobbling::listenBrainz
 
             const auto tracks{ Track::findIds(session, params) };
             // conservative behavior: in case of multiple matches: reject
-            if (tracks.results.size() == 1)
+            if (tracks.size() == 1)
             {
                 LMS_LOG_LISTENBRAINZ(DEBUG, "Matched listen '" << listen << "' using metadata");
-                return tracks.results.front();
+                return tracks.front();
             }
-            else if (tracks.results.size() > 1)
+            else if (tracks.size() > 1)
             {
                 LMS_LOG_LISTENBRAINZ(DEBUG, "Too many matches for listen '" << listen << "' using metadata");
                 return {};
@@ -349,10 +349,10 @@ namespace lms::scrobbling::listenBrainz
                 .setSyncState(db::SyncState::PendingAdd)
                 .setRange(db::Range{ 0, 100 }); // don't flood too much?
 
-            const db::RangeResults results{ db::Listen::find(session, params) };
-            pendingListens.reserve(results.results.size());
+            const auto results{ db::Listen::find(session, params) };
+            pendingListens.reserve(results.size());
 
-            for (db::ListenId listenId : results.results)
+            for (db::ListenId listenId : results)
             {
                 const db::Listen::pointer listen{ db::Listen::find(session, listenId) };
 
@@ -421,14 +421,14 @@ namespace lms::scrobbling::listenBrainz
 
         enquePendingListens();
 
-        db::RangeResults<db::UserId> userIds;
+        std::vector<db::UserId> userIds;
         {
             db::Session& session{ _db.getTLSSession() };
             auto transaction{ session.createReadTransaction() };
             userIds = db::User::find(_db.getTLSSession(), db::User::FindParameters{}.setScrobblingBackend(db::ScrobblingBackend::ListenBrainz));
         }
 
-        for (const db::UserId userId : userIds.results)
+        for (const db::UserId userId : userIds)
             startSync(getUserContext(userId));
 
         if (!isSyncing())

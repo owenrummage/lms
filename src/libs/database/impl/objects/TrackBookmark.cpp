@@ -54,7 +54,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM track_bookmark"));
     }
 
-    RangeResults<TrackBookmarkId> TrackBookmark::find(Session& session, UserId userId, std::optional<Range> range)
+    std::vector<TrackBookmarkId> TrackBookmark::find(Session& session, UserId userId, std::optional<Range> range)
     {
         session.checkReadTransaction();
 

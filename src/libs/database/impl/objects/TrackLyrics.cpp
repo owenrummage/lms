@@ -121,7 +121,7 @@ namespace lms::db
         });
     }
 
-    RangeResults<TrackLyricsId> TrackLyrics::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<TrackLyricsId> TrackLyrics::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 

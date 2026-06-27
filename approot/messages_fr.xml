@@ -14,6 +14,8 @@
 <message id="Lms.discard">Annuler</message>
 <message id="Lms.edit">Editer</message>
 <message id="Lms.field-must-be-in-upper-case">Ce champ doit être en majuscule</message>
+<message id="Lms.infinite-scrolling-container.limit-reached">Limite d'affichage atteinte — affinez votre recherche pour voir plus de résultats</message>
+<message id="Lms.infinite-scrolling-container.no-results">Aucun résultat</message>
 <message id="Lms.loading">Chargement...</message>
 <message id="Lms.login">Login</message>
 <message id="Lms.logout"><i class="fa fa-fw fa-sign-out" aria-hidden="true"></i> Quitter</message>

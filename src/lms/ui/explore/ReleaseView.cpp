@@ -313,7 +313,7 @@ namespace lms::ui
                 });
             });
 
-            const auto clusterTypeIds{ db::ClusterType::findIds(session).results };
+            const auto clusterTypeIds{ db::ClusterType::findIds(session) };
             const auto clusterGroups{ release->getClusterGroups(clusterTypeIds, maxTagCloudItemCount) };
 
             for (const auto& clusters : clusterGroups)
@@ -607,13 +607,13 @@ namespace lms::ui
         params.setSortMethod(db::ReleaseSortMethod::DateAsc);
 
         const auto releaseIds{ db::Release::findIds(LmsApp->getDbSession(), params) };
-        if (releaseIds.results.size() <= 1)
+        if (releaseIds.size() <= 1)
             return;
 
         setCondition("if-has-other-versions", true);
         auto* container{ bindNew<Wt::WContainerWidget>("other-versions") };
 
-        for (const db::ReleaseId id : releaseIds.results)
+        for (const db::ReleaseId id : releaseIds)
         {
             if (id == _releaseId)
                 continue;

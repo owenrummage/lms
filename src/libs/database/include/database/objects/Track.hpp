@@ -91,8 +91,7 @@ namespace lms::db
             TrackSortMethod sortMethod{ TrackSortMethod::None };
             std::optional<Range> range;
             Wt::WDateTime writtenAfter;
-            UserId starringUser;                                     // only tracks starred by this user
-            std::optional<FeedbackBackend> feedbackBackend;          // and for this feedback backend
+            UserId starringUser;                                     // only tracks starred by this user (uses their current feedback backend)
             ArtistId artist;                                         // only tracks that involve this artist
             std::string artistName;                                  // only tracks that involve this artist name
             core::EnumSet<TrackArtistLinkType> trackArtistLinkTypes; //    and for these link types
@@ -138,10 +137,9 @@ namespace lms::db
                 writtenAfter = _after;
                 return *this;
             }
-            FindParameters& setStarringUser(UserId _user, FeedbackBackend _feedbackBackend)
+            FindParameters& setStarringUser(UserId _user)
             {
                 starringUser = _user;
-                feedbackBackend = _feedbackBackend;
                 return *this;
             }
             FindParameters& setArtist(ArtistId _artist, core::EnumSet<TrackArtistLinkType> _trackArtistLinkTypes = {})
@@ -231,12 +229,11 @@ namespace lms::db
         static bool exists(Session& session, TrackId id);
         static std::vector<pointer> findByRecordingMBID(Session& session, const core::UUID& MBID);
         static std::vector<pointer> findByMBID(Session& session, const core::UUID& MBID);
-        static RangeResults<TrackId> findIds(Session& session, const FindParameters& params);
-        static RangeResults<pointer> find(Session& session, const FindParameters& params);
+        static std::vector<TrackId> findIds(Session& session, const FindParameters& params);
+        static std::vector<pointer> find(Session& session, const FindParameters& params);
         static void find(Session& session, const FindParameters& params, const std::function<void(const Track::pointer&)>& func);
-        static void find(Session& session, const FindParameters& params, bool& moreResults, const std::function<void(const Track::pointer&)>& func);
         static std::size_t getCount(Session& session, const FindParameters& params);
-        static RangeResults<TrackId> findIdsTrackMBIDDuplicates(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<TrackId> findIdsTrackMBIDDuplicates(Session& session, std::optional<Range> range = std::nullopt);
 
         // Update utility functions
         static void updatePreferredArtwork(Session& session, TrackId trackId, ArtworkId artworkId);

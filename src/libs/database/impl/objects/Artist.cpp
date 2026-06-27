@@ -135,14 +135,13 @@ namespace lms::db
 
             if (params.starringUser.isValid())
             {
-                assert(params.feedbackBackend);
                 query.join("starred_artist s_a ON s_a.artist_id = a.id")
+                    .join("user u ON u.id = s_a.user_id")
                     .where("s_a.user_id = ?")
                     .bind(params.starringUser)
-                    .where("s_a.backend = ?")
-                    .bind(*params.feedbackBackend)
                     .where("s_a.sync_state <> ?")
-                    .bind(SyncState::PendingRemove);
+                    .bind(SyncState::PendingRemove)
+                    .where("s_a.backend = u.feedback_backend");
             }
 
             if (params.filters.clusters.size() == 1)
@@ -323,7 +322,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.id = ?").bind(id));
     }
 
-    RangeResults<ArtistId> Artist::findIds(Session& session, const FindParameters& params)
+    std::vector<ArtistId> Artist::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 
@@ -331,7 +330,7 @@ namespace lms::db
         return utils::execRangeQuery<ArtistId>(query, params.range);
     }
 
-    RangeResults<Artist::pointer> Artist::find(Session& session, const FindParameters& params)
+    std::vector<Artist::pointer> Artist::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 
@@ -357,7 +356,7 @@ namespace lms::db
         return IdRange<ArtistId>{ .first = std::get<0>(res), .last = std::get<1>(res) };
     }
 
-    RangeResults<ArtistId> Artist::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ArtistId> Artist::findOrphanIds(Session& session, std::optional<Range> range)
     {
         // TODO extend with release artists
         session.checkReadTransaction();
@@ -388,7 +387,7 @@ AND NOT EXISTS (
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT 1 FROM artist").where("id = ?").bind(id)) == 1;
     }
 
-    RangeResults<Artist::pointer> Artist::findWithMBIDNameVariants(Session& session, ArtistId& lastRetrievedArtist, std::optional<Range> range)
+    std::vector<Artist::pointer> Artist::findWithMBIDNameVariants(Session& session, ArtistId& lastRetrievedArtist, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -407,8 +406,8 @@ AND NOT EXISTS (
 
         auto results{ utils::execRangeQuery<Artist::pointer>(query, range) };
 
-        if (!results.results.empty())
-            lastRetrievedArtist = results.results.back()->getId();
+        if (!results.empty())
+            lastRetrievedArtist = results.back()->getId();
 
         return results;
     }

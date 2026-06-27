@@ -66,9 +66,9 @@ namespace lms::scrobbling
         virtual void visitNowPlayingListens(const std::function<void(Clock::time_point startedAt, const Listen&)>& visitor, db::UserId userId = {}) = 0;
 
         // Stats
-        using ArtistContainer = db::RangeResults<db::ArtistId>;
-        using ReleaseContainer = db::RangeResults<db::ReleaseId>;
-        using TrackContainer = db::RangeResults<db::TrackId>;
+        using ArtistContainer = std::vector<db::ArtistId>;
+        using ReleaseContainer = std::vector<db::ReleaseId>;
+        using TrackContainer = std::vector<db::TrackId>;
 
         struct FindParameters
         {

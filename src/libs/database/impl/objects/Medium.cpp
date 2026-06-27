@@ -110,7 +110,7 @@ namespace lms::db
         return IdRange<MediumId>{ .first = std::get<0>(res), .last = std::get<1>(res) };
     }
 
-    RangeResults<MediumId> Medium::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<MediumId> Medium::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 

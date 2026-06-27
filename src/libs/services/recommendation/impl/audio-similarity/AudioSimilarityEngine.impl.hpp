@@ -627,13 +627,13 @@ namespace lms::recommendation
             {
                 db::Release::FindParameters params;
                 params.setArtist(artist->getId());
-                for (const db::ReleaseId releaseId : db::Release::findIds(session, params).results)
+                for (const db::ReleaseId releaseId : db::Release::findIds(session, params))
                 {
                     if (_releaseVectors.contains(releaseId))
                     {
                         db::Track::FindParameters trackParams;
                         trackParams.setRelease(releaseId);
-                        for (const db::TrackId trackId : db::Track::findIds(session, trackParams).results)
+                        for (const db::TrackId trackId : db::Track::findIds(session, trackParams))
                             artistTrackIds.insert(trackId);
                     }
                 }

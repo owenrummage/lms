@@ -60,7 +60,7 @@ namespace lms
             params.setKeywords(core::stringUtils::splitString(name, ' '));
 
             auto transaction{ session.createReadTransaction() };
-            trackIds = db::Track::findIds(session, params).results;
+            trackIds = db::Track::findIds(session, params);
         }
 
         std::cout << "*** Tracks (" << trackIds.size() << ") ***" << std::endl;
@@ -106,7 +106,7 @@ namespace lms
             params.setKeywords(core::stringUtils::splitString(name, ' '));
 
             auto transaction{ session.createReadTransaction() };
-            releaseIds = db::Release::findIds(session, params).results;
+            releaseIds = db::Release::findIds(session, params);
         }
 
         std::cout << "*** Releases ***" << std::endl;
@@ -148,7 +148,7 @@ namespace lms
             params.setKeywords(core::stringUtils::splitString(name, ' '));
 
             auto transaction{ session.createReadTransaction() };
-            artistIds = db::Artist::findIds(session, params).results;
+            artistIds = db::Artist::findIds(session, params);
         }
 
         std::cout << "*** Artists ***" << std::endl;
@@ -246,7 +246,7 @@ namespace lms
         std::vector<db::ReleaseId> releaseIds;
         {
             auto transaction{ session.createReadTransaction() };
-            releaseIds = db::Release::findIds(session, db::Release::FindParameters{}).results;
+            releaseIds = db::Release::findIds(session, db::Release::FindParameters{});
         }
 
         if (releaseIds.empty())
@@ -307,7 +307,7 @@ namespace lms
         std::vector<db::ArtistId> artistIds;
         {
             auto transaction{ session.createReadTransaction() };
-            artistIds = db::Artist::findIds(session, db::Artist::FindParameters{}).results;
+            artistIds = db::Artist::findIds(session, db::Artist::FindParameters{});
         }
 
         if (artistIds.empty())
@@ -372,7 +372,7 @@ namespace lms
             params.setKeywords(core::stringUtils::splitString(fromName, ' '));
 
             auto transaction{ session.createReadTransaction() };
-            fromTrackIds = db::Track::findIds(session, params).results;
+            fromTrackIds = db::Track::findIds(session, params);
         }
 
         // Find 'to' tracks
@@ -388,7 +388,7 @@ namespace lms
             params.setKeywords(core::stringUtils::splitString(toName, ' '));
 
             auto transaction{ session.createReadTransaction() };
-            toTrackIds = db::Track::findIds(session, params).results;
+            toTrackIds = db::Track::findIds(session, params);
         }
 
         if (fromTrackIds.empty() || toTrackIds.empty())

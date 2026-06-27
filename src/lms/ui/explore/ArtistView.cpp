@@ -175,7 +175,7 @@ namespace lms::ui
                 });
             });
 
-            auto clusterTypes{ db::ClusterType::findIds(LmsApp->getDbSession()).results };
+            auto clusterTypes{ db::ClusterType::findIds(LmsApp->getDbSession()) };
             auto clusterGroups{ artist->getClusterGroups(clusterTypes, 3) };
 
             for (const auto& clusters : clusterGroups)
@@ -466,7 +466,7 @@ namespace lms::ui
         auto transaction{ LmsApp->getDbSession().createReadTransaction() };
 
         const auto tracks{ db::Track::find(LmsApp->getDbSession(), params) };
-        for (const db::Track::pointer& track : tracks.results)
+        for (const db::Track::pointer& track : tracks)
         {
             // TODO handle this with range
             if (_trackContainer->getCount() == _tracksMaxCount)
@@ -477,7 +477,7 @@ namespace lms::ui
             areTracksAdded = true;
         }
 
-        _trackContainer->setHasMore(tracks.moreResults);
+        _trackContainer->setHasMore(tracks.size() == range.size);
 
         return areTracksAdded;
     }

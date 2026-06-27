@@ -150,14 +150,13 @@ namespace lms::db
 
             if (params.starringUser.isValid())
             {
-                assert(params.feedbackBackend);
                 query.join("starred_release s_r ON s_r.release_id = r.id")
+                    .join("user u ON u.id = s_r.user_id")
                     .where("s_r.user_id = ?")
                     .bind(params.starringUser)
-                    .where("s_r.backend = ?")
-                    .bind(*params.feedbackBackend)
                     .where("s_r.sync_state <> ?")
-                    .bind(SyncState::PendingRemove);
+                    .bind(SyncState::PendingRemove)
+                    .where("s_r.backend = u.feedback_backend");
             }
 
             if (params.artist.isValid())
@@ -356,7 +355,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Country>>("SELECT c from country c").where("c.name = ?").bind(name));
     }
 
-    RangeResults<CountryId> Country::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<CountryId> Country::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -418,7 +417,7 @@ namespace lms::db
         });
     }
 
-    RangeResults<LabelId> Label::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<LabelId> Label::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -480,7 +479,7 @@ namespace lms::db
         });
     }
 
-    RangeResults<ReleaseTypeId> ReleaseType::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ReleaseTypeId> ReleaseType::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -527,7 +526,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM release"));
     }
 
-    RangeResults<ReleaseId> Release::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ReleaseId> Release::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -574,7 +573,7 @@ namespace lms::db
         return IdRange<ReleaseId>{ .first = std::get<0>(res), .last = std::get<1>(res) };
     }
 
-    RangeResults<Release::pointer> Release::find(Session& session, const FindParameters& params)
+    std::vector<Release::pointer> Release::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 
@@ -590,7 +589,7 @@ namespace lms::db
         utils::forEachQueryRangeResult(query, params.range, func);
     }
 
-    RangeResults<ReleaseId> Release::findIds(Session& session, const FindParameters& params)
+    std::vector<ReleaseId> Release::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 

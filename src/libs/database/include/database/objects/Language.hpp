@@ -82,12 +82,12 @@ namespace lms::db
         Language() = default;
 
         static std::size_t getCount(Session& session);
-        static RangeResults<LanguageId> findIds(Session& session, const FindParameters& params);
-        static RangeResults<pointer> find(Session& session, const FindParameters& params);
+        static std::vector<LanguageId> findIds(Session& session, const FindParameters& params);
+        static std::vector<pointer> find(Session& session, const FindParameters& params);
         static void find(Session& session, const FindParameters& params, std::function<void(const pointer&)> func);
         static pointer find(Session& session, LanguageId id);
         static pointer find(Session& session, std::string_view name);
-        static RangeResults<LanguageId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<LanguageId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
 
         std::string_view getName() const { return _name; }
 

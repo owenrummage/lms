@@ -58,7 +58,7 @@ namespace lms::api::subsonic
 
             const Range range{ offset, size };
 
-            RangeResults<ReleaseId> releases;
+            std::vector<ReleaseId> releases;
             scrobbling::IScrobblingService& scrobblingService{ *core::Service<scrobbling::IScrobblingService>::get() };
             feedback::IFeedbackService& feedbackService{ *core::Service<feedback::IFeedbackService>::get() };
 
@@ -166,7 +166,7 @@ namespace lms::api::subsonic
             Response response{ Response::createOkResponse(context.getServerProtocolVersion()) };
             Response::Node& albumListNode{ response.createNode(id3 ? Response::Node::Key{ "albumList2" } : Response::Node::Key{ "albumList" }) };
 
-            for (const ReleaseId releaseId : releases.results)
+            for (const ReleaseId releaseId : releases)
             {
                 const Release::pointer release{ Release::find(context.getDbSession(), releaseId) };
                 albumListNode.addArrayChild("album", createAlbumNode(context, release, id3));
@@ -193,7 +193,7 @@ namespace lms::api::subsonic
                 feedback::IFeedbackService::ArtistFindParameters artistFindParams;
                 artistFindParams.setUser(context.getUser()->getId());
                 artistFindParams.setSortMethod(ArtistSortMethod::SortName);
-                for (const ArtistId artistId : feedbackService.findStarredArtists(artistFindParams).results)
+                for (const ArtistId artistId : feedbackService.findStarredArtists(artistFindParams))
                 {
                     if (auto artist{ Artist::find(context.getDbSession(), artistId) })
                         starredNode.addArrayChild("artist", createArtistNode(context, artist));
@@ -204,13 +204,13 @@ namespace lms::api::subsonic
             findParameters.setUser(context.getUser()->getId());
             findParameters.filters.setMediaLibrary(mediaLibrary);
 
-            for (const ReleaseId releaseId : feedbackService.findStarredReleases(findParameters).results)
+            for (const ReleaseId releaseId : feedbackService.findStarredReleases(findParameters))
             {
                 if (auto release{ Release::find(context.getDbSession(), releaseId) })
                     starredNode.addArrayChild("album", createAlbumNode(context, release, id3));
             }
 
-            for (const TrackId trackId : feedbackService.findStarredTracks(findParameters).results)
+            for (const TrackId trackId : feedbackService.findStarredTracks(findParameters))
             {
                 if (auto track{ Track::find(context.getDbSession(), trackId) })
                     starredNode.addArrayChild("song", createSongNode(context, track, context.getUser()));

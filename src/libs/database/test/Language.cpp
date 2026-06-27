@@ -63,8 +63,8 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto orphans{ Language::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), language.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), language.getId());
         }
     }
 
@@ -76,7 +76,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Language::findOrphanIds(session).results.size(), 2);
+            EXPECT_EQ(Language::findOrphanIds(session).size(), 2);
             EXPECT_EQ(track->getLanguages().size(), 0);
             EXPECT_EQ(track->getLanguageIds().size(), 0);
         }
@@ -90,12 +90,12 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             const auto languages{ Language::findIds(session, Language::FindParameters{}.setTrack(track.getId())) };
-            ASSERT_EQ(languages.results.size(), 1);
-            EXPECT_EQ(languages.results.front(), language1.getId());
+            ASSERT_EQ(languages.size(), 1);
+            EXPECT_EQ(languages.front(), language1.getId());
 
             const auto orphans{ Language::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), language2.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), language2.getId());
 
             const auto trackLanguages{ track->getLanguages() };
             ASSERT_EQ(trackLanguages.size(), 1);
@@ -109,11 +109,11 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setLanguage(language1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setLanguage(language2.getId()))) };
-            EXPECT_EQ(tracks2.results.size(), 0);
+            EXPECT_EQ(tracks2.size(), 0);
         }
     }
 
@@ -130,7 +130,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Language::findOrphanIds(session).results.size(), 0);
+            EXPECT_EQ(Language::findOrphanIds(session).size(), 0);
 
             const auto trackLanguages{ track->getLanguages() };
             EXPECT_EQ(trackLanguages.size(), 2);
@@ -139,12 +139,12 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setLanguage(language1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setLanguage(language2.getId()))) };
-            ASSERT_EQ(tracks2.results.size(), 1);
-            EXPECT_EQ(tracks2.results.front(), track.getId());
+            ASSERT_EQ(tracks2.size(), 1);
+            EXPECT_EQ(tracks2.front(), track.getId());
         }
     }
 
@@ -157,10 +157,10 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto languages{ Language::findIds(session, Language::FindParameters{}.setSortMethod(LanguageSortMethod::Name)) };
-            ASSERT_EQ(languages.results.size(), 3);
-            EXPECT_EQ(languages.results[0], l2.getId());
-            EXPECT_EQ(languages.results[1], l3.getId());
-            EXPECT_EQ(languages.results[2], l1.getId());
+            ASSERT_EQ(languages.size(), 3);
+            EXPECT_EQ(languages[0], l2.getId());
+            EXPECT_EQ(languages[1], l3.getId());
+            EXPECT_EQ(languages[2], l1.getId());
         }
     }
 
@@ -182,9 +182,9 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto languages{ Language::findIds(session, Language::FindParameters{}.setSortMethod(LanguageSortMethod::TrackCountDesc)) };
-            ASSERT_EQ(languages.results.size(), 2);
-            EXPECT_EQ(languages.results[0], l1.getId());
-            EXPECT_EQ(languages.results[1], l2.getId());
+            ASSERT_EQ(languages.size(), 2);
+            EXPECT_EQ(languages[0], l1.getId());
+            EXPECT_EQ(languages[1], l2.getId());
         }
     }
 } // namespace lms::db::tests
