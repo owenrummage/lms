@@ -103,4 +103,7 @@ namespace lms::ui::utils
     std::unique_ptr<Wt::WInteractWidget> createCopyright(std::string_view copyright, std::string_view copyrightURL);
 
     void copyToClipboard(std::string_view text);
+
+    // Returns "i. MovementName" when track has work(s) + movement(s), otherwise track->getName().
+    std::string computeTrackDisplayTitle(const db::ObjectPtr<db::Track>& track);
 } // namespace lms::ui::utils

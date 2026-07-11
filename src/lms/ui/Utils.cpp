@@ -36,6 +36,7 @@
 #include "database/objects/Image.hpp"
 #include "database/objects/Language.hpp"
 #include "database/objects/Mood.hpp"
+#include "database/objects/Movement.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/ScanSettings.hpp"
@@ -559,5 +560,27 @@ namespace lms::ui::utils
     void copyToClipboard(std::string_view text)
     {
         LmsApp->doJavaScript("navigator.clipboard.writeText('" + core::stringUtils::jsEscape(text) + "').catch(function(){})");
+    }
+
+    std::string computeTrackDisplayTitle(const db::ObjectPtr<db::Track>& track)
+    {
+        const auto movements{ track->getMovements() };
+        if (!movements.empty() && track->hasWork())
+        {
+            const db::Movement::pointer& movement{ movements.front() };
+            std::string result;
+            if (const auto n{ movement->getNumber() })
+            {
+                if (const std::string numeral{ core::stringUtils::toRomanNumeral(*n) }; !numeral.empty())
+                    result += numeral + ". ";
+            }
+
+            result += movement->getName();
+
+            if (!result.empty())
+                return result;
+        }
+
+        return std::string{ track->getName() };
     }
 } // namespace lms::ui::utils

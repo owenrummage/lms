@@ -65,6 +65,9 @@ namespace lms::core::stringUtils
 
     void capitalize(std::string& str);
 
+    // returns empty string if invalid input
+    [[nodiscard]] std::string toRomanNumeral(std::size_t n);
+
     template<typename T>
     [[nodiscard]] std::optional<T> readAs(std::string_view str)
     {

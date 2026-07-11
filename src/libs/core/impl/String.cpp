@@ -418,6 +418,44 @@ namespace lms::core::stringUtils
         }
     }
 
+    std::string toRomanNumeral(std::size_t n)
+    {
+        if (n == 0 || n > 3999)
+            return {};
+
+        static constexpr struct
+        {
+            std::size_t val;
+            const char* sym;
+        } table[]{
+            { 1000, "m" },
+            { 900, "cm" },
+            { 500, "d" },
+            { 400, "cd" },
+            { 100, "c" },
+            { 90, "xc" },
+            { 50, "l" },
+            { 40, "xl" },
+            { 10, "x" },
+            { 9, "ix" },
+            { 5, "v" },
+            { 4, "iv" },
+            { 1, "i" }
+        };
+
+        std::string res;
+        for (const auto& [val, sym] : table)
+        {
+            while (n >= val)
+            {
+                res += sym;
+                n -= val;
+            }
+        }
+
+        return res;
+    }
+
     std::string replaceInString(std::string_view str, std::string_view from, std::string_view to)
     {
         std::string res{ str };

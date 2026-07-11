@@ -27,8 +27,10 @@ add_library(lmsdatabase STATIC
 	impl/objects/StarredArtist.cpp
 	impl/objects/StarredRelease.cpp
 	impl/objects/StarredTrack.cpp
+	impl/objects/Movement.cpp
 	impl/objects/Track.cpp
 	impl/objects/TrackArtistLink.cpp
+	impl/objects/Work.cpp
 	impl/objects/TrackBookmark.cpp
 	impl/objects/TrackEmbeddedImage.cpp
 	impl/objects/TrackEmbeddedImageLink.cpp

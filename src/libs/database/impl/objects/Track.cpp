@@ -36,12 +36,14 @@
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
 #include "database/objects/Mood.hpp"
+#include "database/objects/Movement.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/TrackEmbeddedImage.hpp"
 #include "database/objects/TrackEmbeddedImageLink.hpp"
 #include "database/objects/TrackLyrics.hpp"
 #include "database/objects/User.hpp"
+#include "database/objects/Work.hpp"
 
 #include "SqlQuery.hpp"
 #include "Utils.hpp"
@@ -671,6 +673,40 @@ namespace lms::db
         _moods.clear();
         for (const ObjectPtr<Mood>& mood : moods)
             _moods.insert(getDboPtr(mood));
+    }
+
+    void Track::setWorks(std::span<const ObjectPtr<Work>> works)
+    {
+        _works.clear();
+        for (const ObjectPtr<Work>& work : works)
+            _works.insert(getDboPtr(work));
+    }
+
+    std::vector<Work::pointer> Track::getWorks() const
+    {
+        // deterministic order, callers rely on the first entry
+        return utils::fetchQueryResults<Work::pointer>(_works.find().orderBy("id"));
+    }
+
+    bool Track::hasWork() const
+    {
+        return !_works.empty();
+    }
+
+    void Track::clearMovements()
+    {
+        _movements.clear();
+    }
+
+    std::vector<Movement::pointer> Track::getMovements() const
+    {
+        // deterministic order, callers rely on the first entry
+        return utils::fetchQueryResults<Movement::pointer>(_movements.find().orderBy("id"));
+    }
+
+    bool Track::hasMovement() const
+    {
+        return !_movements.empty();
     }
 
     void Track::clearLyrics()

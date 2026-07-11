@@ -17,6 +17,8 @@
  * along with LMS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <limits>
+
 #include <gtest/gtest.h>
 
 #include <Wt/WDate.h>
@@ -411,5 +413,33 @@ namespace lms::core::stringUtils::tests
         EXPECT_EQ(stringFromHex("31323334"), "1234");
         EXPECT_EQ(stringFromHex("3132333435"), "12345");
         EXPECT_EQ(stringFromHex("54657374"), "Test");
+    }
+
+    TEST(StringUtils, toRomanNumeral)
+    {
+        EXPECT_EQ(toRomanNumeral(1), "i");
+        EXPECT_EQ(toRomanNumeral(2), "ii");
+        EXPECT_EQ(toRomanNumeral(3), "iii");
+        EXPECT_EQ(toRomanNumeral(4), "iv");
+        EXPECT_EQ(toRomanNumeral(5), "v");
+        EXPECT_EQ(toRomanNumeral(6), "vi");
+        EXPECT_EQ(toRomanNumeral(7), "vii");
+        EXPECT_EQ(toRomanNumeral(8), "viii");
+        EXPECT_EQ(toRomanNumeral(9), "ix");
+        EXPECT_EQ(toRomanNumeral(10), "x");
+        EXPECT_EQ(toRomanNumeral(11), "xi");
+        EXPECT_EQ(toRomanNumeral(14), "xiv");
+        EXPECT_EQ(toRomanNumeral(16), "xvi");
+        EXPECT_EQ(toRomanNumeral(40), "xl");
+        EXPECT_EQ(toRomanNumeral(50), "l");
+        EXPECT_EQ(toRomanNumeral(90), "xc");
+        EXPECT_EQ(toRomanNumeral(99), "xcix");
+        EXPECT_EQ(toRomanNumeral(444), "cdxliv");
+        EXPECT_EQ(toRomanNumeral(1994), "mcmxciv");
+        EXPECT_EQ(toRomanNumeral(3999), "mmmcmxcix");
+        EXPECT_EQ(toRomanNumeral(0), "");
+        EXPECT_EQ(toRomanNumeral(4000), "");
+        EXPECT_EQ(toRomanNumeral(static_cast<std::size_t>(-1)), ""); // underflows to SIZE_MAX
+        EXPECT_EQ(toRomanNumeral(std::numeric_limits<std::size_t>::max()), "");
     }
 } // namespace lms::core::stringUtils::tests

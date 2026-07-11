@@ -20,6 +20,7 @@
 #pragma once
 
 #include <optional>
+#include <span>
 
 #include <Wt/WCheckBox.h>
 #include <Wt/WContainerWidget.h>
@@ -49,11 +50,11 @@ namespace lms::ui
     public:
         PlayQueue();
 
-        void play(const std::vector<db::TrackId>& trackIds);
-        void playNext(const std::vector<db::TrackId>& trackIds);
-        void playShuffled(const std::vector<db::TrackId>& trackIds);
-        void playOrAddLast(const std::vector<db::TrackId>& trackIds); // play if queue empty, otherwise just add last
-        void playAtIndex(const std::vector<db::TrackId>& trackIds, std::size_t index);
+        void play(std::span<const db::TrackId> trackIds);
+        void playNext(std::span<const db::TrackId> trackIds);
+        void playShuffled(std::span<const db::TrackId> trackIds);
+        void playOrAddLast(std::span<const db::TrackId> trackIds); // play if queue empty, otherwise just add last
+        void playAtIndex(std::span<const db::TrackId> trackIds, std::size_t index);
 
         // play the next track in the queue
         void playNext();
@@ -83,7 +84,7 @@ namespace lms::ui
         bool isFull() const;
 
         void clearTracks();
-        void enqueueTracks(const std::vector<db::TrackId>& trackIds);
+        void enqueueTracks(std::span<const db::TrackId> trackIds);
         std::vector<db::TrackId> getAndClearNextTracks();
         void addSome();
         void addEntry(const db::ObjectPtr<db::TrackListEntry>& entry);
