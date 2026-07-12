@@ -152,6 +152,7 @@ namespace lms::ui
                     LmsApp->getDbSession().create<db::TrackListEntry>(entry->getTrack(), queue);
             }
             _entriesContainer->reset();
+            _nextPlayPos.reset();
             addSome();
         });
 
@@ -234,6 +235,7 @@ namespace lms::ui
 
         _entriesContainer->reset();
         _trackPos.reset();
+        _nextPlayPos.reset();
         updateInfo();
     }
 
@@ -241,11 +243,12 @@ namespace lms::ui
     {
         updateCurrentTrack(false);
         _trackPos.reset();
+        _nextPlayPos.reset();
         _isTrackSelected = false;
         trackUnselected.emit();
     }
 
-    void PlayQueue::loadTrack(std::size_t pos, bool play)
+    void PlayQueue::loadTrack(std::size_t pos, bool play, ResetNextPlayPos resetNextPlayPos)
     {
         updateCurrentTrack(false);
 
@@ -269,6 +272,8 @@ namespace lms::ui
             }
 
             _trackPos = pos;
+            if (resetNextPlayPos.value())
+                _nextPlayPos.reset();
 
             const db::Track::pointer track{ queue->getEntry(*_trackPos)->getTrack() };
             trackId = track->getId();
@@ -296,18 +301,23 @@ namespace lms::ui
 
     void PlayQueue::playNext()
     {
-        if (!_trackPos)
-        {
-            loadTrack(0, true);
-            return;
-        }
-
-        loadTrack(*_trackPos + 1, true);
+        advanceTrack(ResetNextPlayPos{ true });
     }
 
     void PlayQueue::onPlaybackEnded()
     {
-        playNext();
+        advanceTrack(ResetNextPlayPos{ false });
+    }
+
+    void PlayQueue::advanceTrack(ResetNextPlayPos resetNextPlayPos)
+    {
+        if (!_trackPos)
+        {
+            loadTrack(0, true, resetNextPlayPos);
+            return;
+        }
+
+        loadTrack(*_trackPos + 1, true, resetNextPlayPos);
     }
 
     std::size_t PlayQueue::getCount()
@@ -396,14 +406,14 @@ namespace lms::ui
         _entriesContainer->setHasMore();
     }
 
-    std::vector<db::TrackId> PlayQueue::getAndClearNextTracks()
+    std::vector<db::TrackId> PlayQueue::getAndClearTracksFrom(std::size_t pos)
     {
         std::vector<db::TrackId> tracks;
 
         auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
 
         db::TrackList::pointer queue{ getQueue() };
-        auto entries{ queue->getEntries(db::Range{ _trackPos ? *_trackPos + 1 : 0, getCapacity() }) };
+        auto entries{ queue->getEntries(db::Range{ pos, getCapacity() }) };
         tracks.reserve(entries.size());
         for (db::TrackListEntry::pointer& entry : entries)
         {
@@ -411,15 +421,14 @@ namespace lms::ui
             entry.remove();
         }
 
-        if (_trackPos)
-        {
-            // entries may have been cleared
-            if (*_trackPos + 1 < _entriesContainer->getCount())
-                _entriesContainer->remove(*_trackPos + 1, _entriesContainer->getCount() - 1);
-        }
-        else
+        if (pos == 0)
         {
             _entriesContainer->reset();
+        }
+        else if (pos < _entriesContainer->getCount())
+        {
+            // entries may have been cleared
+            _entriesContainer->remove(pos, _entriesContainer->getCount() - 1);
         }
 
         return tracks;
@@ -432,9 +441,19 @@ namespace lms::ui
 
     void PlayQueue::playNext(std::span<const db::TrackId> trackIds)
     {
-        std::vector<db::TrackId> nextTracks{ getAndClearNextTracks() };
-        nextTracks.insert(std::cbegin(nextTracks), std::cbegin(trackIds), std::cend(trackIds));
-        playOrAddLast(nextTracks);
+        const std::size_t defaultInsertPos{ _trackPos ? *_trackPos + 1 : 0 };
+        if (!_nextPlayPos || *_nextPlayPos < defaultInsertPos)
+            _nextPlayPos = defaultInsertPos;
+
+        const std::size_t insertPos{ *_nextPlayPos };
+
+        std::vector<db::TrackId> tracksToInsert{ getAndClearTracksFrom(insertPos) };
+        tracksToInsert.insert(std::cbegin(tracksToInsert), std::cbegin(trackIds), std::cend(trackIds));
+
+        playOrAddLast(tracksToInsert);
+
+        // set after playOrAddLast: it may call loadTrack() (queue was empty), which resets _nextPlayPos
+        _nextPlayPos = insertPos + trackIds.size();
     }
 
     void PlayQueue::playShuffled(std::span<const db::TrackId> trackIds)
@@ -549,6 +568,7 @@ namespace lms::ui
                 else if (*_trackPos >= _entriesContainer->getCount())
                     _trackPos.reset();
             }
+            _nextPlayPos.reset();
 
             _entriesContainer->remove(*entry);
 
