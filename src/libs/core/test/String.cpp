@@ -387,6 +387,31 @@ namespace lms::core::stringUtils::tests
         EXPECT_FALSE(stringEndsWith("FooBar", "R"));
     }
 
+    TEST(StringUtils, utf8Truncate)
+    {
+        EXPECT_EQ(utf8Truncate("abc", 10), "abc");
+        EXPECT_EQ(utf8Truncate("abcdef", 6), "abcdef");
+        EXPECT_EQ(utf8Truncate("", 10), "");
+        EXPECT_EQ(utf8Truncate("abc", 0), "");
+
+        EXPECT_EQ(utf8Truncate("caf\xC3\xA9", 4), "caf");
+        EXPECT_EQ(utf8Truncate("caf\xC3\xA9", 5), "caf\xC3\xA9");
+
+        EXPECT_EQ(utf8Truncate("\xE2\x82\xAC", 1), "");
+        EXPECT_EQ(utf8Truncate("\xE2\x82\xAC", 2), "");
+        EXPECT_EQ(utf8Truncate("\xE2\x82\xAC", 3), "\xE2\x82\xAC");
+
+        EXPECT_EQ(utf8Truncate("\xF0\x9F\x98\x80", 1), "");
+        EXPECT_EQ(utf8Truncate("\xF0\x9F\x98\x80", 2), "");
+        EXPECT_EQ(utf8Truncate("\xF0\x9F\x98\x80", 3), "");
+        EXPECT_EQ(utf8Truncate("\xF0\x9F\x98\x80", 4), "\xF0\x9F\x98\x80");
+
+        EXPECT_EQ(utf8Truncate("e\xCC\x81", 2), "e");
+        EXPECT_EQ(utf8Truncate("e\xCC\x81", 3), "e\xCC\x81");
+
+        EXPECT_EQ(utf8Truncate("\x80\x80\x80", 2), "");
+    }
+
     TEST(StringUtils, stringCaseInsensitiveContains)
     {
         EXPECT_TRUE(stringCaseInsensitiveContains("FooBar", "Bar"));

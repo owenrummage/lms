@@ -22,6 +22,8 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
+
 #include "database/Session.hpp"
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
@@ -304,8 +306,7 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        if (name.size() > maxNameLength)
-            name = name.substr(0, maxNameLength);
+        name = core::stringUtils::utf8Truncate(name, maxNameLength);
 
         return utils::fetchQueryResults<Artist::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.name = ?").bind(name).orderBy("LENGTH(a.mbid) DESC")); // put mbid entries first
     }
@@ -473,13 +474,13 @@ AND NOT EXISTS (
 
     void Artist::setName(std::string_view name)
     {
-        _name.assign(name, 0, maxNameLength);
+        _name = core::stringUtils::utf8Truncate(name, maxNameLength);
         LMS_LOG_IF(DB, WARNING, name.size() > maxNameLength, "Artist name too long, truncated to '" << _name << "'");
     }
 
     void Artist::setSortName(std::string_view sortName)
     {
-        _sortName.assign(sortName, 0, maxNameLength);
+        _sortName = core::stringUtils::utf8Truncate(sortName, maxNameLength);
         LMS_LOG_IF(DB, WARNING, sortName.size() > maxNameLength, "Artist sort name too long, truncated to '" << _sortName << "'");
     }
 

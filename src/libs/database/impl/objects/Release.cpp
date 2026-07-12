@@ -23,6 +23,8 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 
 #include "core/PartialDateTime.hpp"
+#include "core/String.hpp"
+
 #include "database/Session.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
@@ -491,7 +493,7 @@ namespace lms::db
     }
 
     Release::Release(const std::string& name, const std::optional<core::UUID>& MBID)
-        : _name{ std::string(name, 0, _maxNameLength) }
+        : _name{ core::stringUtils::utf8Truncate(name, _maxNameLength) }
         , _MBID{ MBID }
     {
     }

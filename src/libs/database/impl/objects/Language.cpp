@@ -22,6 +22,7 @@
 #include <Wt/Dbo/Impl.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
 
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
@@ -114,7 +115,7 @@ namespace lms::db
     } // namespace
 
     Language::Language(std::string_view name)
-        : _name{ name.substr(0, maxNameLength) }
+        : _name{ core::stringUtils::utf8Truncate(name, maxNameLength) }
     {
         LMS_LOG_IF(DB, WARNING, name.size() > maxNameLength, "Language name too long, truncated to '" << _name << "'");
     }
@@ -161,8 +162,7 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        if (name.size() > maxNameLength)
-            name = name.substr(0, maxNameLength);
+        name = core::stringUtils::utf8Truncate(name, maxNameLength);
 
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Language>().where("name = ?").bind(name));
     }

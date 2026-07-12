@@ -23,6 +23,7 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
 
 #include "database/Session.hpp"
 #include "database/Types.hpp"
@@ -614,19 +615,19 @@ namespace lms::db
 
     void Track::setName(std::string_view name)
     {
-        _name = std::string{ name, 0, _maxNameLength };
+        _name = core::stringUtils::utf8Truncate(name, _maxNameLength);
         LMS_LOG_IF(DB, WARNING, name.size() > _maxNameLength, "Track name too long, truncated to '" << _name << "'");
     }
 
     void Track::setCopyright(std::string_view copyright)
     {
-        _copyright = std::string{ copyright, 0, _maxCopyrightLength };
+        _copyright = core::stringUtils::utf8Truncate(copyright, _maxCopyrightLength);
         LMS_LOG_IF(DB, WARNING, copyright.size() > _maxCopyrightLength, "Track copyright too long, truncated to '" << _copyright << "'");
     }
 
     void Track::setCopyrightURL(std::string_view copyrightURL)
     {
-        _copyrightURL = std::string{ copyrightURL, 0, _maxCopyrightURLLength };
+        _copyrightURL = core::stringUtils::utf8Truncate(copyrightURL, _maxCopyrightURLLength);
         LMS_LOG_IF(DB, WARNING, copyrightURL.size() > _maxCopyrightURLLength, "Track copyright URL too long, truncated to '" << _copyrightURL << "'");
     }
 

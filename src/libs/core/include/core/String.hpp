@@ -54,6 +54,9 @@ namespace lms::core::stringUtils
     [[nodiscard]] std::string_view stringTrim(std::string_view str, std::string_view whitespaces = " \t\r");
     [[nodiscard]] std::string_view stringTrimEnd(std::string_view str, std::string_view whitespaces = " \t\r");
 
+    // Like str.substr(0, maxBytes), but takes utf8 into account to properly truncate
+    [[nodiscard]] std::string_view utf8Truncate(std::string_view str, std::size_t maxBytes);
+
     [[nodiscard]] std::string stringToLower(std::string_view str);
     void stringToLower(std::string& str);
     [[nodiscard]] std::string stringToUpper(const std::string& str);

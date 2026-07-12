@@ -22,6 +22,7 @@
 #include <Wt/Dbo/Impl.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
 
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
@@ -48,7 +49,7 @@ DBO_INSTANTIATE_TEMPLATES(lms::db::Movement)
 namespace lms::db
 {
     Movement::Movement(std::string_view name, std::optional<std::size_t> number, std::optional<std::size_t> count, const ObjectPtr<Track>& track)
-        : _name{ name.substr(0, maxNameLength) }
+        : _name{ core::stringUtils::utf8Truncate(name, maxNameLength) }
         , _number{ number }
         , _count{ count }
         , _track{ getDboPtr(track) }

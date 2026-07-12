@@ -341,6 +341,15 @@ namespace lms::core::stringUtils
         return str.substr(0, str.find_last_not_of(whitespaces) + 1);
     }
 
+    std::string_view utf8Truncate(std::string_view str, std::size_t maxBytes)
+    {
+        std::size_t len{ std::min(maxBytes, str.size()) };
+        while (len > 0 && len < str.size() && (static_cast<unsigned char>(str[len]) & 0xC0) == 0x80)
+            --len;
+
+        return str.substr(0, len);
+    }
+
     std::string stringToLower(std::string_view str)
     {
         std::string res;
