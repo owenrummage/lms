@@ -512,6 +512,10 @@ namespace lms::api::subsonic::detail
                 }
             }
 
+            // Lossy codecs have no meaningful PCM bit depth: don't report the source's bit depth as if it still applied
+            if (!core::media::getCodecDesc(transcodeFormat->codec).isLossless)
+                transcodedStream.audioBitdepth.reset();
+
             return transcodedStream;
         }
 

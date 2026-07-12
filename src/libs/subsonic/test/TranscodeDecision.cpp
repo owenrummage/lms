@@ -625,6 +625,54 @@ namespace lms::api::subsonic
 
                 .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::AudioBitrateNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "mp3", .codec = "mp3", .audioChannels = std::nullopt, .audioBitrate = 96000, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
             },
+
+            // transcoding to a lossy codec must not report a bit depth, even if a bit depth limitation is set on that codec (lossy codecs have no PCM bit depth)
+            {
+                .clientInfo = { .name = "TestClient", .platform = "TestPlatform", .maxAudioBitrate = std::nullopt, .maxTranscodingAudioBitrate = std::nullopt, .directPlayProfiles = { {
+                                                                                                                                                                   { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                                                                                                                                                               } },
+                                .transcodingProfiles = {
+                                    { .container = "mp3", .audioCodec = "mp3", .protocol = "http", .maxAudioChannels = std::nullopt },
+                                },
+                                .codecProfiles = { { .type = "AudioCodec", .name = "mp3", .limitations = {
+                                                                                              { .name = Limitation::Type::AudioBitdepth, .comparison = Limitation::ComparisonOperator::LessThanEqual, .values = { "16" }, .required = true },
+                                                                                          } } } },
+                .source = {
+                    .container = core::media::Container::FLAC,
+                    .codec = core::media::Codec::FLAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 750'000,
+                    .channelCount = 2,
+                    .sampleRate = 48'000,
+                    .bitsPerSample = 24,
+                },
+
+                .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "mp3", .codec = "mp3", .audioChannels = std::nullopt, .audioBitrate = 256000, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
+            },
+
+            // transcoding to a lossless codec still reports the adjusted bit depth
+            {
+                .clientInfo = { .name = "TestClient", .platform = "TestPlatform", .maxAudioBitrate = std::nullopt, .maxTranscodingAudioBitrate = std::nullopt, .directPlayProfiles = { {
+                                                                                                                                                                   { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                                                                                                                                                               } },
+                                .transcodingProfiles = {
+                                    { .container = "flac", .audioCodec = "flac", .protocol = "http", .maxAudioChannels = std::nullopt },
+                                },
+                                .codecProfiles = { { .type = "AudioCodec", .name = "flac", .limitations = {
+                                                                                               { .name = Limitation::Type::AudioBitdepth, .comparison = Limitation::ComparisonOperator::LessThanEqual, .values = { "16" }, .required = true },
+                                                                                           } } } },
+                .source = {
+                    .container = core::media::Container::FLAC,
+                    .codec = core::media::Codec::FLAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 750'000,
+                    .channelCount = 2,
+                    .sampleRate = 48'000,
+                    .bitsPerSample = 24,
+                },
+
+                .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "flac", .codec = "flac", .audioChannels = std::nullopt, .audioBitrate = std::nullopt, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = 16 } } },
+            },
         };
 
         processTests(testCases);
