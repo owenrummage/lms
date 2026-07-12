@@ -97,6 +97,9 @@ namespace lms::db
                 query.join("track t ON t.release_id = r.id");
             }
 
+            if (!params.keywords.empty())
+                query.leftJoin("medium m ON m.release_id = r.id");
+
             if (params.parentDirectory.isValid())
             {
                 query.join("directory d ON t.directory_id = d.id");
@@ -149,8 +152,25 @@ namespace lms::db
             if (!params.name.empty())
                 query.where("r.name = ?").bind(params.name);
 
-            for (std::string_view keyword : params.keywords)
-                query.where("r.name LIKE ? ESCAPE '" ESCAPE_CHAR_STR "'").bind("%" + utils::escapeForLikeKeyword(keyword) + "%");
+            if (!params.keywords.empty())
+            {
+                std::vector<std::string> nameClauses;
+                std::vector<std::string> mediumNameClauses;
+
+                for (const std::string_view keyword : params.keywords)
+                {
+                    nameClauses.push_back("r.name LIKE ? ESCAPE '" ESCAPE_CHAR_STR "'");
+                    query.bind("%" + utils::escapeForLikeKeyword(keyword) + "%");
+                }
+
+                for (const std::string_view keyword : params.keywords)
+                {
+                    mediumNameClauses.push_back("m.name LIKE ? ESCAPE '" ESCAPE_CHAR_STR "'");
+                    query.bind("%" + utils::escapeForLikeKeyword(keyword) + "%");
+                }
+
+                query.where("(" + core::stringUtils::joinStrings(nameClauses, " AND ") + ") OR (" + core::stringUtils::joinStrings(mediumNameClauses, " AND ") + ")");
+            }
 
             if (params.starringUser.isValid())
             {
