@@ -36,6 +36,7 @@
 #include "core/SystemPaths.hpp"
 
 #include "audio/IAudioOutput.hpp"
+#include "audio/IMusicNNEmbeddingExtractor.hpp"
 #include "database/IDb.hpp"
 #include "database/Session.hpp"
 #include "database/profiling/IQueryProfiler.hpp"
@@ -436,6 +437,7 @@ namespace lms
                 db::Session session{ *database };
                 session.prepareTablesIfNeeded();
                 bool migrationPerformed{ session.migrateSchemaIfNeeded() };
+                session.createScanSettingsIfNeeded(audio::canExtractMusicNNEmbeddings() ? db::RecommendationEngineType::AudioSimilarity : db::RecommendationEngineType::Clusters);
                 session.createIndexesIfNeeded();
 
                 // As this may be quite long, we only do it during startup

@@ -180,17 +180,15 @@ namespace lms::db
 
     bool Session::migrateSchemaIfNeeded()
     {
-        const bool migrationPerformed{ Migration::doDbMigration(*this) };
+        return Migration::doDbMigration(*this);
+    }
 
-        // TODO: move this elsewhere
-        {
-            auto uniqueTransaction{ createWriteTransaction() };
+    void Session::createScanSettingsIfNeeded(RecommendationEngineType defaultRecommendationEngineType)
+    {
+        auto uniqueTransaction{ createWriteTransaction() };
 
-            if (!ScanSettings::find(*this))
-                create<ScanSettings>();
-        }
-
-        return migrationPerformed;
+        if (!ScanSettings::find(*this))
+            create<ScanSettings>().modify()->setRecommendationEngineType(defaultRecommendationEngineType);
     }
 
     void Session::createIndexesIfNeeded()

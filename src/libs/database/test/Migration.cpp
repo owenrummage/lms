@@ -344,6 +344,7 @@ VALUES
 
         // Now perform full migration
         db.getTLSSession().migrateSchemaIfNeeded();
+        db.getTLSSession().createScanSettingsIfNeeded();
 
         // Now perform some dummy finds to ensure all fields are correctly mapped
         {
