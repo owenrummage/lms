@@ -174,6 +174,58 @@ namespace lms::api::subsonic
 
                 .expected = { detail::DirectPlayResult{} },
             },
+
+            // MP4 container with ALAC (lossless) codec and no codec restriction direct-plays like any other supported container/codec pair
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = std::nullopt,
+                    .maxTranscodingAudioBitrate = std::nullopt,
+                    .directPlayProfiles = {
+                        { .containers = { "m4a", "mp4" }, .audioCodecs = {}, .protocols = {}, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {},
+                    .codecProfiles = {},
+                },
+                .source = {
+                    .container = core::media::Container::MP4,
+                    .codec = core::media::Codec::ALAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 1'011'000,
+                    .channelCount = 2,
+                    .sampleRate = 44'100,
+                    .bitsPerSample = 16,
+                },
+
+                .expected = { detail::DirectPlayResult{} },
+            },
+
+            // MP4 container with an explicit aac audioCodecs restriction (as declared by real AAC-only profiles) direct-plays when the codec matches
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = std::nullopt,
+                    .maxTranscodingAudioBitrate = std::nullopt,
+                    .directPlayProfiles = {
+                        { .containers = { "m4a", "mp4" }, .audioCodecs = { "aac" }, .protocols = {}, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {},
+                    .codecProfiles = {},
+                },
+                .source = {
+                    .container = core::media::Container::MP4,
+                    .codec = core::media::Codec::AAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 257'000,
+                    .channelCount = 2,
+                    .sampleRate = 44'100,
+                    .bitsPerSample = std::nullopt,
+                },
+
+                .expected = { detail::DirectPlayResult{} },
+            },
         };
 
         processTests(testCases);
@@ -532,9 +584,9 @@ namespace lms::api::subsonic
 
             // needs transcode because codec not handled (lossless source => using a default good bitrate)
             {
-                .clientInfo = { .name = "TestClient", .platform = "TestPlatform", .maxAudioBitrate = std::nullopt, .maxTranscodingAudioBitrate = std::nullopt, .directPlayProfiles = { {
+                .clientInfo = { .name = "TestClient", .platform = "TestPlatform", .maxAudioBitrate = std::nullopt, .maxTranscodingAudioBitrate = std::nullopt, .directPlayProfiles = {
                                                                                                                                                                    { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
-                                                                                                                                                               } },
+                                                                                                                                                               },
                                 .transcodingProfiles = {
                                     { .container = "mp3", .audioCodec = "mp3", .protocol = "http", .maxAudioChannels = std::nullopt },
                                 },
@@ -550,6 +602,62 @@ namespace lms::api::subsonic
                 },
 
                 .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "mp3", .codec = "mp3", .audioChannels = std::nullopt, .audioBitrate = 256000, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
+            },
+
+            // PCM (WAV) is a lossless codec: a WAV source must be able to fall back to a lossless transcoding target, just like FLAC
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = std::nullopt,
+                    .maxTranscodingAudioBitrate = std::nullopt,
+                    .directPlayProfiles = {
+                        { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {
+                        { .container = "flac", .audioCodec = "flac", .protocol = "http", .maxAudioChannels = std::nullopt },
+                    },
+                    .codecProfiles = {},
+                },
+                .source = {
+                    .container = core::media::Container::WAV,
+                    .codec = core::media::Codec::PCM,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 1'411'200,
+                    .channelCount = 2,
+                    .sampleRate = 44'100,
+                    .bitsPerSample = 16,
+                },
+
+                .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "flac", .codec = "flac", .audioChannels = std::nullopt, .audioBitrate = std::nullopt, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
+            },
+
+            // PCM (WAV) is lossless, so transcoding to a lossy target with no bitrate cap must pick a sane default bitrate, not the raw PCM bitrate
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = std::nullopt,
+                    .maxTranscodingAudioBitrate = std::nullopt,
+                    .directPlayProfiles = {
+                        { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {
+                        { .container = "ogg", .audioCodec = "opus", .protocol = "http", .maxAudioChannels = std::nullopt },
+                    },
+                    .codecProfiles = {},
+                },
+                .source = {
+                    .container = core::media::Container::WAV,
+                    .codec = core::media::Codec::PCM,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 1'411'200,
+                    .channelCount = 2,
+                    .sampleRate = 44'100,
+                    .bitsPerSample = 16,
+                },
+
+                .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "ogg", .codec = "opus", .audioChannels = std::nullopt, .audioBitrate = 256000, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
             },
 
             // wants a lossy codec not handled -> transcode to lossy
