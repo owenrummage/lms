@@ -308,6 +308,7 @@ namespace lms::api::subsonic::detail
             throw InternalErrorGenericError{ "Unhandled limitation comparison operator" };
         }
 
+        // A non-required limitation is a preference only: it must never force a transcode away from direct play
         bool isStreamCompatibleWithLimitation(const audio::AudioProperties& source, const Limitation& limitation)
         {
             if (!limitation.required)
@@ -397,6 +398,9 @@ namespace lms::api::subsonic::detail
             return std::nullopt;
         }
 
+        // Unlike isStreamCompatibleWithLimitation, this ignores `required` entirely:
+        // once transcoding is already happening for any reason,
+        // every limitation of the matched target codec profile still shapes the output
         AdjustResult applyLimitation(const audio::AudioProperties& source, const Limitation& limitation, StreamDetails& transcodedStream)
         {
             switch (limitation.name)

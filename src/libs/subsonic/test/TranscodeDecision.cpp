@@ -837,6 +837,75 @@ namespace lms::api::subsonic
         processTests(testCases);
     }
 
+    TEST(TranscodeDecision, optionalLimitation)
+    {
+        const TestCase testCases[]{
+            // A non-required limitation is a preference only: it never blocks direct play, even when clearly violated (source has 6 channels vs the allowed 1 or 2)
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = 1'000'000,
+                    .maxTranscodingAudioBitrate = 1'000'000,
+                    .directPlayProfiles = {
+                        { .containers = { "flac" }, .audioCodecs = { "flac" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {
+                        { .container = "mp3", .audioCodec = "mp3", .protocol = "http", .maxAudioChannels = 2 },
+                    },
+                    .codecProfiles = { { .type = "AudioCodec", .name = "flac", .limitations = {
+                                                                                   { .name = Limitation::Type::AudioSamplerate, .comparison = Limitation::ComparisonOperator::LessThanEqual, .values = { "192000" }, .required = false },
+                                                                                   { .name = Limitation::Type::AudioChannels, .comparison = Limitation::ComparisonOperator::Equals, .values = { "1", "2" }, .required = false },
+                                                                               } } },
+                },
+                .source = {
+                    .container = core::media::Container::FLAC,
+                    .codec = core::media::Codec::FLAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 900'000,
+                    .channelCount = 6,
+                    .sampleRate = 96'000,
+                    .bitsPerSample = 24,
+                },
+
+                .expected = { detail::DirectPlayResult{} },
+            },
+
+            // A non-required limitation still shapes the transcoded target once a transcode is already happening for an unrelated reason (container mismatch): applyLimitation never checks `required`
+            {
+                .clientInfo = {
+                    .name = "TestClient",
+                    .platform = "TestPlatform",
+                    .maxAudioBitrate = 1'000'000,
+                    .maxTranscodingAudioBitrate = 1'000'000,
+                    .directPlayProfiles = {
+                        { .containers = { "mp3" }, .audioCodecs = { "mp3" }, .protocols = { "http" }, .maxAudioChannels = std::nullopt },
+                    },
+                    .transcodingProfiles = {
+                        { .container = "flac", .audioCodec = "flac", .protocol = "http", .maxAudioChannels = std::nullopt },
+                    },
+                    .codecProfiles = { { .type = "AudioCodec", .name = "flac", .limitations = {
+                                                                                   { .name = Limitation::Type::AudioSamplerate, .comparison = Limitation::ComparisonOperator::LessThanEqual, .values = { "192000" }, .required = false },
+                                                                                   { .name = Limitation::Type::AudioChannels, .comparison = Limitation::ComparisonOperator::Equals, .values = { "1", "2" }, .required = false },
+                                                                               } } },
+                },
+                .source = {
+                    .container = core::media::Container::FLAC,
+                    .codec = core::media::Codec::FLAC,
+                    .duration = std::chrono::seconds{ 60 },
+                    .bitrate = 900'000,
+                    .channelCount = 6,
+                    .sampleRate = 96'000,
+                    .bitsPerSample = 16,
+                },
+
+                .expected = { detail::TranscodeResult{ .reasons = { detail::TranscodeReason::ContainerNotSupported }, .targetStreamInfo = { .protocol = "http", .container = "flac", .codec = "flac", .audioChannels = 2, .audioBitrate = std::nullopt, .audioProfile = "", .audioSamplerate = std::nullopt, .audioBitdepth = std::nullopt } } },
+            },
+        };
+
+        processTests(testCases);
+    }
+
     TEST(TranscodeDecision, comparisonOperators)
     {
         const TestCase testCases[]{
