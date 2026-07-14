@@ -415,6 +415,6 @@ namespace lms::api::subsonic
 
     db::UserId SubsonicResource::authenticateUser(const Wt::Http::Request& request)
     {
-        return utils::authenticateUser(request, _db.getTLSSession(), _config);
+        return utils::authenticateUser(request, _db.getTLSSession());
     }
 } // namespace lms::api::subsonic

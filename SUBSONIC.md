@@ -19,8 +19,6 @@ OpenSubsonic is an initiative to patch and extend the legacy Subsonic API. You'l
 _LMS_ supports the [API Key Authentication](https://opensubsonic.netlify.app/docs/extensions/apikeyauth/) method. Each user has to generate their own API key on the settings page to use the Subsonic API.
 If a client's login screen has no dedicated API key field, enter the API key as the password instead.
 
-__Note__: the legacy Subsonic authentication methods can be disabled using the `lms.conf` file.
-
 ## Extra fields
 The following extra fields are implemented:
 * `Album` response:

@@ -24,27 +24,6 @@
 
 namespace lms::api::subsonic::utils::tests
 {
-    namespace
-    {
-        const SubsonicResourceConfig bothMechanismsSupported{
-            .openSubsonicDisabledClients = {},
-            .supportPasswordAuthentication = true,
-            .supportTokenAuthentication = true,
-        };
-
-        const SubsonicResourceConfig noneSupported{
-            .openSubsonicDisabledClients = {},
-            .supportPasswordAuthentication = false,
-            .supportTokenAuthentication = false,
-        };
-
-        const SubsonicResourceConfig passwordUnsupported{
-            .openSubsonicDisabledClients = {},
-            .supportPasswordAuthentication = false,
-            .supportTokenAuthentication = true,
-        };
-    } // namespace
-
     // Reference values from the Subsonic API documentation (apiKey = "sesame", salt = "c19b2d")
     TEST(AuthUtils, checkAuthToken_ValidToken)
     {
@@ -73,66 +52,59 @@ namespace lms::api::subsonic::utils::tests
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_apiKeyOnly)
     {
-        const auto request{ parseAndValidateAuthenticationRequest({ { "apiKey", { "apiKey" } } }, bothMechanismsSupported) };
+        const auto request{ parseAndValidateAuthenticationRequest({ { "apiKey", { "apiKey" } } }) };
         ASSERT_TRUE(std::holds_alternative<ApiKeyAuthentication>(request));
         EXPECT_EQ(std::get<ApiKeyAuthentication>(request).apiKey, "apiKey");
 
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({}, bothMechanismsSupported), RequiredParameterMissingError);
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({}), RequiredParameterMissingError);
     }
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_password)
     {
-        const auto request{ parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } } }, bothMechanismsSupported) };
+        const auto request{ parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } } }) };
         ASSERT_TRUE(std::holds_alternative<PasswordAuthentication>(request));
         EXPECT_EQ(std::get<PasswordAuthentication>(request).user, "user");
         EXPECT_EQ(std::get<PasswordAuthentication>(request).password, "password");
 
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "p", { "password" } } }, bothMechanismsSupported), RequiredParameterMissingError); // missing u
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } } }, bothMechanismsSupported), RequiredParameterMissingError);     // missing p
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "p", { "password" } } }), RequiredParameterMissingError); // missing u
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } } }), RequiredParameterMissingError);     // missing p
     }
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_token)
     {
-        const auto request{ parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } }, { "s", { "salt" } } }, bothMechanismsSupported) };
+        const auto request{ parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } }, { "s", { "salt" } } }) };
         ASSERT_TRUE(std::holds_alternative<TokenAuthentication>(request));
         EXPECT_EQ(std::get<TokenAuthentication>(request).user, "user");
         EXPECT_EQ(std::get<TokenAuthentication>(request).token, "token");
         EXPECT_EQ(std::get<TokenAuthentication>(request).salt, "salt");
 
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "t", { "token" } }, { "s", { "salt" } } }, bothMechanismsSupported), RequiredParameterMissingError); // missing u
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "s", { "salt" } } }, bothMechanismsSupported), RequiredParameterMissingError);  // missing t
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } } }, bothMechanismsSupported), RequiredParameterMissingError); // missing s
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "t", { "token" } }, { "s", { "salt" } } }), RequiredParameterMissingError); // missing u
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "s", { "salt" } } }), RequiredParameterMissingError);  // missing t
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } } }), RequiredParameterMissingError); // missing s
     }
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_conflicts)
     {
         // password + token
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } }, { "t", { "token" } }, { "s", { "salt" } } }, bothMechanismsSupported), MultipleConflictingAuthenticationMechanismsProvidedError);
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } }, { "t", { "token" } }, { "s", { "salt" } } }), MultipleConflictingAuthenticationMechanismsProvidedError);
         // apiKey + password
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } }, { "apiKey", { "apiKey" } } }, bothMechanismsSupported), MultipleConflictingAuthenticationMechanismsProvidedError);
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } }, { "apiKey", { "apiKey" } } }), MultipleConflictingAuthenticationMechanismsProvidedError);
         // apiKey + token
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } }, { "s", { "salt" } }, { "apiKey", { "apiKey" } } }, bothMechanismsSupported), MultipleConflictingAuthenticationMechanismsProvidedError);
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } }, { "s", { "salt" } }, { "apiKey", { "apiKey" } } }), MultipleConflictingAuthenticationMechanismsProvidedError);
     }
 
-    TEST(AuthUtils, parseAndValidateAuthenticationRequest_mechanismNotSupported)
+    TEST(AuthUtils, parseAndValidateAuthenticationRequest_usernameOnlyRequiresPassword)
     {
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "p", { "password" } } }, noneSupported), ProvidedAuthenticationMechanismNotSupportedError);
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } }, { "t", { "token" } }, { "s", { "salt" } } }, noneSupported), ProvidedAuthenticationMechanismNotSupportedError);
-        EXPECT_NO_THROW(parseAndValidateAuthenticationRequest({ { "apiKey", { "apiKey" } } }, noneSupported)); // apiKey is unaffected by these two flags
-    }
-
-    TEST(AuthUtils, parseAndValidateAuthenticationRequest_usernameOnlyTreatedAsPasswordAttempt)
-    {
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } } }, passwordUnsupported), ProvidedAuthenticationMechanismNotSupportedError);
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "u", { "user" } } }), RequiredParameterMissingError); // missing p
     }
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_apiKeyWithPartialPassword)
     {
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "p", { "password" } }, { "apiKey", { "apiKey" } } }, bothMechanismsSupported), RequiredParameterMissingError); // missing u
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "p", { "password" } }, { "apiKey", { "apiKey" } } }), RequiredParameterMissingError); // missing u
     }
 
     TEST(AuthUtils, parseAndValidateAuthenticationRequest_apiKeyWithPartialToken)
     {
-        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "s", { "salt" } }, { "apiKey", { "apiKey" } } }, bothMechanismsSupported), RequiredParameterMissingError); // missing u
+        EXPECT_THROW(parseAndValidateAuthenticationRequest({ { "s", { "salt" } }, { "apiKey", { "apiKey" } } }), RequiredParameterMissingError); // missing u
     }
 } // namespace lms::api::subsonic::utils::tests

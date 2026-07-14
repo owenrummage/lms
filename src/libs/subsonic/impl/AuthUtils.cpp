@@ -60,7 +60,7 @@ namespace lms::api::subsonic::utils
         }
     } // namespace
 
-    AuthenticationRequest parseAndValidateAuthenticationRequest(const Wt::Http::ParameterMap& parameters, const SubsonicResourceConfig& config)
+    AuthenticationRequest parseAndValidateAuthenticationRequest(const Wt::Http::ParameterMap& parameters)
     {
         const std::optional<std::string> user{ getParameterAs<std::string>(parameters, "u") };
         const std::optional<std::string> password{ getParameterAs<std::string>(parameters, "p") };
@@ -70,12 +70,6 @@ namespace lms::api::subsonic::utils
 
         const bool passwordAuthRequested{ password.has_value() };
         const bool tokenAuthRequested{ token.has_value() || salt.has_value() };
-        const bool passwordAuthAttempted{ passwordAuthRequested || (user.has_value() && !tokenAuthRequested) };
-
-        if (!config.supportPasswordAuthentication && passwordAuthAttempted)
-            throw ProvidedAuthenticationMechanismNotSupportedError{};
-        if (!config.supportTokenAuthentication && tokenAuthRequested)
-            throw ProvidedAuthenticationMechanismNotSupportedError{};
 
         if (passwordAuthRequested && tokenAuthRequested)
             throw MultipleConflictingAuthenticationMechanismsProvidedError{};
@@ -130,9 +124,9 @@ namespace lms::api::subsonic::utils
         throw UserNotAuthorizedError{};
     }
 
-    db::UserId authenticateUser(const Wt::Http::Request& request, db::Session& session, const SubsonicResourceConfig& config)
+    db::UserId authenticateUser(const Wt::Http::Request& request, db::Session& session)
     {
-        const AuthenticationRequest authRequest{ parseAndValidateAuthenticationRequest(request.getParameterMap(), config) };
+        const AuthenticationRequest authRequest{ parseAndValidateAuthenticationRequest(request.getParameterMap()) };
 
         const auto clientAddress{ boost::asio::ip::make_address(request.clientAddress()) };
         auto& authTokenService{ *core::Service<auth::IAuthTokenService>::get() };

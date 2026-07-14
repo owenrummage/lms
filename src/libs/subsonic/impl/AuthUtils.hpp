@@ -28,8 +28,6 @@
 #include "database/objects/User.hpp"
 #include "database/objects/UserId.hpp"
 
-#include "SubsonicResourceConfig.hpp"
-
 namespace lms::db
 {
     class Session;
@@ -58,7 +56,7 @@ namespace lms::api::subsonic::utils
     using AuthenticationRequest = std::variant<PasswordAuthentication, TokenAuthentication, ApiKeyAuthentication>;
 
     // Throws on error
-    AuthenticationRequest parseAndValidateAuthenticationRequest(const Wt::Http::ParameterMap& parameters, const SubsonicResourceConfig& config);
+    AuthenticationRequest parseAndValidateAuthenticationRequest(const Wt::Http::ParameterMap& parameters);
 
     // Checks token == hex(md5(apiKey + salt)), case insensitive
     bool checkAuthToken(std::string_view apiKey, std::string_view salt, std::string_view token);
@@ -67,5 +65,5 @@ namespace lms::api::subsonic::utils
     db::User::pointer getUserFromUserId(db::Session& session, db::UserId userId);
 
     // Throws on error
-    db::UserId authenticateUser(const Wt::Http::Request& request, db::Session& session, const SubsonicResourceConfig& config);
+    db::UserId authenticateUser(const Wt::Http::Request& request, db::Session& session);
 } // namespace lms::api::subsonic::utils
