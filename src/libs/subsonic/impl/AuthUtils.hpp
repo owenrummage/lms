@@ -68,4 +68,4 @@ namespace lms::api::subsonic::utils
 
     // Throws on error
     db::UserId authenticateUser(const Wt::Http::Request& request, db::Session& session, const SubsonicResourceConfig& config);
-} // namespace lms::api::subsonic
+} // namespace lms::api::subsonic::utils

@@ -312,8 +312,8 @@ namespace lms::api::subsonic
             map<Key, ValuesType> _childrenValues;
         };
 
-        static Response createOkResponse(ProtocolVersion protocolVersion);
-        static Response createFailedResponse(ProtocolVersion protocolVersion, const Error& error);
+        static Response createOkResponse();
+        static Response createFailedResponse(const Error& error);
 
         ~Response() = default;
         Response(const Response&) = delete;
@@ -328,7 +328,7 @@ namespace lms::api::subsonic
         void write(std::ostream& os, ResponseFormat format) const;
 
     private:
-        static Response createResponseCommon(ProtocolVersion protocolVersion, const Error* error = nullptr);
+        static Response createResponseCommon(const Error* error = nullptr);
 
         class JsonSerializer
         {

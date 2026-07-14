@@ -25,19 +25,6 @@ namespace lms::api::subsonic
 {
     namespace
     {
-        std::unordered_map<std::string, ProtocolVersion> readConfigProtocolVersions(core::IConfig& config)
-        {
-            std::unordered_map<std::string, ProtocolVersion> res;
-
-            config.visitStrings("api-subsonic-old-server-protocol-clients",
-                                [&](std::string_view client) {
-                                    res.emplace(std::string{ client }, ProtocolVersion{ .major = 1, .minor = 12, .patch = 0 });
-                                },
-                                { "DSub" });
-
-            return res;
-        }
-
         std::unordered_set<std::string> readOpenSubsonicDisabledClients(core::IConfig& config)
         {
             std::unordered_set<std::string> res;
@@ -55,7 +42,6 @@ namespace lms::api::subsonic
     SubsonicResourceConfig readSubsonicResourceConfig(core::IConfig& config)
     {
         return SubsonicResourceConfig{
-            .serverProtocolVersionsByClient = readConfigProtocolVersions(config),
             .openSubsonicDisabledClients = readOpenSubsonicDisabledClients(config),
             .supportPasswordAuthentication = config.getBool("api-subsonic-support-password-auth", true),
             .supportTokenAuthentication = config.getBool("api-subsonic-support-token-auth", true)

@@ -373,7 +373,7 @@ namespace lms::api::subsonic
         }
         catch (const Error& e)
         {
-            writeResponse(Response::createFailedResponse(defaultServerProtocolVersion, e), ResponseFormat::xml);
+            writeResponse(Response::createFailedResponse(e), ResponseFormat::xml);
             throw;
         }
 
@@ -407,7 +407,7 @@ namespace lms::api::subsonic
         }
         catch (const Error& e)
         {
-            Response resp{ Response::createFailedResponse(requestContext->getServerProtocolVersion(), e) };
+            Response resp{ Response::createFailedResponse(e) };
             writeResponse(resp, requestContext->getResponseFormat());
             throw;
         }

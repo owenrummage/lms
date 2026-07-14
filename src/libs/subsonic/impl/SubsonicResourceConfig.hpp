@@ -20,10 +20,7 @@
 #pragma once
 
 #include <string>
-#include <unordered_map>
 #include <unordered_set>
-
-#include "ProtocolVersion.hpp"
 
 namespace lms::core
 {
@@ -34,7 +31,6 @@ namespace lms::api::subsonic
 {
     struct SubsonicResourceConfig
     {
-        std::unordered_map<std::string, ProtocolVersion> serverProtocolVersionsByClient;
         std::unordered_set<std::string> openSubsonicDisabledClients;
         bool supportPasswordAuthentication;
         bool supportTokenAuthentication;

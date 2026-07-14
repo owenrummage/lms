@@ -27,21 +27,18 @@ namespace lms::api::subsonic::utils::tests
     namespace
     {
         const SubsonicResourceConfig bothMechanismsSupported{
-            .serverProtocolVersionsByClient = {},
             .openSubsonicDisabledClients = {},
             .supportPasswordAuthentication = true,
             .supportTokenAuthentication = true,
         };
 
         const SubsonicResourceConfig noneSupported{
-            .serverProtocolVersionsByClient = {},
             .openSubsonicDisabledClients = {},
             .supportPasswordAuthentication = false,
             .supportTokenAuthentication = false,
         };
 
         const SubsonicResourceConfig passwordUnsupported{
-            .serverProtocolVersionsByClient = {},
             .openSubsonicDisabledClients = {},
             .supportPasswordAuthentication = false,
             .supportTokenAuthentication = true,
