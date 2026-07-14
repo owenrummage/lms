@@ -375,18 +375,6 @@ namespace lms::core::stringUtils
         return res;
     }
 
-    std::string bufferToString(std::span<const unsigned char> data)
-    {
-        std::ostringstream oss;
-
-        for (unsigned char c : data)
-        {
-            oss << std::setw(2) << std::setfill('0') << std::hex << (int)c;
-        }
-
-        return oss.str();
-    }
-
     bool stringCaseInsensitiveEqual(std::string_view strA, std::string_view strB)
     {
         if (strA.size() != strB.size())
@@ -608,16 +596,18 @@ namespace lms::core::stringUtils
         return res;
     }
 
-    std::string toHexString(std::string_view str)
+    std::string bufferToHexString(std::span<const std::byte> data)
     {
         constexpr char lut[]{ "0123456789ABCDEF" };
 
         std::string res;
+        res.reserve(data.size() * 2);
 
-        for (char c : str)
+        for (const std::byte b : data)
         {
-            res.push_back(lut[(c >> 4) & 0xF]);
-            res.push_back(lut[c & 0xF]);
+            const unsigned value{ std::to_integer<unsigned>(b) };
+            res.push_back(lut[(value >> 4) & 0xF]);
+            res.push_back(lut[value & 0xF]);
         }
 
         return res;

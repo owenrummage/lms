@@ -17,6 +17,7 @@
  * along with LMS.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <array>
 #include <limits>
 
 #include <gtest/gtest.h>
@@ -424,13 +425,11 @@ namespace lms::core::stringUtils::tests
         EXPECT_FALSE(stringCaseInsensitiveContains("", "Foo"));
     }
 
-    TEST(StringUtils, toHexString)
+    TEST(StringUtils, bufferToHexString)
     {
-        EXPECT_EQ(toHexString(""), "");
-        EXPECT_EQ(toHexString("123"), "313233");
-        EXPECT_EQ(toHexString("1234"), "31323334");
-        EXPECT_EQ(toHexString("12345"), "3132333435");
-        EXPECT_EQ(toHexString("Test"), "54657374");
+        EXPECT_EQ(bufferToHexString({}), "");
+        EXPECT_EQ(bufferToHexString(std::array{ std::byte{ 0x31 }, std::byte{ 0x32 }, std::byte{ 0x33 } }), "313233");
+        EXPECT_EQ(bufferToHexString(std::array{ std::byte{ 0x00 }, std::byte{ 0xab }, std::byte{ 0xcd }, std::byte{ 0xff } }), "00ABCDFF");
 
         // test back stringFromHex
         EXPECT_EQ(stringFromHex(""), "");

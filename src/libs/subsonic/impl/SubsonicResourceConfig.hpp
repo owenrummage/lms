@@ -36,7 +36,8 @@ namespace lms::api::subsonic
     {
         std::unordered_map<std::string, ProtocolVersion> serverProtocolVersionsByClient;
         std::unordered_set<std::string> openSubsonicDisabledClients;
-        bool supportUserPasswordAuthentication;
+        bool supportPasswordAuthentication;
+        bool supportTokenAuthentication;
     };
 
     SubsonicResourceConfig readSubsonicResourceConfig(core::IConfig& _config);

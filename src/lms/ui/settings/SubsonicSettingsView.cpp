@@ -185,7 +185,10 @@ namespace lms::ui
         auto* t{ addNew<Wt::WTemplate>(Wt::WString::tr("Lms.Settings.subsonic.template.key")) };
         t->addFunction("tr", &Wt::WTemplate::Functions::tr);
 
-        t->setCondition("if-has-subsonic-token-usage", core::Service<core::IConfig>::get()->getBool("api-subsonic-support-user-password-auth", true));
+        {
+            core::IConfig& config{ *core::Service<core::IConfig>::get() };
+            t->setCondition("if-has-subsonic-token-usage", config.getBool("api-subsonic-support-password-auth", true) || config.getBool("api-subsonic-support-token-auth", true));
+        }
 
         std::string currentToken;
         {

@@ -57,7 +57,8 @@ namespace lms::api::subsonic
         return SubsonicResourceConfig{
             .serverProtocolVersionsByClient = readConfigProtocolVersions(config),
             .openSubsonicDisabledClients = readOpenSubsonicDisabledClients(config),
-            .supportUserPasswordAuthentication = config.getBool("api-subsonic-support-user-password-auth", true)
+            .supportPasswordAuthentication = config.getBool("api-subsonic-support-password-auth", true),
+            .supportTokenAuthentication = config.getBool("api-subsonic-support-token-auth", true)
         };
     }
 } // namespace lms::api::subsonic
