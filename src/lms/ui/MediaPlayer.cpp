@@ -244,7 +244,7 @@ namespace lms::ui
             const std::string nativeResource{ _audioFileResource->getUrl(trackId) };
 
             const auto artistDisplayInfo{ utils::computeArtistDisplayInfo(track, db::TrackArtistLinkType::Artist) };
-            const std::string displayTitle{ utils::computeTrackDisplayTitle(track) };
+            const std::string displayTitle{ utils::computeTrackDisplayInfo(track).title };
 
             oss
                 << "var params = {"

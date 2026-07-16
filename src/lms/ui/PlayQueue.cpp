@@ -497,12 +497,17 @@ namespace lms::ui
         const auto track{ tracklistEntry->getTrack() };
         const db::TrackId trackId{ track->getId() };
 
-        const std::string displayTitle{ utils::computeTrackDisplayTitle(track) };
+        const utils::TrackDisplayInfo displayInfo{ utils::computeTrackDisplayInfo(track) };
 
         Template* entry{ _entriesContainer->addNew<Template>(Wt::WString::tr("Lms.PlayQueue.template.entry")) };
         entry->addFunction("id", &Wt::WTemplate::Functions::id);
 
-        entry->bindString("name", Wt::WString::fromUTF8(displayTitle), Wt::TextFormat::Plain);
+        entry->bindString("name", Wt::WString::fromUTF8(displayInfo.title), Wt::TextFormat::Plain);
+        if (displayInfo.workName)
+        {
+            entry->setCondition("if-has-work", true);
+            entry->bindString("work", Wt::WString::fromUTF8(*displayInfo.workName), Wt::TextFormat::Plain);
+        }
 
         const auto artists{ track->getArtistIds({ db::TrackArtistLinkType::Artist }) };
         if (!artists.empty())
@@ -541,7 +546,7 @@ namespace lms::ui
         entry->bindString("duration", utils::durationToString(track->getDuration()), Wt::TextFormat::Plain);
 
         Wt::WPushButton* playBtn{ entry->bindNew<Wt::WPushButton>("play-btn", Wt::WString::tr("Lms.template.play-btn"), Wt::TextFormat::XHTML) };
-        playBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.play-item").arg(displayTitle));
+        playBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.play-item").arg(displayInfo.title));
         playBtn->clicked().connect([this, entry] {
             const std::optional<std::size_t> pos{ _entriesContainer->getIndexOf(*entry) };
             if (pos)
@@ -549,7 +554,7 @@ namespace lms::ui
         });
 
         Wt::WPushButton* delBtn{ entry->bindNew<Wt::WPushButton>("del-btn", Wt::WString::tr("Lms.template.delete-btn"), Wt::TextFormat::XHTML) };
-        delBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.delete-item").arg(displayTitle));
+        delBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.delete-item").arg(displayInfo.title));
         delBtn->setToolTip(Wt::WString::tr("Lms.delete"));
         delBtn->clicked().connect([this, tracklistEntryId, entry] {
             // Remove the entry n both the widget tree and the playqueue

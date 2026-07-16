@@ -230,8 +230,13 @@ namespace lms::ui::TrackListHelpers
         auto entry{ std::make_unique<Template>(Wt::WString::tr("Lms.Explore.Tracks.template.entry")) };
         auto* entryPtr{ entry.get() };
 
-        const std::string displayTitle{ utils::computeTrackDisplayTitle(track) };
-        entry->bindString("name", Wt::WString::fromUTF8(displayTitle), Wt::TextFormat::Plain);
+        const utils::TrackDisplayInfo displayInfo{ utils::computeTrackDisplayInfo(track) };
+        entry->bindString("name", Wt::WString::fromUTF8(displayInfo.title), Wt::TextFormat::Plain);
+        if (displayInfo.workName)
+        {
+            entry->setCondition("if-has-work", true);
+            entry->bindString("work", Wt::WString::fromUTF8(*displayInfo.workName), Wt::TextFormat::Plain);
+        }
 
         const db::Release::pointer release{ track->getRelease() };
         const db::TrackId trackId{ track->getId() };
@@ -270,7 +275,7 @@ namespace lms::ui::TrackListHelpers
         entry->bindString("duration", utils::durationToString(track->getDuration()), Wt::TextFormat::Plain);
 
         Wt::WPushButton* playBtn{ entry->bindNew<Wt::WPushButton>("play-btn", Wt::WString::tr("Lms.template.play-btn"), Wt::TextFormat::XHTML) };
-        playBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.play-item").arg(displayTitle));
+        playBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.play-item").arg(displayInfo.title));
         playBtn->clicked().connect([trackId, &playQueueController] {
             db::TrackId trackIds[]{ trackId };
             playQueueController.processCommand(PlayQueueController::Command::Play, trackIds);
@@ -302,7 +307,7 @@ namespace lms::ui::TrackListHelpers
             auto isStarred{ [=] { return core::Service<feedback::IFeedbackService>::get()->isStarred(LmsApp->getUserId(), trackId); } };
 
             Wt::WPushButton* starBtn{ entry->bindNew<Wt::WPushButton>("star-btn", Wt::WString::tr(isStarred() ? "Lms.template.unstar-btn" : "Lms.template.star-btn"), Wt::TextFormat::XHTML) };
-            starBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.Explore.star-item").arg(displayTitle));
+            starBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.Explore.star-item").arg(displayInfo.title));
             starBtn->setAttributeValue("aria-pressed", isStarred() ? "true" : "false");
             Wt::WPushButton* starMenuEntry{ entry->bindNew<Wt::WPushButton>("star", Wt::WString::tr(isStarred() ? "Lms.Explore.unstar" : "Lms.Explore.star")) };
 

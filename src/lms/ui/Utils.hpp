@@ -21,6 +21,7 @@
 
 #include <chrono>
 #include <map>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -104,6 +105,10 @@ namespace lms::ui::utils
 
     void copyToClipboard(std::string_view text);
 
-    // Returns "i. MovementName" when track has work(s) + movement(s), otherwise track->getName().
-    std::string computeTrackDisplayTitle(const db::ObjectPtr<db::Track>& track);
+    struct TrackDisplayInfo
+    {
+        std::string title;                   // "i. MovementName" when track has work + movement, otherwise just the track's title
+        std::optional<std::string> workName; // only set when title comes from a movement
+    };
+    TrackDisplayInfo computeTrackDisplayInfo(const db::ObjectPtr<db::Track>& track);
 } // namespace lms::ui::utils

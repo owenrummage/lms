@@ -43,6 +43,7 @@
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/TrackList.hpp"
+#include "database/objects/Work.hpp"
 
 #include "LmsApplication.hpp"
 #include "ModalManager.hpp"
@@ -562,25 +563,31 @@ namespace lms::ui::utils
         LmsApp->doJavaScript("navigator.clipboard.writeText('" + core::stringUtils::jsEscape(text) + "').catch(function(){})");
     }
 
-    std::string computeTrackDisplayTitle(const db::ObjectPtr<db::Track>& track)
+    TrackDisplayInfo computeTrackDisplayInfo(const db::ObjectPtr<db::Track>& track)
     {
         const auto movements{ track->getMovements() };
         if (!movements.empty() && track->hasWork())
         {
             const db::Movement::pointer& movement{ movements.front() };
-            std::string result;
+            std::string title;
             if (const auto n{ movement->getNumber() })
             {
                 if (const std::string numeral{ core::stringUtils::toRomanNumeral(*n) }; !numeral.empty())
-                    result += numeral + ". ";
+                    title += numeral + ". ";
             }
 
-            result += movement->getName();
+            title += movement->getName();
 
-            if (!result.empty())
-                return result;
+            if (!title.empty())
+            {
+                TrackDisplayInfo info{ .title = std::move(title), .workName = std::nullopt };
+                if (const auto works{ track->getWorks() }; !works.empty())
+                    info.workName = std::string{ works.front()->getName() };
+
+                return info;
+            }
         }
 
-        return std::string{ track->getName() };
+        return TrackDisplayInfo{ .title = std::string{ track->getName() }, .workName = std::nullopt };
     }
 } // namespace lms::ui::utils
