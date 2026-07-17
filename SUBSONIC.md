@@ -27,6 +27,7 @@ The following extra fields are implemented:
   * `displayArtist`
   * `explicitStatus`
   * `genres`
+  * `groupings`
   * `isCompilation`
   * `played`
   * `mediaType`
@@ -50,12 +51,15 @@ The following extra fields are implemented:
   * `displayArtist`
   * `explicitStatus`
   * `genres`
+  * `groupings`
   * `mediaType`
   * `moods`
+  * `movements`
   * `musicBrainzId`: note this is actually the recording MBID when this response refers to a song
   * `played`
   * `replayGain`
   * `samplingRate`
+  * `works`
 * `Artist` response:
   * `mediaType`
   * `musicBrainzId`
