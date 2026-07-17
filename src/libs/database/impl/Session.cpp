@@ -49,6 +49,7 @@
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/ScanSettings.hpp"
+#include "database/objects/ServerInfo.hpp"
 #include "database/objects/StarredArtist.hpp"
 #include "database/objects/StarredRelease.hpp"
 #include "database/objects/StarredTrack.hpp"
@@ -125,6 +126,7 @@ namespace lms::db
         _session.mapClass<UIState>("ui_state");
         _session.mapClass<Work>("work");
         _session.mapClass<User>("user");
+        _session.mapClass<ServerInfo>("server_info");
         _session.mapClass<VersionInfo>("version_info");
     }
 
@@ -189,6 +191,13 @@ namespace lms::db
 
         if (!ScanSettings::find(*this))
             create<ScanSettings>().modify()->setRecommendationEngineType(defaultRecommendationEngineType);
+    }
+
+    void Session::createServerInfoIfNeeded()
+    {
+        auto uniqueTransaction{ createWriteTransaction() };
+
+        ServerInfo::getOrCreate(*this);
     }
 
     void Session::createIndexesIfNeeded()

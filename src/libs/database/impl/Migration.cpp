@@ -36,7 +36,7 @@ namespace lms::db
 {
     namespace
     {
-        static constexpr Version LMS_DATABASE_VERSION{ 109 };
+        static constexpr Version LMS_DATABASE_VERSION{ 110 };
     }
 
     VersionInfo::VersionInfo()
@@ -1956,6 +1956,16 @@ CREATE TABLE IF NOT EXISTS "track_movement" (
         utils::executeCommand(*session.getDboSession(), "UPDATE scan_settings SET audio_scan_version = audio_scan_version + 1");
     }
 
+    void migrateFromV109(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(
+CREATE TABLE IF NOT EXISTS "server_info" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "instance_id" blob not null
+))");
+    }
+
     bool doDbMigration(Session& session)
     {
         constexpr std::string_view outdatedMsg{ "Outdated database, please rebuild it (delete the .db file and restart)" };
@@ -2041,6 +2051,7 @@ CREATE TABLE IF NOT EXISTS "track_movement" (
             { 106, migrateFromV106 },
             { 107, migrateFromV107 },
             { 108, migrateFromV108 },
+            { 109, migrateFromV109 },
         };
 
         LMS_SCOPED_TRACE_OVERVIEW("Database", "Migration");

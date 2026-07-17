@@ -24,6 +24,7 @@ add_library(lmsdatabase STATIC
 	impl/objects/RatedTrack.cpp
 	impl/objects/Release.cpp
 	impl/objects/ScanSettings.cpp
+	impl/objects/ServerInfo.cpp
 	impl/objects/StarredArtist.cpp
 	impl/objects/StarredRelease.cpp
 	impl/objects/StarredTrack.cpp

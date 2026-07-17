@@ -34,11 +34,13 @@
 #include "core/Service.hpp"
 #include "core/String.hpp"
 #include "core/SystemPaths.hpp"
+#include "core/UUID.hpp"
 
 #include "audio/IAudioOutput.hpp"
 #include "audio/IMusicNNEmbeddingExtractor.hpp"
 #include "database/IDb.hpp"
 #include "database/Session.hpp"
+#include "database/objects/ServerInfo.hpp"
 #include "database/profiling/IQueryProfiler.hpp"
 #include "image/Image.hpp"
 #include "services/artwork/IArtworkService.hpp"
@@ -109,6 +111,12 @@ namespace lms
                 return std::nullopt;
 
             throw core::LmsException{ "Invalid config value for 'jukebox-audio-backend'" };
+        }
+
+        core::UUID getServerInstanceId(db::Session& session)
+        {
+            auto transaction{ session.createReadTransaction() };
+            return db::ServerInfo::get(session)->getInstanceId();
         }
 
         std::error_code checkDirectoryAccessible(const std::filesystem::path& dir)
@@ -433,12 +441,16 @@ namespace lms
 
             // Connection pool size must be twice the number of threads: we have at least 2 io pools with getThreadCount() each and they all may access the database
             auto database{ db::createDb(config->getPath("working-dir", "/var/lms") / "lms.db", getThreadCount() * 2) };
+            core::UUID serverInstanceId;
             {
                 db::Session session{ *database };
                 session.prepareTablesIfNeeded();
                 bool migrationPerformed{ session.migrateSchemaIfNeeded() };
                 session.createScanSettingsIfNeeded(audio::canExtractMusicNNEmbeddings() ? db::RecommendationEngineType::AudioSimilarity : db::RecommendationEngineType::Clusters);
+                session.createServerInfoIfNeeded();
                 session.createIndexesIfNeeded();
+
+                serverInstanceId = getServerInstanceId(session);
 
                 // As this may be quite long, we only do it during startup
                 if (migrationPerformed)
@@ -517,8 +529,8 @@ namespace lms
 
             // bind UI entry point
             server.addEntryPoint(Wt::EntryPointType::Application,
-                                 [&database, &appManager, uiAuthenticationBackend](const Wt::WEnvironment& env) {
-                                     return ui::LmsApplication::create(env, *database, appManager, uiAuthenticationBackend);
+                                 [&database, &appManager, uiAuthenticationBackend, serverInstanceId](const Wt::WEnvironment& env) {
+                                     return ui::LmsApplication::create(env, *database, appManager, uiAuthenticationBackend, serverInstanceId);
                                  });
 
             proxyScannerEventsToApplication(*scannerService, server);
