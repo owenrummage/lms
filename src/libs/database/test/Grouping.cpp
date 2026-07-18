@@ -63,8 +63,8 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto orphans{ Grouping::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), grouping.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), grouping.getId());
         }
     }
 
@@ -76,7 +76,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Grouping::findOrphanIds(session).results.size(), 2);
+            EXPECT_EQ(Grouping::findOrphanIds(session).size(), 2);
             EXPECT_EQ(track->getGroupings().size(), 0);
             EXPECT_EQ(track->getGroupingIds().size(), 0);
         }
@@ -90,12 +90,12 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             const auto groupings{ Grouping::findIds(session, Grouping::FindParameters{}.setTrack(track.getId())) };
-            ASSERT_EQ(groupings.results.size(), 1);
-            EXPECT_EQ(groupings.results.front(), grouping1.getId());
+            ASSERT_EQ(groupings.size(), 1);
+            EXPECT_EQ(groupings.front(), grouping1.getId());
 
             const auto orphans{ Grouping::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), grouping2.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), grouping2.getId());
 
             const auto trackGroupings{ track->getGroupings() };
             ASSERT_EQ(trackGroupings.size(), 1);
@@ -109,11 +109,11 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGrouping(grouping1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGrouping(grouping2.getId()))) };
-            EXPECT_EQ(tracks2.results.size(), 0);
+            EXPECT_EQ(tracks2.size(), 0);
         }
     }
 
@@ -130,7 +130,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Grouping::findOrphanIds(session).results.size(), 0);
+            EXPECT_EQ(Grouping::findOrphanIds(session).size(), 0);
 
             const auto trackGroupings{ track->getGroupings() };
             EXPECT_EQ(trackGroupings.size(), 2);
@@ -139,12 +139,12 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGrouping(grouping1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGrouping(grouping2.getId()))) };
-            ASSERT_EQ(tracks2.results.size(), 1);
-            EXPECT_EQ(tracks2.results.front(), track.getId());
+            ASSERT_EQ(tracks2.size(), 1);
+            EXPECT_EQ(tracks2.front(), track.getId());
         }
     }
 
@@ -157,10 +157,10 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto groupings{ Grouping::findIds(session, Grouping::FindParameters{}.setSortMethod(GroupingSortMethod::Name)) };
-            ASSERT_EQ(groupings.results.size(), 3);
-            EXPECT_EQ(groupings.results[0], g2.getId());
-            EXPECT_EQ(groupings.results[1], g3.getId());
-            EXPECT_EQ(groupings.results[2], g1.getId());
+            ASSERT_EQ(groupings.size(), 3);
+            EXPECT_EQ(groupings[0], g2.getId());
+            EXPECT_EQ(groupings[1], g3.getId());
+            EXPECT_EQ(groupings[2], g1.getId());
         }
     }
 
@@ -182,9 +182,9 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto groupings{ Grouping::findIds(session, Grouping::FindParameters{}.setSortMethod(GroupingSortMethod::TrackCountDesc)) };
-            ASSERT_EQ(groupings.results.size(), 2);
-            EXPECT_EQ(groupings.results[0], g1.getId());
-            EXPECT_EQ(groupings.results[1], g2.getId());
+            ASSERT_EQ(groupings.size(), 2);
+            EXPECT_EQ(groupings[0], g1.getId());
+            EXPECT_EQ(groupings[1], g2.getId());
         }
     }
 } // namespace lms::db::tests

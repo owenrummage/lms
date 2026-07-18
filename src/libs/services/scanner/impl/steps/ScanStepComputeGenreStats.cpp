@@ -50,7 +50,7 @@ namespace lms::scanner
                 Genre::FindParameters params;
                 params.setRange(range);
                 auto transaction{ dbSession.createReadTransaction() };
-                return std::move(Genre::findIds(dbSession, params).results);
+                return Genre::findIds(dbSession, params);
             }() };
 
             for (const GenreId genreId : genreIds)
@@ -65,6 +65,7 @@ namespace lms::scanner
                     trackCount = Genre::computeTrackCount(dbSession, genreId);
                     releaseCount = Genre::computeReleaseCount(dbSession, genreId);
                 }
+
                 {
                     auto transaction{ dbSession.createWriteTransaction() };
                     auto genre{ Genre::find(dbSession, genreId) };

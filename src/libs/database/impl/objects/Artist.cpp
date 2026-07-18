@@ -22,6 +22,8 @@
 #include <Wt/Dbo/WtSqlTraits.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
+
 #include "database/Session.hpp"
 #include "database/objects/Artwork.hpp"
 #include "database/objects/Cluster.hpp"
@@ -135,14 +137,13 @@ namespace lms::db
 
             if (params.starringUser.isValid())
             {
-                assert(params.feedbackBackend);
                 query.join("starred_artist s_a ON s_a.artist_id = a.id")
+                    .join("user u ON u.id = s_a.user_id")
                     .where("s_a.user_id = ?")
                     .bind(params.starringUser)
-                    .where("s_a.backend = ?")
-                    .bind(*params.feedbackBackend)
                     .where("s_a.sync_state <> ?")
-                    .bind(SyncState::PendingRemove);
+                    .bind(SyncState::PendingRemove)
+                    .where("s_a.backend = u.feedback_backend");
             }
 
             if (params.filters.clusters.size() == 1)
@@ -160,7 +161,7 @@ namespace lms::db
                 WhereClause clusterClause;
                 for (const ClusterId clusterId : params.filters.clusters)
                 {
-                    clusterClause.Or(WhereClause("t_c.cluster_id = ?"));
+                    clusterClause.Or(WhereClause{ "t_c.cluster_id = ?" });
                     query.bind(clusterId);
                 }
 
@@ -305,8 +306,7 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        if (name.size() > maxNameLength)
-            name = name.substr(0, maxNameLength);
+        name = core::stringUtils::utf8Truncate(name, maxNameLength);
 
         return utils::fetchQueryResults<Artist::pointer>(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.name = ?").bind(name).orderBy("LENGTH(a.mbid) DESC")); // put mbid entries first
     }
@@ -323,7 +323,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<Wt::Dbo::ptr<Artist>>("SELECT a FROM artist a").where("a.id = ?").bind(id));
     }
 
-    RangeResults<ArtistId> Artist::findIds(Session& session, const FindParameters& params)
+    std::vector<ArtistId> Artist::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 
@@ -331,7 +331,7 @@ namespace lms::db
         return utils::execRangeQuery<ArtistId>(query, params.range);
     }
 
-    RangeResults<Artist::pointer> Artist::find(Session& session, const FindParameters& params)
+    std::vector<Artist::pointer> Artist::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
 
@@ -357,7 +357,7 @@ namespace lms::db
         return IdRange<ArtistId>{ .first = std::get<0>(res), .last = std::get<1>(res) };
     }
 
-    RangeResults<ArtistId> Artist::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ArtistId> Artist::findOrphanIds(Session& session, std::optional<Range> range)
     {
         // TODO extend with release artists
         session.checkReadTransaction();
@@ -388,7 +388,7 @@ AND NOT EXISTS (
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT 1 FROM artist").where("id = ?").bind(id)) == 1;
     }
 
-    RangeResults<Artist::pointer> Artist::findWithMBIDNameVariants(Session& session, ArtistId& lastRetrievedArtist, std::optional<Range> range)
+    std::vector<Artist::pointer> Artist::findWithMBIDNameVariants(Session& session, ArtistId& lastRetrievedArtist, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -407,8 +407,8 @@ AND NOT EXISTS (
 
         auto results{ utils::execRangeQuery<Artist::pointer>(query, range) };
 
-        if (!results.results.empty())
-            lastRetrievedArtist = results.results.back()->getId();
+        if (!results.empty())
+            lastRetrievedArtist = results.back()->getId();
 
         return results;
     }
@@ -442,11 +442,11 @@ AND NOT EXISTS (
         std::ostringstream oss;
         oss << "SELECT c FROM cluster c INNER JOIN track t ON c.id = t_c.cluster_id INNER JOIN track_cluster t_c ON t_c.track_id = t.id INNER JOIN cluster_type c_type ON c.cluster_type_id = c_type.id INNER JOIN artist a ON t_a_l.artist_id = a.id INNER JOIN track_artist_link t_a_l ON t_a_l.track_id = t.id";
 
-        where.And(WhereClause("a.id = ?")).bind(getId().toString());
+        where.And(WhereClause{ "a.id = ?" }).bind(getId().toString());
         {
             WhereClause clusterClause;
             for (const ClusterTypeId clusterTypeId : clusterTypeIds)
-                clusterClause.Or(WhereClause("c_type.id = ?")).bind(clusterTypeId.toString());
+                clusterClause.Or(WhereClause{ "c_type.id = ?" }).bind(clusterTypeId.toString());
 
             where.And(clusterClause);
         }
@@ -474,13 +474,13 @@ AND NOT EXISTS (
 
     void Artist::setName(std::string_view name)
     {
-        _name.assign(name, 0, maxNameLength);
+        _name = core::stringUtils::utf8Truncate(name, maxNameLength);
         LMS_LOG_IF(DB, WARNING, name.size() > maxNameLength, "Artist name too long, truncated to '" << _name << "'");
     }
 
     void Artist::setSortName(std::string_view sortName)
     {
-        _sortName.assign(sortName, 0, maxNameLength);
+        _sortName = core::stringUtils::utf8Truncate(sortName, maxNameLength);
         LMS_LOG_IF(DB, WARNING, sortName.size() > maxNameLength, "Artist sort name too long, truncated to '" << _sortName << "'");
     }
 

@@ -65,8 +65,8 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto orphans{ Genre::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), genre.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), genre.getId());
         }
     }
 
@@ -78,7 +78,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Genre::findOrphanIds(session).results.size(), 2);
+            EXPECT_EQ(Genre::findOrphanIds(session).size(), 2);
             EXPECT_EQ(track->getGenres().size(), 0);
             EXPECT_EQ(track->getGenreIds().size(), 0);
             EXPECT_EQ(Genre::computeTrackCount(session, genre1.getId()), 0);
@@ -94,15 +94,15 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             const auto genres{ Genre::findIds(session, Genre::FindParameters{}.setTrack(track.getId())) };
-            ASSERT_EQ(genres.results.size(), 1);
-            EXPECT_EQ(genres.results.front(), genre1.getId());
+            ASSERT_EQ(genres.size(), 1);
+            EXPECT_EQ(genres.front(), genre1.getId());
 
             EXPECT_EQ(Genre::computeTrackCount(session, genre1.getId()), 1);
             EXPECT_EQ(Genre::computeTrackCount(session, genre2.getId()), 0);
 
             const auto orphans{ Genre::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), genre2.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), genre2.getId());
 
             const auto trackGenres{ track->getGenres() };
             ASSERT_EQ(trackGenres.size(), 1);
@@ -116,11 +116,11 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGenre(genre1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGenre(genre2.getId()))) };
-            EXPECT_EQ(tracks2.results.size(), 0);
+            EXPECT_EQ(tracks2.size(), 0);
         }
     }
 
@@ -139,7 +139,7 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
             EXPECT_EQ(Genre::computeTrackCount(session, genre1.getId()), 1);
             EXPECT_EQ(Genre::computeTrackCount(session, genre2.getId()), 1);
-            EXPECT_EQ(Genre::findOrphanIds(session).results.size(), 0);
+            EXPECT_EQ(Genre::findOrphanIds(session).size(), 0);
 
             const auto trackGenres{ track->getGenres() };
             EXPECT_EQ(trackGenres.size(), 2);
@@ -148,12 +148,12 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGenre(genre1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setGenre(genre2.getId()))) };
-            ASSERT_EQ(tracks2.results.size(), 1);
-            EXPECT_EQ(tracks2.results.front(), track.getId());
+            ASSERT_EQ(tracks2.size(), 1);
+            EXPECT_EQ(tracks2.front(), track.getId());
         }
     }
 
@@ -200,10 +200,10 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto genres{ Genre::findIds(session, Genre::FindParameters{}.setSortMethod(GenreSortMethod::Name)) };
-            ASSERT_EQ(genres.results.size(), 3);
-            EXPECT_EQ(genres.results[0], g2.getId());
-            EXPECT_EQ(genres.results[1], g3.getId());
-            EXPECT_EQ(genres.results[2], g1.getId());
+            ASSERT_EQ(genres.size(), 3);
+            EXPECT_EQ(genres[0], g2.getId());
+            EXPECT_EQ(genres[1], g3.getId());
+            EXPECT_EQ(genres[2], g1.getId());
         }
     }
 
@@ -225,9 +225,9 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto genres{ Genre::findIds(session, Genre::FindParameters{}.setSortMethod(GenreSortMethod::TrackCountDesc)) };
-            ASSERT_EQ(genres.results.size(), 2);
-            EXPECT_EQ(genres.results[0], g1.getId());
-            EXPECT_EQ(genres.results[1], g2.getId());
+            ASSERT_EQ(genres.size(), 2);
+            EXPECT_EQ(genres[0], g1.getId());
+            EXPECT_EQ(genres[1], g2.getId());
         }
     }
 } // namespace lms::db::tests

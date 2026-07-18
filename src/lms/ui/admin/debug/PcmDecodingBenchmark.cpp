@@ -81,7 +81,7 @@ namespace lms::ui
             const auto results{ db::Track::find(session, params) };
 
             std::vector<TrackEntry> entries;
-            for (const db::Track::pointer& track : results.results)
+            for (const db::Track::pointer& track : results)
             {
                 const auto trackDuration{ track->getDuration() };
                 if (trackDuration >= minTrackDuration && trackDuration <= maxTrackDuration)

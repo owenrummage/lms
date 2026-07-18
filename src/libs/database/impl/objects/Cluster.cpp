@@ -31,12 +31,14 @@
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
 #include "database/objects/Mood.hpp"
+#include "database/objects/Movement.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/TrackEmbeddedImage.hpp"
 #include "database/objects/TrackEmbeddedImageLink.hpp"
 #include "database/objects/TrackLyrics.hpp"
+#include "database/objects/Work.hpp"
 
 #include "Utils.hpp"
 #include "traits/IdTypeTraits.hpp"
@@ -130,7 +132,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM cluster"));
     }
 
-    RangeResults<ClusterId> Cluster::findIds(Session& session, const FindParameters& params)
+    std::vector<ClusterId> Cluster::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<ClusterId>(session, params) };
@@ -138,7 +140,7 @@ namespace lms::db
         return utils::execRangeQuery<ClusterId>(query, params.range);
     }
 
-    RangeResults<Cluster::pointer> Cluster::find(Session& session, const FindParameters& params)
+    std::vector<Cluster::pointer> Cluster::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Cluster>>(session, params) };
@@ -154,7 +156,7 @@ namespace lms::db
         return utils::forEachQueryResult(query, _func);
     }
 
-    RangeResults<ClusterId> Cluster::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ClusterId> Cluster::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<ClusterId>("SELECT DISTINCT c.id FROM cluster c WHERE NOT EXISTS(SELECT 1 FROM track_cluster t_c WHERE t_c.cluster_id = c.id)") };
@@ -188,7 +190,7 @@ namespace lms::db
         _tracks.insert(getDboPtr(track));
     }
 
-    RangeResults<TrackId> Cluster::getTracks(std::optional<Range> range) const
+    std::vector<TrackId> Cluster::getTracks(std::optional<Range> range) const
     {
         assert(session());
 
@@ -217,7 +219,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM cluster_type"));
     }
 
-    RangeResults<ClusterTypeId> ClusterType::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<ClusterTypeId> ClusterType::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -229,7 +231,7 @@ namespace lms::db
         return utils::execRangeQuery<ClusterTypeId>(query, range);
     }
 
-    RangeResults<ClusterTypeId> ClusterType::findUsed(Session& session, std::optional<Range> range)
+    std::vector<ClusterTypeId> ClusterType::findUsed(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 
@@ -263,7 +265,7 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->find<ClusterType>().where("id = ?").bind(id));
     }
 
-    RangeResults<ClusterTypeId> ClusterType::findIds(Session& session, std::optional<Range> range)
+    std::vector<ClusterTypeId> ClusterType::findIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
 

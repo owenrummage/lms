@@ -236,7 +236,7 @@ namespace lms::api::subsonic
         std::string artistName{ getParameterAs<std::string>(context.getParameters(), "artist").value_or("") };
         std::string titleName{ getParameterAs<std::string>(context.getParameters(), "title").value_or("") };
 
-        Response response{ Response::createOkResponse(context.getServerProtocolVersion()) };
+        Response response{ Response::createOkResponse() };
 
         // best effort search, as this API is really limited
         auto transaction{ context.getDbSession().createReadTransaction() };
@@ -248,11 +248,11 @@ namespace lms::api::subsonic
 
         // Choice: we return nothing if there are too many results
         const auto tracks{ db::Track::findIds(context.getDbSession(), params) };
-        if (tracks.results.size() == 1)
+        if (tracks.size() == 1)
         {
             // Choice: we return only the first lyrics if the track has many lyrics
             db::TrackLyrics::FindParameters lyricsParams;
-            lyricsParams.setTrack(tracks.results[0]);
+            lyricsParams.setTrack(tracks[0]);
             lyricsParams.setSortMethod(db::TrackLyricsSortMethod::ExternalFirst);
             lyricsParams.setRange(db::Range{ 0, 1 });
 
@@ -269,7 +269,7 @@ namespace lms::api::subsonic
         // mandatory params
         db::TrackId id{ getMandatoryParameterAs<db::TrackId>(context.getParameters(), "id") };
 
-        Response response{ Response::createOkResponse(context.getServerProtocolVersion()) };
+        Response response{ Response::createOkResponse() };
         Response::Node& lyricsList{ response.createNode("lyricsList") };
         lyricsList.createEmptyArrayChild("structuredLyrics");
 

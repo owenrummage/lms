@@ -33,6 +33,7 @@
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackEmbeddedImage.hpp"
+#include "database/objects/Work.hpp"
 
 #include "ScanContext.hpp"
 
@@ -52,6 +53,7 @@ namespace lms::scanner
         removeOrphanedGroupings(context);
         removeOrphanedLanguages(context);
         removeOrphanedMoods(context);
+        removeOrphanedWorks(context);
         removeOrphanedArtists(context);
         removeOrphanedReleases(context);
         removeOrphanedMediums(context); // after release so that most entries are removed using the medium foreign key
@@ -96,6 +98,12 @@ namespace lms::scanner
     {
         LMS_LOG(DBUPDATER, DEBUG, "Checking orphaned moods...");
         removeOrphanedEntries<db::Mood>(context);
+    }
+
+    void ScanStepRemoveOrphanedDbEntries::removeOrphanedWorks(ScanContext& context)
+    {
+        LMS_LOG(DBUPDATER, DEBUG, "Checking orphaned works...");
+        removeOrphanedEntries<db::Work>(context);
     }
 
     void ScanStepRemoveOrphanedDbEntries::removeOrphanedArtists(ScanContext& context)
@@ -155,7 +163,7 @@ namespace lms::scanner
 
         db::Session& session{ _db.getTLSSession() };
 
-        db::RangeResults<IdType> entries;
+        std::vector<IdType> entries;
         while (!_abortScan)
         {
             {
@@ -164,16 +172,16 @@ namespace lms::scanner
                 entries = T::findOrphanIds(session, db::Range{ 0, batchSize });
             };
 
-            if (entries.results.empty())
+            if (entries.empty())
                 break;
 
             {
                 auto transaction{ session.createWriteTransaction() };
 
-                session.destroy<T>(entries.results);
+                session.destroy<T>(entries);
             }
 
-            context.currentStepStats.processedElems += entries.results.size();
+            context.currentStepStats.processedElems += entries.size();
             _progressCallback(context.currentStepStats);
         }
     }

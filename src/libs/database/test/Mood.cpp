@@ -63,8 +63,8 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto orphans{ Mood::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), mood.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), mood.getId());
         }
     }
 
@@ -76,7 +76,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Mood::findOrphanIds(session).results.size(), 2);
+            EXPECT_EQ(Mood::findOrphanIds(session).size(), 2);
             EXPECT_EQ(track->getMoods().size(), 0);
             EXPECT_EQ(track->getMoodIds().size(), 0);
         }
@@ -90,12 +90,12 @@ namespace lms::db::tests
             auto transaction{ session.createReadTransaction() };
 
             const auto moods{ Mood::findIds(session, Mood::FindParameters{}.setTrack(track.getId())) };
-            ASSERT_EQ(moods.results.size(), 1);
-            EXPECT_EQ(moods.results.front(), mood1.getId());
+            ASSERT_EQ(moods.size(), 1);
+            EXPECT_EQ(moods.front(), mood1.getId());
 
             const auto orphans{ Mood::findOrphanIds(session) };
-            ASSERT_EQ(orphans.results.size(), 1);
-            EXPECT_EQ(orphans.results.front(), mood2.getId());
+            ASSERT_EQ(orphans.size(), 1);
+            EXPECT_EQ(orphans.front(), mood2.getId());
 
             const auto trackMoods{ track->getMoods() };
             ASSERT_EQ(trackMoods.size(), 1);
@@ -109,11 +109,11 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMood(mood1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMood(mood2.getId()))) };
-            EXPECT_EQ(tracks2.results.size(), 0);
+            EXPECT_EQ(tracks2.size(), 0);
         }
     }
 
@@ -130,7 +130,7 @@ namespace lms::db::tests
 
         {
             auto transaction{ session.createReadTransaction() };
-            EXPECT_EQ(Mood::findOrphanIds(session).results.size(), 0);
+            EXPECT_EQ(Mood::findOrphanIds(session).size(), 0);
 
             const auto trackMoods{ track->getMoods() };
             EXPECT_EQ(trackMoods.size(), 2);
@@ -139,12 +139,12 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMood(mood1.getId()))) };
-            ASSERT_EQ(tracks.results.size(), 1);
-            EXPECT_EQ(tracks.results.front(), track.getId());
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track.getId());
 
             const auto tracks2{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMood(mood2.getId()))) };
-            ASSERT_EQ(tracks2.results.size(), 1);
-            EXPECT_EQ(tracks2.results.front(), track.getId());
+            ASSERT_EQ(tracks2.size(), 1);
+            EXPECT_EQ(tracks2.front(), track.getId());
         }
     }
 
@@ -157,10 +157,10 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto moods{ Mood::findIds(session, Mood::FindParameters{}.setSortMethod(MoodSortMethod::Name)) };
-            ASSERT_EQ(moods.results.size(), 3);
-            EXPECT_EQ(moods.results[0], m2.getId());
-            EXPECT_EQ(moods.results[1], m3.getId());
-            EXPECT_EQ(moods.results[2], m1.getId());
+            ASSERT_EQ(moods.size(), 3);
+            EXPECT_EQ(moods[0], m2.getId());
+            EXPECT_EQ(moods[1], m3.getId());
+            EXPECT_EQ(moods[2], m1.getId());
         }
     }
 
@@ -182,9 +182,9 @@ namespace lms::db::tests
         {
             auto transaction{ session.createReadTransaction() };
             const auto moods{ Mood::findIds(session, Mood::FindParameters{}.setSortMethod(MoodSortMethod::TrackCountDesc)) };
-            ASSERT_EQ(moods.results.size(), 2);
-            EXPECT_EQ(moods.results[0], m1.getId());
-            EXPECT_EQ(moods.results[1], m2.getId());
+            ASSERT_EQ(moods.size(), 2);
+            EXPECT_EQ(moods[0], m1.getId());
+            EXPECT_EQ(moods[1], m2.getId());
         }
     }
 } // namespace lms::db::tests

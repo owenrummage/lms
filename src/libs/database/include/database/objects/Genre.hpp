@@ -82,12 +82,12 @@ namespace lms::db
         Genre() = default;
 
         static std::size_t getCount(Session& session);
-        static RangeResults<GenreId> findIds(Session& session, const FindParameters& params);
-        static RangeResults<pointer> find(Session& session, const FindParameters& params);
+        static std::vector<GenreId> findIds(Session& session, const FindParameters& params);
+        static std::vector<pointer> find(Session& session, const FindParameters& params);
         static void find(Session& session, const FindParameters& params, std::function<void(const pointer&)> func);
         static pointer find(Session& session, GenreId id);
         static pointer find(Session& session, std::string_view name);
-        static RangeResults<GenreId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
+        static std::vector<GenreId> findOrphanIds(Session& session, std::optional<Range> range = std::nullopt);
 
         static std::size_t computeTrackCount(Session& session, GenreId id);
         static std::size_t computeReleaseCount(Session& session, GenreId id);

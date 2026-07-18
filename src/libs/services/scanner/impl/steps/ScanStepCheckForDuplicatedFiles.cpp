@@ -41,8 +41,8 @@ namespace lms::scanner
         Session& session{ _db.getTLSSession() };
         auto transaction{ session.createReadTransaction() };
 
-        const RangeResults<TrackId> tracks = Track::findIdsTrackMBIDDuplicates(session);
-        for (const TrackId trackId : tracks.results)
+        const std::vector<TrackId> tracks = Track::findIdsTrackMBIDDuplicates(session);
+        for (const TrackId trackId : tracks)
         {
             if (_abortScan)
                 break;

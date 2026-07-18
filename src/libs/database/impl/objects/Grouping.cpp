@@ -22,6 +22,7 @@
 #include <Wt/Dbo/Impl.h>
 
 #include "core/ILogger.hpp"
+#include "core/String.hpp"
 
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
@@ -33,12 +34,14 @@
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Medium.hpp"
 #include "database/objects/Mood.hpp"
+#include "database/objects/Movement.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackArtistLink.hpp"
 #include "database/objects/TrackEmbeddedImage.hpp"
 #include "database/objects/TrackEmbeddedImageLink.hpp"
 #include "database/objects/TrackLyrics.hpp"
+#include "database/objects/Work.hpp"
 
 #include "Utils.hpp"
 #include "traits/IdTypeTraits.hpp"
@@ -112,7 +115,7 @@ namespace lms::db
     } // namespace
 
     Grouping::Grouping(std::string_view name)
-        : _name{ name.substr(0, maxNameLength) }
+        : _name{ core::stringUtils::utf8Truncate(name, maxNameLength) }
     {
         LMS_LOG_IF(DB, WARNING, name.size() > maxNameLength, "Grouping name too long, truncated to '" << _name << "'");
     }
@@ -128,14 +131,14 @@ namespace lms::db
         return utils::fetchQuerySingleResult(session.getDboSession()->query<int>("SELECT COUNT(*) FROM grouping"));
     }
 
-    RangeResults<GroupingId> Grouping::findIds(Session& session, const FindParameters& params)
+    std::vector<GroupingId> Grouping::findIds(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<GroupingId>(session, params) };
         return utils::execRangeQuery<GroupingId>(query, params.range);
     }
 
-    RangeResults<Grouping::pointer> Grouping::find(Session& session, const FindParameters& params)
+    std::vector<Grouping::pointer> Grouping::find(Session& session, const FindParameters& params)
     {
         session.checkReadTransaction();
         auto query{ createQuery<Wt::Dbo::ptr<Grouping>>(session, params) };
@@ -159,13 +162,12 @@ namespace lms::db
     {
         session.checkReadTransaction();
 
-        if (name.size() > maxNameLength)
-            name = name.substr(0, maxNameLength);
+        name = core::stringUtils::utf8Truncate(name, maxNameLength);
 
         return utils::fetchQuerySingleResult(session.getDboSession()->find<Grouping>().where("name = ?").bind(name));
     }
 
-    RangeResults<GroupingId> Grouping::findOrphanIds(Session& session, std::optional<Range> range)
+    std::vector<GroupingId> Grouping::findOrphanIds(Session& session, std::optional<Range> range)
     {
         session.checkReadTransaction();
         auto query{ session.getDboSession()->query<GroupingId>("SELECT g.id FROM grouping g WHERE NOT EXISTS (SELECT 1 FROM track_grouping t_gr WHERE t_gr.grouping_id = g.id)") };
