@@ -161,7 +161,7 @@ namespace lms::db
                 WhereClause clusterClause;
                 for (const ClusterId clusterId : params.filters.clusters)
                 {
-                    clusterClause.Or(WhereClause("t_c.cluster_id = ?"));
+                    clusterClause.Or(WhereClause{ "t_c.cluster_id = ?" });
                     query.bind(clusterId);
                 }
 
@@ -442,11 +442,11 @@ AND NOT EXISTS (
         std::ostringstream oss;
         oss << "SELECT c FROM cluster c INNER JOIN track t ON c.id = t_c.cluster_id INNER JOIN track_cluster t_c ON t_c.track_id = t.id INNER JOIN cluster_type c_type ON c.cluster_type_id = c_type.id INNER JOIN artist a ON t_a_l.artist_id = a.id INNER JOIN track_artist_link t_a_l ON t_a_l.track_id = t.id";
 
-        where.And(WhereClause("a.id = ?")).bind(getId().toString());
+        where.And(WhereClause{ "a.id = ?" }).bind(getId().toString());
         {
             WhereClause clusterClause;
             for (const ClusterTypeId clusterTypeId : clusterTypeIds)
-                clusterClause.Or(WhereClause("c_type.id = ?")).bind(clusterTypeId.toString());
+                clusterClause.Or(WhereClause{ "c_type.id = ?" }).bind(clusterTypeId.toString());
 
             where.And(clusterClause);
         }

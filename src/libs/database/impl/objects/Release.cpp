@@ -236,7 +236,7 @@ namespace lms::db
                 WhereClause clusterClause;
                 for (const ClusterId clusterId : params.filters.clusters)
                 {
-                    clusterClause.Or(WhereClause("t_c.cluster_id = ?"));
+                    clusterClause.Or(WhereClause{ "t_c.cluster_id = ?" });
                     query.bind(clusterId);
                 }
 
@@ -1003,11 +1003,11 @@ namespace lms::db
 
         oss << "SELECT c from cluster c INNER JOIN track_cluster t_c ON t_c.cluster_id = c.id INNER JOIN track t ON t.id = t_c.track_id ";
 
-        where.And(WhereClause("t.release_id = ?")).bind(getId().toString());
+        where.And(WhereClause{ "t.release_id = ?" }).bind(getId().toString());
         {
             WhereClause clusterClause;
             for (const ClusterTypeId clusterTypeId : clusterTypeIds)
-                clusterClause.Or(WhereClause("c.cluster_type_id = ?")).bind(clusterTypeId.toString());
+                clusterClause.Or(WhereClause{ "c.cluster_type_id = ?" }).bind(clusterTypeId.toString());
             where.And(clusterClause);
         }
         oss << " " << where.get();

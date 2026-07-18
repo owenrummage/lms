@@ -138,7 +138,7 @@ namespace lms::ui
                     return Wt::WFormModel::validateField(field);
                 }
 
-                setValidation(field, Wt::WValidator::Result(error.empty() ? Wt::ValidationState::Valid : Wt::ValidationState::Invalid, error));
+                setValidation(field, Wt::WValidator::Result{ error.empty() ? Wt::ValidationState::Valid : Wt::ValidationState::Invalid, error });
 
                 return (validation(field).state() == Wt::ValidationState::Valid);
             }

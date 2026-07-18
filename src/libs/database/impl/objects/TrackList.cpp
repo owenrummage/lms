@@ -115,7 +115,7 @@ namespace lms::db
                 WhereClause clusterClause;
                 for (const ClusterId clusterId : params.filters.clusters)
                 {
-                    clusterClause.Or(WhereClause("c.id = ?"));
+                    clusterClause.Or(WhereClause{ "c.id = ?" });
                     query.bind(clusterId);
                 }
 
