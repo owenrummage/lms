@@ -32,6 +32,7 @@ namespace lms::api::subsonic
     struct SubsonicResourceConfig
     {
         std::unordered_set<std::string> openSubsonicDisabledClients;
+        bool logRequests{};
     };
 
     SubsonicResourceConfig readSubsonicResourceConfig(core::IConfig& _config);

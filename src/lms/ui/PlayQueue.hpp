@@ -21,6 +21,7 @@
 
 #include <optional>
 #include <span>
+#include <variant>
 
 #include <Wt/WCheckBox.h>
 #include <Wt/WContainerWidget.h>
@@ -31,6 +32,7 @@
 
 #include "database/Object.hpp"
 #include "database/objects/TrackId.hpp"
+#include "database/objects/PodcastEpisodeId.hpp"
 #include "database/objects/TrackListId.hpp"
 
 #include "common/Template.hpp"
@@ -59,6 +61,7 @@ namespace lms::ui
         void playShuffled(std::span<const db::TrackId> trackIds);
         void playOrAddLast(std::span<const db::TrackId> trackIds); // play if queue empty, otherwise just add last
         void playAtIndex(std::span<const db::TrackId> trackIds, std::size_t index);
+        void playPodcastEpisodes(std::span<const db::PodcastEpisodeId> episodeIds, std::size_t index);
 
         // play the next track in the queue
         void playNext();
@@ -68,6 +71,7 @@ namespace lms::ui
 
         // Signal emitted when a track is to be load(and optionally played)
         Wt::Signal<db::TrackId, bool /*play*/, float /* replayGain */> trackSelected;
+        Wt::Signal<db::PodcastEpisodeId, bool /*play*/> podcastEpisodeSelected;
 
         // Signal emitted when track is unselected (has to be stopped)
         Wt::Signal<> trackUnselected;
@@ -88,8 +92,10 @@ namespace lms::ui
         bool isFull() const;
 
         void clearTracks();
+        using MediaId = std::variant<db::TrackId, db::PodcastEpisodeId>;
+        void enqueueMedia(std::span<const MediaId> mediaIds);
         void enqueueTracks(std::span<const db::TrackId> trackIds);
-        std::vector<db::TrackId> getAndClearTracksFrom(std::size_t pos);
+        std::vector<MediaId> getAndClearMediaFrom(std::size_t pos);
         void advanceTrack(ResetNextPlayPos resetNextPlayPos);
         void addSome();
         void addEntry(const db::ObjectPtr<db::TrackListEntry>& entry);

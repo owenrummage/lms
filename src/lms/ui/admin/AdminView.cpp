@@ -21,6 +21,8 @@
 
 #include "DebugToolsView.hpp"
 #include "MediaLibrariesView.hpp"
+#include "InternetRadioView.hpp"
+#include "PodcastsView.hpp"
 #include "ScanSettingsView.hpp"
 #include "ScannerController.hpp"
 #include "UserView.hpp"
@@ -34,6 +36,8 @@ namespace lms::ui
         auto* router{ addNew<PathRouter>() };
 
         router->add<MediaLibrariesView>("/admin/libraries", Wt::WString::tr("Lms.Admin.MediaLibraries.media-libraries"));
+        router->add<PodcastSettingsView>("/admin/podcasts", Wt::WString::tr("Lms.Admin.Podcasts.podcasts"));
+        router->add<InternetRadioView>("/admin/internet-radio", Wt::WString::tr("Lms.Admin.InternetRadio.title"));
         router->add<ScanSettingsView>("/admin/scan-settings", Wt::WString::tr("Lms.Admin.Database.scan-settings"));
         router->add<ScannerController>("/admin/scanner", Wt::WString::tr("Lms.Admin.ScannerController.scanner"));
         router->add<UsersView>("/admin/users", Wt::WString::tr("Lms.Admin.Users.users"));

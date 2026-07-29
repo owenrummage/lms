@@ -69,7 +69,7 @@ namespace lms::api::subsonic
                 Release::FindParameters params;
                 params.setSortMethod(ReleaseSortMethod::Name);
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = Release::findIds(context.getDbSession(), params);
             }
@@ -78,7 +78,7 @@ namespace lms::api::subsonic
                 Release::FindParameters params;
                 params.setSortMethod(ReleaseSortMethod::ArtistNameThenName);
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = Release::findIds(context.getDbSession(), params);
             }
@@ -90,7 +90,7 @@ namespace lms::api::subsonic
                 if (const Genre::pointer genreObj{ Genre::find(context.getDbSession(), genre) })
                 {
                     Release::FindParameters params;
-                    params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
                     params.filters.setGenre(genreObj->getId());
                     params.setSortMethod(ReleaseSortMethod::Name);
                     params.setRange(range);
@@ -107,7 +107,7 @@ namespace lms::api::subsonic
                 params.setSortMethod(fromYear > toYear ? ReleaseSortMethod::OriginalDateDesc : ReleaseSortMethod::OriginalDate);
                 params.setRange(range);
                 params.setOriginalDateRange(YearRange{ std::min(fromYear, toYear), std::max(fromYear, toYear) });
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = Release::findIds(context.getDbSession(), params);
             }
@@ -116,7 +116,7 @@ namespace lms::api::subsonic
                 scrobbling::IScrobblingService::FindParameters params;
                 params.setUser(context.getUser()->getId());
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = scrobblingService.getTopReleases(params);
             }
@@ -125,7 +125,7 @@ namespace lms::api::subsonic
                 Release::FindParameters params;
                 params.setSortMethod(ReleaseSortMethod::AddedDesc);
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = Release::findIds(context.getDbSession(), params);
             }
@@ -136,7 +136,7 @@ namespace lms::api::subsonic
                 Release::FindParameters params;
                 params.setSortMethod(ReleaseSortMethod::Random);
                 params.setRange(Range{ 0, size });
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = Release::findIds(context.getDbSession(), params);
             }
@@ -145,7 +145,7 @@ namespace lms::api::subsonic
                 scrobbling::IScrobblingService::FindParameters params;
                 params.setUser(context.getUser()->getId());
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = scrobblingService.getRecentReleases(params);
             }
@@ -154,7 +154,7 @@ namespace lms::api::subsonic
                 feedback::IFeedbackService::FindParameters params;
                 params.setUser(context.getUser()->getId());
                 params.setRange(range);
-                params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
                 releases = feedbackService.findStarredReleases(params);
             }
@@ -202,7 +202,7 @@ namespace lms::api::subsonic
 
             feedback::IFeedbackService::FindParameters findParameters;
             findParameters.setUser(context.getUser()->getId());
-            findParameters.filters.setMediaLibrary(mediaLibrary);
+context.applyUserLibraryFilter(findParameters.filters, mediaLibrary);
 
             for (const ReleaseId releaseId : feedbackService.findStarredReleases(findParameters))
             {
@@ -246,7 +246,7 @@ namespace lms::api::subsonic
         Track::FindParameters params;
         params.setSortMethod(TrackSortMethod::Random);
         params.setRange(Range{ 0, size });
-        params.filters.setMediaLibrary(mediaLibraryId);
+context.applyUserLibraryFilter(params.filters, mediaLibraryId);
 
         Track::find(context.getDbSession(), params, [&](const Track::pointer& track) {
             randomSongsNode.addArrayChild("song", createSongNode(context, track, context.getUser()));
@@ -279,7 +279,7 @@ namespace lms::api::subsonic
 
         Track::FindParameters params;
         params.filters.setGenre(genreObj->getId());
-        params.filters.setMediaLibrary(mediaLibrary);
+context.applyUserLibraryFilter(params.filters, mediaLibrary);
         params.setRange(Range{ offset, count });
 
         Track::find(context.getDbSession(), params, [&](const Track::pointer& track) {

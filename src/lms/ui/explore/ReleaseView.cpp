@@ -58,6 +58,7 @@
 #include "LmsApplicationException.hpp"
 #include "MediaPlayer.hpp"
 #include "ModalManager.hpp"
+#include "ShareUtils.hpp"
 #include "Utils.hpp"
 #include "common/Template.hpp"
 #include "explore/Filters.hpp"
@@ -262,7 +263,7 @@ namespace lms::ui
         auto transaction{ session.createReadTransaction() };
 
         const db::Release::pointer release{ db::Release::find(session, *releaseId) };
-        if (!release)
+        if (!release || !_filters.isReleaseAllowed(*releaseId))
             throw ReleaseNotFoundException{};
 
         LmsApp->setTitle(std::string{ release->getName() });
@@ -385,6 +386,9 @@ namespace lms::ui
             .connect([this] {
                 showReleaseInfoModal(_releaseId);
             });
+
+        bindNew<Wt::WPushButton>("share", "Share")
+            ->clicked().connect([this] { shareUtils::share(_releaseId); });
 
         {
             auto isStarred{ [this] { return core::Service<feedback::IFeedbackService>::get()->isStarred(LmsApp->getUserId(), _releaseId); } };
@@ -560,6 +564,7 @@ namespace lms::ui
     Release::TrackInfoList Release::collectMediumTrackInfoList(const db::Medium::pointer& medium)
     {
         db::Track::FindParameters params;
+        params.setFilters(_filters.getDbFilters());
         params.setMedium(medium->getId());
         params.setSortMethod(db::TrackSortMethod::TrackNumber);
 
@@ -690,6 +695,9 @@ namespace lms::ui
                 entry->bindNew<Wt::WPushButton>("download", Wt::WString::tr("Lms.Explore.download"))
                     ->setLink(Wt::WLink{ std::make_unique<DownloadTrackResource>(trackId) });
             }
+
+            entry->bindNew<Wt::WPushButton>("share", "Share")
+                ->clicked().connect([trackId] { shareUtils::share(trackId); });
 
             entry->bindNew<Wt::WPushButton>("track-info", Wt::WString::tr("Lms.Explore.track-info"))
                 ->clicked()

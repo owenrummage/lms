@@ -43,6 +43,7 @@ namespace lms::api::subsonic
     {
         return SubsonicResourceConfig{
             .openSubsonicDisabledClients = readOpenSubsonicDisabledClients(config),
+            .logRequests = config.getBool("api-subsonic-log-requests", false),
         };
     }
 } // namespace lms::api::subsonic

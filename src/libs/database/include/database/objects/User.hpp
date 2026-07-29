@@ -31,11 +31,13 @@
 #include "database/Object.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Types.hpp"
+#include "database/objects/MediaLibraryId.hpp"
 #include "database/objects/UserId.hpp"
 
 namespace lms::db
 {
     class AuthToken;
+    class MediaLibrary;
     class Session;
     class UIState;
 
@@ -94,12 +96,17 @@ namespace lms::db
 
         // accessors
         const std::string& getLoginName() const { return _loginName; }
+        const std::string& getDisplayName() const { return _displayName; }
         PasswordHash getPasswordHash() const { return PasswordHash{ .bcryptRoundCount = static_cast<std::size_t>(_bcryptRoundCount), .salt = _passwordSalt, .hash = _passwordHash }; }
         const Wt::WDateTime& getLastLogin() const { return _lastLogin; }
         std::size_t getAuthTokensCount() const { return _authTokens.size(); }
+        std::vector<ObjectPtr<MediaLibrary>> getMediaLibraries() const;
+        bool hasMediaLibrary(MediaLibraryId mediaLibraryId) const;
 
         // write
         void setLastLogin(const Wt::WDateTime& dateTime) { _lastLogin = dateTime; }
+        void setLoginName(std::string_view loginName) { _loginName = loginName; }
+        void setDisplayName(std::string_view displayName) { _displayName = displayName; }
         void setPasswordHash(const PasswordHash& passwordHash)
         {
             _bcryptRoundCount = passwordHash.bcryptRoundCount;
@@ -121,6 +128,7 @@ namespace lms::db
         void setLastFmApiKey(std::string_view key) { _lastFmApiKey = key; }
         void setLastFmApiSecret(std::string_view secret) { _lastFmApiSecret = secret; }
         void setLastFmSessionKey(std::string_view key) { _lastFmSessionKey = key; }
+        void setMediaLibraries(const std::vector<ObjectPtr<MediaLibrary>>& mediaLibraries);
 
         // read
         bool isAdmin() const { return _type == UserType::ADMIN; }
@@ -146,6 +154,7 @@ namespace lms::db
         {
             Wt::Dbo::field(a, _type, "type");
             Wt::Dbo::field(a, _loginName, "login_name");
+            Wt::Dbo::field(a, _displayName, "display_name");
             Wt::Dbo::field(a, _bcryptRoundCount, "bcrypt_round_count");
             Wt::Dbo::field(a, _passwordSalt, "password_salt");
             Wt::Dbo::field(a, _passwordHash, "password_hash");
@@ -167,6 +176,7 @@ namespace lms::db
 
             Wt::Dbo::hasMany(a, _authTokens, Wt::Dbo::ManyToOne, "user");
             Wt::Dbo::hasMany(a, _uiStates, Wt::Dbo::ManyToOne, "user");
+            Wt::Dbo::hasMany(a, _mediaLibraries, Wt::Dbo::ManyToMany, "user_media_library", "user", Wt::Dbo::OnDeleteCascade);
         }
 
     private:
@@ -175,6 +185,7 @@ namespace lms::db
         static pointer create(Session& session, std::string_view loginName);
 
         std::string _loginName;
+        std::string _displayName;
         int _bcryptRoundCount{};
         std::string _passwordSalt;
         std::string _passwordHash;
@@ -201,5 +212,6 @@ namespace lms::db
 
         Wt::Dbo::collection<Wt::Dbo::ptr<AuthToken>> _authTokens;
         Wt::Dbo::collection<Wt::Dbo::ptr<UIState>> _uiStates;
+        Wt::Dbo::collection<Wt::Dbo::ptr<MediaLibrary>> _mediaLibraries;
     };
 } // namespace lms::db

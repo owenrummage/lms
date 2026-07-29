@@ -60,6 +60,7 @@
 					<li>${play-next class="dropdown-item"}</li>
 					<li>${play-last class="dropdown-item"}</li>
 					<li>${star class="dropdown-item"}</li>
+					<li>${share class="dropdown-item"}</li>
 					${<if-has-download>}
 					<li>${download class="dropdown-item"}</li>
 					${</if-has-download>}

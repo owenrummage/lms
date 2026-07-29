@@ -7,6 +7,11 @@
 			<div class="col-12">
 				${export-query-profiling-btn class="btn btn-primary"}
 			</div>
+			<div class="col-12">
+				${musicbrainz-resync-btn class="btn btn-warning"}
+				<span class="ms-2">${musicbrainz-resync-status}</span>
+				<div class="form-text">${tr:Lms.Admin.DebugTools.Db.musicbrainz-resync-help}</div>
+			</div>
 		</div>
 	</form>
 </message>

@@ -96,7 +96,7 @@ namespace lms::api::subsonic
         Response::Node podcastNode;
 
         podcastNode.setAttribute("id", idToString(podcast->getId()));
-        podcastNode.setAttribute("url", podcast->getLink()); // TODO
+        podcastNode.setAttribute("url", podcast->getUrl());
         if (!podcast->getTitle().empty())
             podcastNode.setAttribute("title", podcast->getTitle());
         if (!podcast->getDescription().empty())
@@ -111,7 +111,7 @@ namespace lms::api::subsonic
 
         if (includeEpisodes)
         {
-            podcastNode.createEmptyArrayChild("episode ");
+            podcastNode.createEmptyArrayChild("episode");
 
             db::PodcastEpisode::FindParameters params;
             params.setPodcast(podcast->getId());

@@ -49,6 +49,7 @@
 #include "explore/PlayQueueController.hpp"
 #include "resource/ArtworkResource.hpp"
 #include "resource/DownloadResource.hpp"
+#include "ShareUtils.hpp"
 
 namespace lms::ui::TrackListHelpers
 {
@@ -57,7 +58,7 @@ namespace lms::ui::TrackListHelpers
         auto transaction{ LmsApp->getDbSession().createReadTransaction() };
 
         const db::Track::pointer track{ db::Track::find(LmsApp->getDbSession(), trackId) };
-        if (!track)
+        if (!track || !filters.isTrackAllowed(trackId))
             return;
 
         auto trackInfo{ std::make_unique<Template>(Wt::WString::tr("Lms.Explore.Tracks.template.track-info")) };
@@ -340,6 +341,9 @@ namespace lms::ui::TrackListHelpers
             entry->bindNew<Wt::WPushButton>("download", Wt::WString::tr("Lms.Explore.download"))
                 ->setLink(Wt::WLink{ std::make_unique<DownloadTrackResource>(trackId) });
         }
+
+        entry->bindNew<Wt::WPushButton>("share", "Share")
+            ->clicked().connect([trackId] { shareUtils::share(trackId); });
 
         entry->bindNew<Wt::WPushButton>("track-info", Wt::WString::tr("Lms.Explore.track-info"))
             ->clicked()

@@ -28,6 +28,7 @@
 
 #include "LmsApplication.hpp"
 #include "ModalManager.hpp"
+#include "UserView.hpp"
 
 namespace lms::ui
 {
@@ -70,7 +71,21 @@ namespace lms::ui
 
             Wt::WTemplate* entry{ _container->addNew<Wt::WTemplate>(Wt::WString::tr("Lms.Admin.Users.template.entry")) };
 
-            entry->bindString("name", user->getLoginName(), Wt::TextFormat::Plain);
+            auto* nameBtn{ entry->bindNew<Wt::WPushButton>("name", user->getDisplayName()) };
+            nameBtn->addStyleClass("btn btn-link text-start p-0 text-decoration-none");
+            nameBtn->setToolTip(user->getLoginName());
+            nameBtn->clicked().connect([this, userId] {
+                auto modal{ std::make_unique<Wt::WTemplate>(Wt::WString::tr("Lms.Admin.Users.template.edit-user")) };
+                modal->addFunction("tr", &Wt::WTemplate::Functions::tr);
+                Wt::WWidget* modalPtr{ modal.get() };
+                auto* content{ modal->bindNew<Wt::WContainerWidget>("content") };
+                auto* userView{ content->addNew<UserView>(userId) };
+                userView->saved().connect([this, modalPtr] {
+                    LmsApp->getModalManager().dispose(modalPtr);
+                    refreshView();
+                });
+                LmsApp->getModalManager().show(std::move(modal));
+            });
 
             // Create tag
             if (user->isAdmin() || user->isDemo())
@@ -79,17 +94,11 @@ namespace lms::ui
                 entry->bindString("tag", Wt::WString::tr(user->isAdmin() ? "Lms.Admin.Users.admin" : "Lms.Admin.Users.demo"));
             }
 
-            // Don't edit ourself this way
+            // Don't delete ourself
             if (user->getId() == currentUserId)
                 return;
 
             entry->setCondition("if-edit", true);
-            Wt::WPushButton* editBtn = entry->bindNew<Wt::WPushButton>("edit-btn", Wt::WString::tr("Lms.template.edit-btn"), Wt::TextFormat::XHTML);
-            editBtn->setToolTip(Wt::WString::tr("Lms.edit"));
-            editBtn->clicked().connect([userId]() {
-                LmsApp->setInternalPath("/admin/user/" + userId.toString(), true);
-            });
-
             Wt::WPushButton* delBtn = entry->bindNew<Wt::WPushButton>("del-btn", Wt::WString::tr("Lms.template.trash-btn"), Wt::TextFormat::XHTML);
             delBtn->setToolTip(Wt::WString::tr("Lms.delete"));
             delBtn->clicked().connect([this, userId, entry] {

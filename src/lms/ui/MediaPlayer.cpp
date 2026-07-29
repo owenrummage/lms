@@ -32,6 +32,8 @@
 #include "database/Session.hpp"
 #include "database/Types.hpp"
 #include "database/objects/Artist.hpp"
+#include "database/objects/Podcast.hpp"
+#include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackList.hpp"
@@ -40,6 +42,7 @@
 
 #include "LmsApplication.hpp"
 #include "Utils.hpp"
+#include "ShareUtils.hpp"
 #include "resource/ArtworkResource.hpp"
 #include "resource/AudioFileResource.hpp"
 #include "resource/AudioTranscodingResource.hpp"
@@ -199,6 +202,13 @@ namespace lms::ui
         _release = bindNew<Wt::WAnchor>("release");
         _separator = bindNew<Wt::WText>("separator");
         _playQueue = bindNew<Wt::WPushButton>("playqueue-btn", Wt::WString::tr("Lms.MediaPlayer.template.playqueue-btn").arg(0), Wt::TextFormat::XHTML);
+        _share = bindNew<Wt::WPushButton>("share-btn", Wt::WString::tr("Lms.MediaPlayer.template.share-btn"), Wt::TextFormat::XHTML);
+        _share->setToolTip("Share current item");
+        _share->setAttributeValue("aria-label", "Share current item");
+        _share->clicked().connect([this] {
+            if (_podcastEpisodeIdLoaded) shareUtils::share(*_podcastEpisodeIdLoaded);
+            else if (_trackIdLoaded) shareUtils::share(*_trackIdLoaded);
+        });
         _playQueue->setLink(Wt::WLink{ Wt::LinkType::InternalPath, "/playqueue" });
         _playQueue->setToolTip(tr("Lms.PlayQueue.playqueue"));
 
@@ -313,7 +323,81 @@ namespace lms::ui
         doJavaScript(oss.str());
 
         _trackIdLoaded = trackId;
+        _podcastEpisodeIdLoaded.reset();
         trackLoaded.emit(*_trackIdLoaded);
+    }
+
+    void MediaPlayer::loadPodcastEpisode(db::PodcastEpisodeId episodeId, bool play)
+    {
+        LMS_LOG(UI, DEBUG, "Playing podcast episode ID = " << episodeId.toString());
+
+        std::ostringstream oss;
+        {
+            auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+
+            const db::PodcastEpisode::pointer episode{ db::PodcastEpisode::find(LmsApp->getDbSession(), episodeId) };
+            if (!episode || episode->getAudioRelativeFilePath().empty())
+                return;
+
+            const db::Podcast::pointer podcast{ episode->getPodcast() };
+            const std::string title{ episode->getTitle() };
+            const std::string podcastTitle{ podcast ? std::string{ podcast->getTitle() } : std::string{} };
+            const std::string author{ !episode->getAuthor().empty() ? std::string{ episode->getAuthor() } : (podcast ? std::string{ podcast->getAuthor() } : std::string{}) };
+            const std::string nativeResource{ _audioFileResource->getUrl(episodeId) };
+
+            oss
+                << "var params = {"
+                << " trackId: \"podcast-" << episodeId.toString() << "\","
+                << " nativeResource: \"" << nativeResource << "\","
+                << " transcodingResource: \"\","
+                << " duration: " << std::chrono::duration_cast<std::chrono::duration<float>>(episode->getDuration()).count() << ","
+                << " replayGain: 0,"
+                << " scrobbleEnabled: false,"
+                << " queueEnabled: true,"
+                << " transcodingEnabled: false,"
+                << " title: \"" << core::stringUtils::jsEscape(title) << "\","
+                << " artist: \"" << core::stringUtils::jsEscape(author) << "\","
+                << " release: \"" << core::stringUtils::jsEscape(podcastTitle) << "\",";
+
+            db::ArtworkId artworkId{ episode->getArtworkId() };
+            if (!artworkId.isValid() && podcast)
+                artworkId = podcast->getArtworkId();
+            if (artworkId.isValid())
+            {
+                oss << " artwork: ["
+                    << "   { src: \"" << LmsApp->getArtworkResource()->getArtworkUrl(artworkId, ArtworkResource::DefaultArtworkType::Release, ArtworkResource::Size::Small) << "\", sizes: \"128x128\" },"
+                    << "   { src: \"" << LmsApp->getArtworkResource()->getArtworkUrl(artworkId, ArtworkResource::DefaultArtworkType::Release, ArtworkResource::Size::Large) << "\", sizes: \"512x512\" },"
+                    << " ]";
+            }
+            else
+            {
+                oss << " artwork: ["
+                    << "   { src: \"" << LmsApp->getArtworkResource()->getDefaultArtworkUrl(ArtworkResource::DefaultArtworkType::Release) << "\", type: \"image/svg+xml\" },"
+                    << " ]";
+            }
+            oss << "};";
+            oss << jsRef() + ".mediaplayer.loadTrack(params, " << (play ? "true" : "false") << ")";
+
+            _title->setTextFormat(Wt::TextFormat::Plain);
+            _title->setText(Wt::WString::fromUTF8(title));
+
+            _artists->clear();
+            if (!author.empty())
+                _artists->addNew<Wt::WText>(Wt::WString::fromUTF8(author), Wt::TextFormat::Plain);
+
+            _release->setTextFormat(Wt::TextFormat::Plain);
+            _release->setText(Wt::WString::fromUTF8(podcastTitle));
+            if (podcast)
+                _release->setLink(Wt::WLink{ Wt::LinkType::InternalPath, "/podcasts/" + podcast->getId().toString() });
+            else
+                _release->setLink({});
+            _separator->setText(!author.empty() && !podcastTitle.empty() ? " — " : "");
+        }
+
+        LMS_LOG(UI, DEBUG, "Running js = '" << oss.str() << "'");
+        doJavaScript(oss.str());
+        _trackIdLoaded.reset();
+        _podcastEpisodeIdLoaded = episodeId;
     }
 
     void MediaPlayer::stop()

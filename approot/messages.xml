@@ -170,6 +170,9 @@
 <!--Db-->
 <message id="Lms.Admin.DebugTools.Db.export-query-profiling">Export query profiling data</message>
 <message id="Lms.Admin.DebugTools.Db.db">Database</message>
+<message id="Lms.Admin.DebugTools.Db.musicbrainz-resync">Resync albums from MusicBrainz</message>
+<message id="Lms.Admin.DebugTools.Db.musicbrainz-resync-help">Updates MusicBrainz-tagged albums at one request per second. Albums without a MusicBrainz release ID are skipped.</message>
+<message id="Lms.Admin.DebugTools.Db.musicbrainz-resync-progress">{1} / {2} processed — {3} updated, {4} skipped, {5} failed</message>
 
 <!--PcmDecodingStats-->
 <message id="Lms.Admin.DebugTools.PcmDecodingStats.pcm-decoding-stats">PCM decoding stats</message>
@@ -187,12 +190,15 @@
 <message id="Lms.Admin.Users.admin">Admin</message>
 <message id="Lms.Admin.Users.del-user-confirm">Delete user?</message>
 <message id="Lms.Admin.Users.demo">Demo</message>
+<message id="Lms.Admin.Users.edit-user">Edit user</message>
 <message id="Lms.Admin.Users.users">Users</message>
 
 <!--User-->
 <message id="Lms.Admin.User.demo-account">Demo account</message>
 <message id="Lms.Admin.User.demo-account-already-exists">Demo account already exists!</message>
+<message id="Lms.Admin.User.display-name">Display name</message>
 <message id="Lms.Admin.User.last-login">Last login</message>
+<message id="Lms.Admin.User.media-libraries">Visible libraries</message>
 <message id="Lms.Admin.User.user-already-exists">User already exists!</message>
 <message id="Lms.Admin.User.user-create">New user</message>
 <message id="Lms.Admin.User.user-created">New user created!</message>
@@ -363,7 +369,59 @@
 <!--PlayHistory-->
 <message id="Lms.PlayHistory.playhistory">Play History</message>
 
+<!--Podcasts-->
+<message id="Lms.Podcasts.podcasts">Podcasts</message>
+<message id="Lms.Podcasts.empty">No podcast feeds have been added yet.</message>
+<message id="Lms.Podcasts.back">← All podcasts</message>
+<message id="Lms.Podcasts.no-episodes">No episodes have been discovered yet.</message>
+<message id="Lms.Podcasts.play"><i class="fa fa-play" aria-hidden="true"></i> Play</message>
+<message id="Lms.Podcasts.download"><i class="fa fa-download" aria-hidden="true"></i> Download</message>
+<message id="Lms.Podcasts.download-requested">Episode download requested.</message>
+<message id="Lms.Podcasts.status.downloaded">Downloaded</message>
+<message id="Lms.Podcasts.status.downloading">Downloading</message>
+<message id="Lms.Podcasts.status.deleting">Deleting</message>
+<message id="Lms.Podcasts.status.not-downloaded">Not downloaded</message>
+
 <!--Settings-->
+<message id="Lms.Admin.menu-podcasts"><i class="fa fa-fw fa-podcast" aria-hidden="true"></i> Podcasts</message>
+<message id="Lms.Admin.Podcasts.podcasts">Podcasts</message>
+<message id="Lms.Admin.Podcasts.help">Add an RSS feed to check it daily and automatically download new episodes. Podcast clients can manage the same feeds through the Subsonic podcast API.</message>
+<message id="Lms.Admin.Podcasts.feed-url-placeholder">https://example.com/podcast.rss</message>
+<message id="Lms.Admin.Podcasts.add-feed">Add RSS feed</message>
+<message id="Lms.Admin.Podcasts.refresh-now">Scan for new episodes</message>
+<message id="Lms.Admin.Podcasts.refresh-started">Podcast scan started.</message>
+<message id="Lms.Admin.Podcasts.invalid-url">Enter a valid HTTP or HTTPS RSS feed URL.</message>
+<message id="Lms.Admin.Podcasts.feed-added">Podcast feed added. Its episodes are being refreshed.</message>
+<message id="Lms.Admin.Podcasts.feed-deleted">Podcast feed deleted.</message>
+<message id="Lms.Admin.Podcasts.pending-title">Waiting for feed metadata…</message>
+<message id="Lms.Admin.Podcasts.episodes">Podcast episodes</message>
+<message id="Lms.Admin.Podcasts.download-all">Download all</message>
+<message id="Lms.Admin.Podcasts.download-all-requested">All available podcast episodes were queued for download.</message>
+<message id="Lms.Admin.Podcasts.close">Close</message>
+<message id="Lms.Admin.Podcasts.delete-confirm">Delete podcast feed?</message>
+<message id="Lms.Admin.Podcasts.delete-help">The feed, downloaded episodes, and cached artwork will be removed.</message>
+
+<!-- Internet radio -->
+<message id="Lms.Admin.menu-internet-radio"><i class="fa fa-fw fa-broadcast-tower" aria-hidden="true"></i> Internet radio</message>
+<message id="Lms.Admin.InternetRadio.title">Internet radio</message>
+<message id="Lms.Admin.InternetRadio.help">Add live audio streams here to make them available to Subsonic-compatible players, including Supersonic.</message>
+<message id="Lms.Admin.InternetRadio.name">Station name</message>
+<message id="Lms.Admin.InternetRadio.stream-url">Stream URL</message>
+<message id="Lms.Admin.InternetRadio.homepage-url">Homepage URL (optional)</message>
+<message id="Lms.Admin.InternetRadio.name-placeholder">Station name</message>
+<message id="Lms.Admin.InternetRadio.stream-url-placeholder">https://radio.example.com/live.mp3</message>
+<message id="Lms.Admin.InternetRadio.homepage-url-placeholder">https://radio.example.com</message>
+<message id="Lms.Admin.InternetRadio.add">Add</message>
+<message id="Lms.Admin.InternetRadio.added">Radio station added.</message>
+<message id="Lms.Admin.InternetRadio.saved">Radio station saved.</message>
+<message id="Lms.Admin.InternetRadio.deleted">Radio station deleted.</message>
+<message id="Lms.Admin.InternetRadio.edit">Edit radio station</message>
+<message id="Lms.Admin.InternetRadio.empty">No internet radio stations have been added yet.</message>
+<message id="Lms.Admin.InternetRadio.no-homepage">No homepage</message>
+<message id="Lms.Admin.InternetRadio.invalid-name">Enter a station name.</message>
+<message id="Lms.Admin.InternetRadio.invalid-url">Enter valid HTTP or HTTPS URLs.</message>
+<message id="Lms.Admin.InternetRadio.delete-confirm">Delete radio station?</message>
+<message id="Lms.Admin.InternetRadio.delete-help">The station will no longer appear in connected Subsonic players.</message>
 <message id="Lms.Settings.artist-release-sort-method">Method to sort artist's albums</message>
 <message id="Lms.Settings.audio">Audio</message>
 <message id="Lms.Settings.audio-settings-are-local">These audio settings are local to your browser</message>

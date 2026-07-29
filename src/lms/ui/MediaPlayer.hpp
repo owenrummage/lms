@@ -29,6 +29,7 @@
 #include <Wt/WText.h>
 
 #include "database/objects/TrackId.hpp"
+#include "database/objects/PodcastEpisodeId.hpp"
 #include "database/objects/Types.hpp"
 
 namespace lms::ui
@@ -97,6 +98,7 @@ namespace lms::ui
         std::optional<db::TrackId> getTrackLoaded() const { return _trackIdLoaded; }
 
         void loadTrack(db::TrackId trackId, bool play, float replayGain);
+        void loadPodcastEpisode(db::PodcastEpisodeId episodeId, bool play = true);
         void stop();
 
         std::optional<Settings> getSettings() const { return _settings; }
@@ -120,6 +122,7 @@ namespace lms::ui
         std::unique_ptr<AudioTranscodingResource> _audioTranscodingResource;
 
         std::optional<db::TrackId> _trackIdLoaded;
+        std::optional<db::PodcastEpisodeId> _podcastEpisodeIdLoaded;
         std::optional<Settings> _settings;
 
         Wt::JSignal<std::string> _settingsLoaded;
@@ -129,5 +132,6 @@ namespace lms::ui
         Wt::WText* _separator{};
         Wt::WContainerWidget* _artists{};
         Wt::WPushButton* _playQueue{};
+        Wt::WPushButton* _share{};
     };
 } // namespace lms::ui

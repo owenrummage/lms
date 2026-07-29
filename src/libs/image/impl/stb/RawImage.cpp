@@ -23,6 +23,9 @@
 #include "StbImage.hpp"
 #include "StbImageResize.hpp"
 
+#include <fstream>
+#include <webp/decode.h>
+
 #include "core/ITraceLogger.hpp"
 #include "image/Exception.hpp"
 
@@ -30,11 +33,34 @@ namespace lms::image::STB
 {
     namespace
     {
-
+        std::vector<std::byte> readFile(const std::filesystem::path& path)
+        {
+            std::ifstream file{ path, std::ios::binary };
+            if (!file) throw StbiException{ "Cannot load image from file" };
+            const std::string contents{ std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
+            const auto bytes{ std::as_bytes(std::span{ contents.data(), contents.size() }) };
+            return { bytes.begin(), bytes.end() };
+        }
     } // namespace
 
     RawImage::RawImage(std::span<const std::byte> encodedData)
     {
+        int webpWidth{};
+        int webpHeight{};
+        if (::WebPGetInfo(reinterpret_cast<const uint8_t*>(encodedData.data()), encodedData.size(), &webpWidth, &webpHeight))
+        {
+            uint8_t* decoded{ ::WebPDecodeRGB(reinterpret_cast<const uint8_t*>(encodedData.data()), encodedData.size(), &webpWidth, &webpHeight) };
+            if (!decoded) throw StbiException{ "Cannot load WebP image from memory" };
+            const std::size_t size{ static_cast<std::size_t>(webpWidth) * static_cast<std::size_t>(webpHeight) * 3 };
+            _data.reset(static_cast<unsigned char*>(std::malloc(size)));
+            if (!_data) { ::WebPFree(decoded); throw StbiException{ "Cannot allocate WebP image" }; }
+            std::copy(decoded, decoded + size, static_cast<unsigned char*>(_data.get()));
+            ::WebPFree(decoded);
+            _width = webpWidth;
+            _height = webpHeight;
+            return;
+        }
+
         int n{};
         _data = UniquePtrFree{ ::stbi_load_from_memory(reinterpret_cast<const stbi_uc*>(encodedData.data()), encodedData.size(), &_width, &_height, &n, 3), std::free };
         if (!_data)
@@ -42,11 +68,8 @@ namespace lms::image::STB
     }
 
     RawImage::RawImage(const std::filesystem::path& p)
+        : RawImage{ readFile(p) }
     {
-        int n{};
-        _data = UniquePtrFree{ stbi_load(p.c_str(), &_width, &_height, &n, 3), std::free };
-        if (!_data)
-            throw StbiException{ "Cannot load image from file" };
     }
 
     void RawImage::resize(ImageSize width)

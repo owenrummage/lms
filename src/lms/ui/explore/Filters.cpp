@@ -39,6 +39,8 @@
 #include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseTypeId.hpp"
+#include "database/objects/Track.hpp"
+#include "database/objects/User.hpp"
 
 #include "LmsApplication.hpp"
 #include "ModalManager.hpp"
@@ -122,9 +124,10 @@ namespace lms::ui
 
             std::visit(core::utils::overloads{
                            [&](const MediaLibraryTag&) {
-                               db::MediaLibrary::find(session, [&](const db::MediaLibrary::pointer& library) {
+                               for (const db::MediaLibrary::pointer& library : LmsApp->getUser()->getMediaLibraries())
+                               {
                                    valueModel->add(Wt::WString::fromUTF8(std::string{ library->getName() }), library->getId());
-                               });
+                               }
                            },
                            [&](const LabelTag&) {
                                db::Label::find(session, db::LabelSortMethod::Name, [&](const db::Label::pointer& label) {
@@ -256,6 +259,14 @@ namespace lms::ui
         addFilterBtn->clicked().connect(this, &Filters::showDialog);
 
         _filters = bindNew<Wt::WContainerWidget>("clusters");
+
+        {
+            auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+            std::vector<db::MediaLibraryId> mediaLibraryIds;
+            for (const db::MediaLibrary::pointer& library : LmsApp->getUser()->getMediaLibraries())
+                mediaLibraryIds.push_back(library->getId());
+            _dbFilters.setMediaLibraries(std::move(mediaLibraryIds));
+        }
 
         if (const std::optional<db::MediaLibraryId::ValueType> mediaLibraryId{ state::readValue<db::MediaLibraryId::ValueType>("filters_media_library_id") })
             set(db::MediaLibraryId{ *mediaLibraryId });
@@ -451,7 +462,7 @@ namespace lms::ui
             auto transaction{ LmsApp->getDbSession().createReadTransaction() };
 
             const auto library{ db::MediaLibrary::find(LmsApp->getDbSession(), mediaLibraryId) };
-            if (!library)
+            if (!library || !isMediaLibraryAllowed(mediaLibraryId))
                 return;
 
             libraryName = library->getName();
@@ -470,6 +481,47 @@ namespace lms::ui
         });
 
         emitFilterAddedNotification();
+    }
+
+    bool Filters::isMediaLibraryAllowed(db::MediaLibraryId mediaLibraryId) const
+    {
+        if (!mediaLibraryId.isValid() || !_dbFilters.mediaLibraries)
+            return false;
+
+        const auto& allowed{ *_dbFilters.mediaLibraries };
+        return std::find(allowed.cbegin(), allowed.cend(), mediaLibraryId) != allowed.cend();
+    }
+
+    bool Filters::isArtistAllowed(db::ArtistId artistId) const
+    {
+        db::Release::FindParameters releaseParams;
+        releaseParams.setFilters(_dbFilters);
+        releaseParams.setArtist(artistId);
+        releaseParams.setRange(db::Range{ 0, 1 });
+        if (!db::Release::find(LmsApp->getDbSession(), releaseParams).empty())
+            return true;
+
+        db::Track::FindParameters trackParams;
+        trackParams.setFilters(_dbFilters);
+        trackParams.setArtist(artistId);
+        trackParams.setRange(db::Range{ 0, 1 });
+        return !db::Track::find(LmsApp->getDbSession(), trackParams).empty();
+    }
+
+    bool Filters::isReleaseAllowed(db::ReleaseId releaseId) const
+    {
+        db::Track::FindParameters params;
+        params.setFilters(_dbFilters);
+        params.setRelease(releaseId);
+        params.setRange(db::Range{ 0, 1 });
+        return !db::Track::find(LmsApp->getDbSession(), params).empty();
+    }
+
+    bool Filters::isTrackAllowed(db::TrackId trackId) const
+    {
+        const db::Track::pointer track{ db::Track::find(LmsApp->getDbSession(), trackId) };
+        const db::MediaLibrary::pointer mediaLibrary{ track ? track->getMediaLibrary() : db::MediaLibrary::pointer{} };
+        return mediaLibrary && isMediaLibraryAllowed(mediaLibrary->getId());
     }
 
     void Filters::set(db::LabelId labelId)

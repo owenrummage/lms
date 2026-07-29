@@ -41,12 +41,14 @@
 #include "endpoints/Bookmarks.hpp"
 #include "endpoints/Browsing.hpp"
 #include "endpoints/Jukebox.hpp"
+#include "endpoints/InternetRadio.hpp"
 #include "endpoints/MediaAnnotation.hpp"
 #include "endpoints/MediaLibraryScanning.hpp"
 #include "endpoints/MediaRetrieval.hpp"
 #include "endpoints/Playlists.hpp"
 #include "endpoints/Podcast.hpp"
 #include "endpoints/Searching.hpp"
+#include "endpoints/Sharing.hpp"
 #include "endpoints/System.hpp"
 #include "endpoints/Transcoding.hpp"
 #include "endpoints/UserManagement.hpp"
@@ -64,7 +66,7 @@ namespace lms::api::subsonic
         {
             constexpr std::string_view redactedStr{ "*REDACTED*" };
             auto redactValueIfNeeded = [redactedStr](const std::string& type, const std::string& value) -> std::string_view {
-                if (type == "p" || type == "password" || type == "apiKey")
+                if (type == "p" || type == "password" || type == "apiKey" || type == "t" || type == "s")
                     return redactedStr;
 
                 return value;
@@ -147,7 +149,7 @@ namespace lms::api::subsonic
             { "/getSong", { handleGetSongRequest } },
             { "/getVideos", { handleNotImplemented } },
             { "/getArtistInfo", { handleNotImplemented } },
-            { "/getArtistInfo2", { handleGetArtistInfo2Request } },
+            { "/getArtistInfo2", { handleNotImplemented } },
             { "/getAlbumInfo", { handleGetAlbumInfo } },
             { "/getAlbumInfo2", { handleGetAlbumInfo2 } },
             { "/getSimilarSongs", { handleGetSimilarSongsRequest } },
@@ -194,10 +196,11 @@ namespace lms::api::subsonic
             { "/scrobble", { handleScrobble } },
 
             // Sharing
-            { "/getShares", { handleNotImplemented } },
-            { "/createShares", { handleNotImplemented } },
-            { "/updateShare", { handleNotImplemented } },
-            { "/deleteShare", { handleNotImplemented } },
+            { "/getShares", { handleGetShares, AuthenticationMode::Authenticated, { db::UserType::REGULAR, db::UserType::ADMIN } } },
+            { "/createShare", { handleCreateShare, AuthenticationMode::Authenticated, { db::UserType::REGULAR, db::UserType::ADMIN } } },
+            { "/createShares", { handleCreateShare, AuthenticationMode::Authenticated, { db::UserType::REGULAR, db::UserType::ADMIN } } },
+            { "/updateShare", { handleUpdateShare, AuthenticationMode::Authenticated, { db::UserType::REGULAR, db::UserType::ADMIN } } },
+            { "/deleteShare", { handleDeleteShare, AuthenticationMode::Authenticated, { db::UserType::REGULAR, db::UserType::ADMIN } } },
 
             // Podcast
             { "/getPodcasts", { handleGetPodcasts } },
@@ -213,10 +216,10 @@ namespace lms::api::subsonic
             { "/jukeboxControl", { handleJukeboxControl } },
 
             // Internet radio
-            { "/getInternetRadioStations", { handleNotImplemented } },
-            { "/createInternetRadioStation", { handleNotImplemented } },
-            { "/updateInternetRadioStation", { handleNotImplemented } },
-            { "/deleteInternetRadioStation", { handleNotImplemented } },
+            { "/getInternetRadioStations", { handleGetInternetRadioStations } },
+            { "/createInternetRadioStation", { handleCreateInternetRadioStation, AuthenticationMode::Authenticated, { db::UserType::ADMIN } } },
+            { "/updateInternetRadioStation", { handleUpdateInternetRadioStation, AuthenticationMode::Authenticated, { db::UserType::ADMIN } } },
+            { "/deleteInternetRadioStation", { handleDeleteInternetRadioStation, AuthenticationMode::Authenticated, { db::UserType::ADMIN } } },
 
             // Chat
             { "/getChatMessages", { handleNotImplemented } },
@@ -289,6 +292,7 @@ namespace lms::api::subsonic
             requestPath.resize(requestPath.length() - optionalSuffix.size());
 
         LMS_LOG(API_SUBSONIC, DEBUG, "Handling request " << requestId << " to '" << requestPath << " with params = " << parameterMapToDebugString(request.getParameterMap()) << "', continuation = " << (request.continuation() ? "true" : "false"));
+        LMS_LOG_IF(API_SUBSONIC, INFO, _config.logRequests, "Subsonic request " << requestId << " to '" << requestPath << "' with params = " << parameterMapToDebugString(request.getParameterMap()) << ", continuation = " << (request.continuation() ? "true" : "false"));
 
         try
         {

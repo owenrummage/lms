@@ -79,8 +79,8 @@ namespace lms::ui
             std::vector<Segment> segments;
         };
         void refreshDiscs(const db::ObjectPtr<db::Release>& release, std::span<const DiscInfo> discoInfoList);
-        static std::vector<DiscInfo> createDiscInfoList(const db::ObjectPtr<db::Release>& release);
-        static DiscInfo createDiscInfo(const db::ObjectPtr<db::Medium>& medium);
+        std::vector<DiscInfo> createDiscInfoList(const db::ObjectPtr<db::Release>& release);
+        DiscInfo createDiscInfo(const db::ObjectPtr<db::Medium>& medium);
 
         static void appendTrackIds(std::vector<db::TrackId>& trackIds, const DiscInfo& disc);
         static void appendTrackIds(std::vector<db::TrackId>& trackIds, const TrackInfoList& tracks);
@@ -92,7 +92,7 @@ namespace lms::ui
         };
         void addDisc(Wt::WContainerWidget* container, const DiscInfo& discInfo, DisplayOptions displayOptions);
 
-        static TrackInfoList collectMediumTrackInfoList(const db::ObjectPtr<db::Medium>& medium);
+        TrackInfoList collectMediumTrackInfoList(const db::ObjectPtr<db::Medium>& medium);
 
         Wt::WContainerWidget* addSegment(Wt::WContainerWidget* container, const Wt::WString& title, db::ArtworkId artworkId, std::span<const db::TrackId> trackIds, const char* segmentTemplate);
         void addTrackEntries(Wt::WContainerWidget* container, std::span<const TrackInfo> tracks, bool displayTrackArtists);

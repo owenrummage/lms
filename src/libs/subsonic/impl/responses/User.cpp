@@ -27,7 +27,7 @@
 
 namespace lms::api::subsonic
 {
-    Response::Node createUserNode(RequestContext& context, const db::User::pointer& user)
+    Response::Node createUserNode(RequestContext&, const db::User::pointer& user)
     {
         Response::Node userNode;
 
@@ -43,12 +43,12 @@ namespace lms::api::subsonic
         userNode.setAttribute("podcastRole", user->isAdmin()); // Whether the user is allowed to administrate Podcasts
         userNode.setAttribute("streamRole", true);             // Whether the user is allowed to play files
         userNode.setAttribute("jukeboxRole", user->isAdmin()); // Whether the user is allowed to control the jukebox
-        userNode.setAttribute("shareRole", false);             // not supported
+        userNode.setAttribute("shareRole", user->getType() != db::UserType::DEMO);
 
-        // users can access all libraries
-        db::MediaLibrary::find(context.getDbSession(), [&](const db::MediaLibrary::pointer& library) {
+        for (const db::MediaLibrary::pointer& library : user->getMediaLibraries())
+        {
             userNode.addArrayValue("folder", library->getId().getValue());
-        });
+        }
 
         return userNode;
     }

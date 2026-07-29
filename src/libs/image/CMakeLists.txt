@@ -21,6 +21,7 @@ set_property(CACHE LMS_IMAGE_BACKEND PROPERTY STRINGS "stb" "graphicsmagick")
 
 if (${LMS_IMAGE_BACKEND} STREQUAL "stb")
 	find_package(StbImage REQUIRED)
+	pkg_check_modules(WebP REQUIRED IMPORTED_TARGET libwebp)
 	message(STATUS "Using stb (resize version ${STB_IMAGE_RESIZE_VERSION})")
 
 	target_sources(lmsimage PRIVATE
@@ -38,6 +39,7 @@ if (${LMS_IMAGE_BACKEND} STREQUAL "stb")
 
 	target_compile_options(lmsimage PRIVATE "-DSTB_IMAGE_RESIZE_VERSION=${STB_IMAGE_RESIZE_VERSION}")
 	target_include_directories(lmsimage PRIVATE ${STB_IMAGE_INCLUDE_DIR})
+	target_link_libraries(lmsimage PRIVATE PkgConfig::WebP)
 
 elseif (${LMS_IMAGE_BACKEND} STREQUAL "graphicsmagick")
 	pkg_check_modules(GraphicsMagick++ REQUIRED IMPORTED_TARGET GraphicsMagick++)

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<messages>
+
+<message id="Lms.Admin.InternetRadio.template">
+	<legend>${tr:Lms.Admin.InternetRadio.title}</legend>
+	<p class="text-body-secondary">${tr:Lms.Admin.InternetRadio.help}</p>
+	<div class="card mb-4"><div class="card-body">
+		<div class="row g-3 align-items-end">
+			<div class="col-12 col-lg-3"><label class="form-label">${tr:Lms.Admin.InternetRadio.name}</label>${name class="form-control"}</div>
+			<div class="col-12 col-lg-4"><label class="form-label">${tr:Lms.Admin.InternetRadio.stream-url}</label>${stream-url class="form-control"}</div>
+			<div class="col-12 col-lg-4"><label class="form-label">${tr:Lms.Admin.InternetRadio.homepage-url}</label>${homepage-url class="form-control"}</div>
+			<div class="col-12 col-lg-1 d-grid">${add-btn class="btn btn-primary"}</div>
+		</div>
+	</div></div>
+	${stations class="d-grid gap-1 mb-3 Lms-row-container"}
+</message>
+
+<message id="Lms.Admin.InternetRadio.template.entry">
+	<div class="d-flex align-items-center Lms-bg-dark-hover">
+		<div class="row align-items-center flex-fill overflow-hidden">
+			<div class="col-12 col-md-3"><div class="p-2 fw-semibold text-truncate">${name}</div></div>
+			<div class="col-12 col-md-5"><div class="p-2 text-truncate">${stream-url}</div></div>
+			<div class="col-12 col-md-4"><div class="p-2 text-body-secondary text-truncate">${homepage-url}</div></div>
+		</div>
+		<div class="p-2 d-flex gap-1">${edit-btn class="btn btn-sm btn-outline-secondary border-0"}${delete-btn class="btn btn-sm btn-outline-danger border-0"}</div>
+	</div>
+</message>
+
+<message id="Lms.Admin.InternetRadio.template.edit">
+	<div class="modal fade" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+		<div class="modal-header"><h5 class="modal-title">${tr:Lms.Admin.InternetRadio.edit}</h5></div>
+		<div class="modal-body">
+			<div class="mb-3"><label class="form-label">${tr:Lms.Admin.InternetRadio.name}</label>${name class="form-control"}</div>
+			<div class="mb-3"><label class="form-label">${tr:Lms.Admin.InternetRadio.stream-url}</label>${stream-url class="form-control"}</div>
+			<div><label class="form-label">${tr:Lms.Admin.InternetRadio.homepage-url}</label>${homepage-url class="form-control"}</div>
+		</div>
+		<div class="modal-footer">${save-btn class="btn btn-primary"}${cancel-btn class="btn btn-secondary"}</div>
+	</div></div></div>
+</message>
+
+<message id="Lms.Admin.InternetRadio.template.delete">
+	<div class="modal fade" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
+		<div class="modal-header"><h5 class="modal-title">${tr:Lms.Admin.InternetRadio.delete-confirm}</h5></div>
+		<div class="modal-body">${tr:Lms.Admin.InternetRadio.delete-help}</div>
+		<div class="modal-footer">${delete-btn class="btn btn-danger"}${cancel-btn class="btn btn-secondary"}</div>
+	</div></div></div>
+</message>
+
+</messages>

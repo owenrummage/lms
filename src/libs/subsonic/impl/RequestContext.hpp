@@ -26,6 +26,7 @@
 #include <Wt/Http/Request.h>
 
 #include "database/Object.hpp"
+#include "database/objects/Filters.hpp"
 
 #include "ProtocolVersion.hpp"
 #include "ResponseFormat.hpp"
@@ -56,12 +57,15 @@ namespace lms::api::subsonic
 
         void setUser(const db::ObjectPtr<db::User>& user);
         db::ObjectPtr<db::User> getUser() const;
+        void applyUserLibraryFilter(db::Filters& filters, db::MediaLibraryId requestedLibrary = {}) const;
+        bool isMediaLibraryAllowed(db::MediaLibraryId libraryId) const;
 
         std::string getClientIpAddr() const;
         std::string_view getClientName() const;
 
         ResponseFormat getResponseFormat() const;
         bool isOpenSubsonicEnabled() const;
+        std::string getPublicBaseUrl() const;
 
     private:
         const Wt::Http::Request& _request;

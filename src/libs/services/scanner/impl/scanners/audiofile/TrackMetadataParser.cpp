@@ -460,14 +460,9 @@ namespace lms::scanner
     {
         using namespace audio;
 
-        std::optional<Release> release;
+        std::optional<Release> release{ std::in_place };
 
-        auto releaseName{ getTagValueAs<std::string>(tagReader, TagType::Album) };
-        if (!releaseName)
-            return release;
-
-        release.emplace();
-        release->name = std::move(*releaseName);
+        release->name = getTagValueAs<std::string>(tagReader, TagType::Album).value_or("Unknown Album");
         release->sortName = getTagValueAs<std::string>(tagReader, TagType::AlbumSortOrder).value_or(release->name);
         release->artists = getArtists(tagReader, { TagType::AlbumArtists, TagType::AlbumArtist }, { TagType::AlbumArtistsSortOrder, TagType::AlbumArtistSortOrder }, { TagType::MusicBrainzReleaseArtistID }, _params);
         release->artistDisplayName = computeArtistDisplayName(release->artists, getTagValueAs<std::string>(tagReader, TagType::AlbumArtist), _params.artistTagDelimiters);

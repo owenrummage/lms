@@ -23,6 +23,15 @@
 				</div>
 			</div>
 		${</if-has-login>}
+		<div class="col-lg-6">
+			<label class="form-label" for="${id:display-name}">
+				${tr:Lms.Admin.User.display-name}
+			</label>
+			${display-name class="form-control"}
+			<div class="invalid-feedback">
+				${display-name-info}
+			</div>
+		</div>
 		${<if-has-password>}
 			<div class="col-lg-6">
 				<label class="form-label"  for="${id:password}">
@@ -47,6 +56,10 @@
 				</div>
 			</div>
 		${</if-demo>}
+		<div class="col-12">
+			<label class="form-label">${tr:Lms.Admin.User.media-libraries}</label>
+			${media-libraries class="d-grid gap-1"}
+		</div>
 		<div class="col-12">
 			${save-btn class="btn btn-primary"}
 		</div>

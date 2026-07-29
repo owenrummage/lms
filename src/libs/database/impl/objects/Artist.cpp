@@ -111,6 +111,25 @@ namespace lms::db
                     .bind(params.filters.mediaLibrary)
                     .bind(params.filters.mediaLibrary);
             }
+            else if (params.filters.mediaLibraries)
+            {
+                if (params.filters.mediaLibraries->empty())
+                    query.where("1 = 0");
+                else
+                {
+                    std::string placeholders{ "?" };
+                    for (std::size_t i{ 1 }; i < params.filters.mediaLibraries->size(); ++i)
+                        placeholders += ",?";
+                    query.where(
+                        "EXISTS (SELECT 1 FROM track_artist_link scoped_tal JOIN track scoped_t ON scoped_t.id = scoped_tal.track_id WHERE scoped_tal.artist_id = a.id AND scoped_t.media_library_id IN (" + placeholders + "))"
+                        " OR EXISTS (SELECT 1 FROM release_artist_link scoped_ral JOIN release scoped_r ON scoped_r.id = scoped_ral.release_id JOIN track scoped_t ON scoped_t.release_id = scoped_r.id WHERE scoped_ral.artist_id = a.id AND scoped_t.media_library_id IN (" + placeholders + "))");
+                    for (int pass{}; pass < 2; ++pass)
+                    {
+                        for (db::MediaLibraryId libraryId : *params.filters.mediaLibraries)
+                            query.bind(libraryId);
+                    }
+                }
+            }
 
             if (params.trackArtistLinkType.has_value())
                 query.where("+t_a_l.type = ?").bind(*params.trackArtistLinkType); // Exclude this since the query planner does not do a good job when db is not analyzed

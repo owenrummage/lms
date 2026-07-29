@@ -54,6 +54,7 @@
 #include "ModalManager.hpp"
 #include "NotificationContainer.hpp"
 #include "PlayQueue.hpp"
+#include "PodcastsView.hpp"
 #include "admin/About.hpp"
 #include "admin/AdminView.hpp"
 #include "admin/InitWizardView.hpp"
@@ -80,8 +81,10 @@ namespace lms::ui
             res->use(appRoot + "admin-db");
             res->use(appRoot + "admin-debugtools");
             res->use(appRoot + "admin-initwizard");
+            res->use(appRoot + "admin-internet-radio");
             res->use(appRoot + "admin-medialibraries");
             res->use(appRoot + "admin-medialibrary");
+            res->use(appRoot + "admin-podcasts");
             res->use(appRoot + "admin-scannercontroller");
             res->use(appRoot + "admin-scansettings");
             res->use(appRoot + "admin-tracing");
@@ -98,6 +101,7 @@ namespace lms::ui
             res->use(appRoot + "misc");
             res->use(appRoot + "notifications");
             res->use(appRoot + "playqueue");
+            res->use(appRoot + "podcasts");
             res->use(appRoot + "release");
             res->use(appRoot + "releases");
             res->use(appRoot + "settings-audio");
@@ -412,6 +416,7 @@ namespace lms::ui
         navbar->bindNew<Wt::WAnchor>("releases", Wt::WLink{ Wt::LinkType::InternalPath, "/releases" }, Wt::WString::tr("Lms.Explore.releases"));
         navbar->bindNew<Wt::WAnchor>("tracks", Wt::WLink{ Wt::LinkType::InternalPath, "/tracks" }, Wt::WString::tr("Lms.Explore.tracks"));
         navbar->bindNew<Wt::WAnchor>("tracklists", Wt::WLink{ Wt::LinkType::InternalPath, "/tracklists" }, Wt::WString::tr("Lms.Explore.tracklists"));
+        navbar->bindNew<Wt::WAnchor>("podcasts", Wt::WLink{ Wt::LinkType::InternalPath, "/podcasts" }, Wt::WString::tr("Lms.Podcasts.podcasts"));
 
         Filters* filters{ navbar->bindNew<Filters>("filters") };
         navbar->bindString("username", std::string{ getUserLoginName() }, Wt::TextFormat::Plain);
@@ -445,6 +450,8 @@ namespace lms::ui
                 showAboutModal();
             });
             navbar->bindNew<Wt::WAnchor>("media-libraries", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/libraries" }, Wt::WString::tr("Lms.Admin.menu-media-libraries"));
+            navbar->bindNew<Wt::WAnchor>("admin-podcasts", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/podcasts" }, Wt::WString::tr("Lms.Admin.menu-podcasts"));
+            navbar->bindNew<Wt::WAnchor>("admin-internet-radio", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/internet-radio" }, Wt::WString::tr("Lms.Admin.menu-internet-radio"));
             navbar->bindNew<Wt::WAnchor>("scan-settings", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scan-settings" }, Wt::WString::tr("Lms.Admin.menu-scan-settings"));
             navbar->bindNew<Wt::WAnchor>("scanner", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/scanner" }, Wt::WString::tr("Lms.Admin.menu-scanner"));
             navbar->bindNew<Wt::WAnchor>("users", Wt::WLink{ Wt::LinkType::InternalPath, "/admin/users" }, Wt::WString::tr("Lms.Admin.menu-users"));
@@ -464,6 +471,7 @@ namespace lms::ui
         mainRouter->addRoute("/tracklist", std::nullopt, explore);
 
         mainRouter->add<SettingsView>("/settings", std::nullopt);
+        mainRouter->add<PodcastsView>("/podcasts", Wt::WString::tr("Lms.Podcasts.podcasts"));
 
         if (getUserType() == db::UserType::ADMIN)
             mainRouter->add<AdminView>("/admin", std::nullopt);
@@ -499,6 +507,9 @@ namespace lms::ui
 
         _playQueue->trackSelected.connect([this](db::TrackId trackId, bool play, float replayGain) {
             _mediaPlayer->loadTrack(trackId, play, replayGain);
+        });
+        _playQueue->podcastEpisodeSelected.connect([this](db::PodcastEpisodeId episodeId, bool play) {
+            _mediaPlayer->loadPodcastEpisode(episodeId, play);
         });
 
         _playQueue->trackUnselected.connect([this] {

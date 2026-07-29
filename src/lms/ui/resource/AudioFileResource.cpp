@@ -27,6 +27,9 @@
 #include "core/String.hpp"
 #include "database/Session.hpp"
 #include "database/objects/Track.hpp"
+#include "database/objects/PodcastEpisode.hpp"
+#include "services/podcast/IPodcastService.hpp"
+#include "core/Service.hpp"
 
 #include "LmsApplication.hpp"
 
@@ -52,6 +55,26 @@ namespace lms::ui
 
         std::optional<std::filesystem::path> getTrackPathFromURLArgs(const Wt::Http::Request& request)
         {
+            if (const std::string* episodeIdParameter{ request.getParameter("episodeid") })
+            {
+                const std::optional<db::PodcastEpisodeId::ValueType> value{ core::stringUtils::readAs<db::PodcastEpisodeId::ValueType>(*episodeIdParameter) };
+                if (!value)
+                {
+                    AUDIO_RESOURCE_LOG(ERROR, "Bad episodeid URL parameter!");
+                    return std::nullopt;
+                }
+
+                auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+                const db::PodcastEpisode::pointer episode{ db::PodcastEpisode::find(LmsApp->getDbSession(), db::PodcastEpisodeId{ *value }) };
+                if (!episode || episode->getAudioRelativeFilePath().empty())
+                {
+                    AUDIO_RESOURCE_LOG(ERROR, "Missing or undownloaded podcast episode");
+                    return std::nullopt;
+                }
+
+                return core::Service<podcast::IPodcastService>::get()->getCachePath() / episode->getAudioRelativeFilePath();
+            }
+
             const std::string* trackIdParameter{ request.getParameter("trackid") };
             if (!trackIdParameter)
             {
@@ -79,6 +102,11 @@ namespace lms::ui
     std::string AudioFileResource::getUrl(db::TrackId trackId) const
     {
         return url() + "&trackid=" + trackId.toString();
+    }
+
+    std::string AudioFileResource::getUrl(db::PodcastEpisodeId episodeId) const
+    {
+        return url() + "&episodeid=" + episodeId.toString();
     }
 
     void AudioFileResource::handleRequest(const Wt::Http::Request& request, Wt::Http::Response& response)

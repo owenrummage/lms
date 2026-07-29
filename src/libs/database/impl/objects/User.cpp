@@ -30,6 +30,7 @@
 #include "database/objects/Genre.hpp"
 #include "database/objects/Grouping.hpp"
 #include "database/objects/Language.hpp"
+#include "database/objects/MediaLibrary.hpp"
 #include "database/objects/Mood.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
@@ -46,6 +47,7 @@ namespace lms::db
 {
     User::User(std::string_view loginName)
         : _loginName{ loginName }
+        , _displayName{ loginName }
     {
     }
 
@@ -108,5 +110,31 @@ namespace lms::db
     {
         assert(isAudioBitrateAllowed(bitrate));
         _subsonicDefaultTranscodingOutputBitrate = bitrate;
+    }
+
+    std::vector<ObjectPtr<MediaLibrary>> User::getMediaLibraries() const
+    {
+        std::vector<ObjectPtr<MediaLibrary>> mediaLibraries;
+        mediaLibraries.reserve(_mediaLibraries.size());
+        for (const auto& mediaLibrary : _mediaLibraries)
+            mediaLibraries.emplace_back(mediaLibrary);
+        return mediaLibraries;
+    }
+
+    bool User::hasMediaLibrary(MediaLibraryId mediaLibraryId) const
+    {
+        for (const auto& mediaLibrary : _mediaLibraries)
+        {
+            if (mediaLibrary.id() == mediaLibraryId)
+                return true;
+        }
+        return false;
+    }
+
+    void User::setMediaLibraries(const std::vector<ObjectPtr<MediaLibrary>>& mediaLibraries)
+    {
+        _mediaLibraries.clear();
+        for (const auto& mediaLibrary : mediaLibraries)
+            _mediaLibraries.insert(getDboPtr(mediaLibrary));
     }
 } // namespace lms::db

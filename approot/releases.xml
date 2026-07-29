@@ -26,6 +26,7 @@
 		<div class="p-2">
 			<div class="Lms-responsive-square Lms-cover-container mb-1">
 				${cover class="shadow-sm"}
+				${share-btn class="btn btn-sm btn-primary position-absolute top-0 end-0 m-1"}
 			</div>
 			${release-name class="Lms-multiline-clamp text-decoration-none link-success"}
 			${<if-has-artist>}${artist-name class="Lms-multiline-clamp"}${</if-has-artist>}

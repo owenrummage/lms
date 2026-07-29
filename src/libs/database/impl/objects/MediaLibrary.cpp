@@ -24,11 +24,14 @@
 #include "core/String.hpp"
 
 #include "database/Session.hpp"
+#include "database/objects/AuthToken.hpp"
 #include "database/objects/Genre.hpp"
 #include "database/objects/Grouping.hpp"
 #include "database/objects/Language.hpp"
 #include "database/objects/Mood.hpp"
 #include "database/objects/Track.hpp"
+#include "database/objects/User.hpp"
+#include "database/objects/UIState.hpp"
 
 #include "Utils.hpp"
 #include "traits/IdTypeTraits.hpp"

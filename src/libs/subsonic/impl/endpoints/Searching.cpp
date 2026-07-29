@@ -160,7 +160,7 @@ namespace lms::api::subsonic
             ArtistId lastRetrievedId;
             auto findArtists{ [&] {
                 Artist::FindParameters params;
-                params.filters.setMediaLibrary(mediaLibrary);
+context.applyUserLibraryFilter(params.filters, mediaLibrary);
                 params.setKeywords(keywords);
                 params.setRange(Range{ artistOffset, artistCount });
                 params.setSortMethod(ArtistSortMethod::Id); // must be consistent with both methods
@@ -237,7 +237,7 @@ namespace lms::api::subsonic
                 Release::FindParameters params;
                 params.setKeywords(keywords);
                 params.setRange(Range{ albumOffset, albumCount });
-                params.filters.setMediaLibrary(mediaLibrary);
+context.applyUserLibraryFilter(params.filters, mediaLibrary);
                 params.setSortMethod(ReleaseSortMethod::Id); // must be consistent with both methods
 
                 Release::find(context.getDbSession(), params, [&](const Release::pointer& release) {
@@ -312,7 +312,7 @@ namespace lms::api::subsonic
                 Track::FindParameters params;
                 params.setKeywords(keywords);
                 params.setRange(Range{ songOffset, songCount });
-                params.filters.setMediaLibrary(mediaLibrary);
+context.applyUserLibraryFilter(params.filters, mediaLibrary);
                 params.setSortMethod(TrackSortMethod::Id); // must be consistent with both methods
 
                 Track::find(context.getDbSession(), params, [&](const Track::pointer& track) {

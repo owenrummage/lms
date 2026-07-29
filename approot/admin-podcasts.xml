@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<messages>
+
+<message id="Lms.Admin.Podcasts.template">
+	<legend>${tr:Lms.Admin.Podcasts.podcasts}</legend>
+	<p class="text-body-secondary">${tr:Lms.Admin.Podcasts.help}</p>
+	<div class="input-group mb-3">
+		${url class="form-control"}
+		${add-btn class="btn btn-primary"}
+	</div>
+	<div class="d-flex justify-content-end mb-3">
+		${refresh-btn class="btn btn-secondary"}
+	</div>
+	${podcasts class="d-grid gap-1 mb-3 Lms-row-container"}
+</message>
+
+<message id="Lms.Admin.Podcasts.template.entry">
+	<div class="d-flex align-items-center Lms-bg-dark-hover">
+		<div class="row align-items-center flex-fill">
+			<div class="col-12 col-md-4"><div class="p-2">${title class="d-block text-truncate"}</div></div>
+			<div class="col-12 col-md-8"><div class="p-2 d-none d-md-block">${url class="d-block text-truncate"}</div></div>
+		</div>
+		<div class="p-2 d-flex">${delete-btn class="btn btn-sm btn-outline-danger border-0"}</div>
+	</div>
+</message>
+
+<message id="Lms.Admin.Podcasts.template.delete">
+	<div class="modal fade" tabindex="-1">
+		<div class="modal-dialog"><div class="modal-content">
+			<div class="modal-header"><h5 class="modal-title">${tr:Lms.Admin.Podcasts.delete-confirm}</h5></div>
+			<div class="modal-body">${tr:Lms.Admin.Podcasts.delete-help}</div>
+			<div class="modal-footer">${delete-btn class="btn btn-danger me-1"}${cancel-btn class="btn btn-secondary"}</div>
+		</div></div>
+	</div>
+</message>
+
+<message id="Lms.Admin.Podcasts.template.episodes">
+	<div class="modal fade" tabindex="-1">
+		<div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">${title}</h5>
+				${close-x class="btn-close" aria-label="Close"}
+			</div>
+			<div class="modal-body">
+				${episodes class="d-grid gap-1 Lms-row-container"}
+			</div>
+			<div class="modal-footer">
+				${download-all-btn class="btn btn-primary"}
+				${close-btn class="btn btn-secondary"}
+			</div>
+		</div></div>
+	</div>
+</message>
+
+<message id="Lms.Admin.Podcasts.template.episode">
+	<div class="d-flex align-items-center Lms-bg-dark-hover p-2 gap-2">
+		<div class="flex-fill overflow-hidden">
+			<div class="text-truncate">${title}</div>
+			<small class="text-body-secondary">${date}</small>
+		</div>
+		${status}
+		${download-btn class="btn btn-sm btn-outline-primary"}
+	</div>
+</message>
+
+</messages>

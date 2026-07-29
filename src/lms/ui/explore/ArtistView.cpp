@@ -125,7 +125,7 @@ namespace lms::ui
         auto transaction{ LmsApp->getDbSession().createReadTransaction() };
 
         const db::Artist::pointer artist{ db::Artist::find(LmsApp->getDbSession(), *artistId) };
-        if (!artist)
+        if (!artist || !_filters.isArtistAllowed(*artistId))
             throw ArtistNotFoundException{};
 
         LmsApp->setTitle(artist->getName());
@@ -462,6 +462,7 @@ namespace lms::ui
         const db::Range range{ static_cast<std::size_t>(_trackContainer->getCount()), _tracksBatchSize };
 
         db::Track::FindParameters params;
+        params.setFilters(_filters.getDbFilters());
         params.setArtist(_artistId);
         params.setRange(range);
         params.setSortMethod(db::TrackSortMethod::Name);

@@ -25,6 +25,7 @@
 #include <string_view>
 
 #include <Wt/Dbo/Field.h>
+#include <Wt/Dbo/collection.h>
 
 #include "database/Object.hpp"
 #include "database/objects/MediaLibraryId.hpp"
@@ -32,6 +33,7 @@
 namespace lms::db
 {
     class Session;
+    class User;
 
     class MediaLibrary final : public Object<MediaLibrary, MediaLibraryId>
     {
@@ -62,6 +64,7 @@ namespace lms::db
         {
             Wt::Dbo::field(a, _path, "path");
             Wt::Dbo::field(a, _name, "name");
+            Wt::Dbo::hasMany(a, _users, Wt::Dbo::ManyToMany, "user_media_library", "media_library", Wt::Dbo::OnDeleteCascade);
         }
 
     private:
@@ -71,5 +74,6 @@ namespace lms::db
 
         std::filesystem::path _path;
         std::string _name;
+        Wt::Dbo::collection<Wt::Dbo::ptr<User>> _users;
     };
 } // namespace lms::db

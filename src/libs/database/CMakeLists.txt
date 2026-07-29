@@ -9,6 +9,7 @@ add_library(lmsdatabase STATIC
 	impl/objects/Genre.cpp
 	impl/objects/Grouping.cpp
 	impl/objects/Image.cpp
+	impl/objects/InternetRadioStation.cpp
 	impl/objects/Language.cpp
 	impl/objects/Listen.cpp
 	impl/objects/MediaLibrary.cpp
@@ -24,6 +25,7 @@ add_library(lmsdatabase STATIC
 	impl/objects/RatedTrack.cpp
 	impl/objects/Release.cpp
 	impl/objects/ScanSettings.cpp
+	impl/objects/Share.cpp
 	impl/objects/ServerInfo.cpp
 	impl/objects/StarredArtist.cpp
 	impl/objects/StarredRelease.cpp

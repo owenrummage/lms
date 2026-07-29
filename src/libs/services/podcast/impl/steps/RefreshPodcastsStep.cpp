@@ -120,7 +120,7 @@ namespace lms::podcast
             dbPodcast.modify()->setSubtitle(podcast.subtitle);
             dbPodcast.modify()->setSummary(podcast.summary);
             dbPodcast.modify()->setTitle(podcast.title);
-            if (std::string previousUrl{ dbPodcast->getImageUrl() }; !previousUrl.empty() && previousUrl != podcast.imageUrl)
+            if (std::string previousUrl{ dbPodcast->getImageUrl() }; previousUrl != podcast.imageUrl && !podcast.imageUrl.empty())
             {
                 if (isAllowedPodcastUrl(podcast.imageUrl))
                 {

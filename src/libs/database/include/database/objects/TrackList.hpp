@@ -33,6 +33,8 @@
 #include "database/objects/Filters.hpp"
 #include "database/objects/TrackId.hpp"
 #include "database/objects/TrackListId.hpp"
+#include "database/objects/PodcastEpisodeId.hpp"
+#include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/Types.hpp"
 #include "database/objects/UserId.hpp"
 
@@ -214,6 +216,8 @@ namespace lms::db
         // Accessors
         TrackId getTrackId() const { return _track.id(); }
         ObjectPtr<Track> getTrack() const { return _track; }
+        PodcastEpisodeId getPodcastEpisodeId() const { return _podcastEpisode.id(); }
+        ObjectPtr<PodcastEpisode> getPodcastEpisode() const { return _podcastEpisode; }
         const Wt::WDateTime& getDateTime() const { return _dateTime; }
 
         template<class Action>
@@ -222,6 +226,7 @@ namespace lms::db
             Wt::Dbo::field(a, _dateTime, "date_time");
 
             Wt::Dbo::belongsTo(a, _track, "track", Wt::Dbo::OnDeleteCascade);
+            Wt::Dbo::belongsTo(a, _podcastEpisode, "podcast_episode", Wt::Dbo::OnDeleteCascade);
             Wt::Dbo::belongsTo(a, _tracklist, "tracklist", Wt::Dbo::OnDeleteCascade);
         }
 
@@ -229,10 +234,13 @@ namespace lms::db
         friend class Session;
         TrackListEntry(ObjectPtr<Track> track, ObjectPtr<TrackList> tracklist, const Wt::WDateTime& dateTime);
         TrackListEntry(ObjectPtr<Track> track, ObjectPtr<TrackList> tracklist);
+        TrackListEntry(ObjectPtr<PodcastEpisode> episode, ObjectPtr<TrackList> tracklist);
         static pointer create(Session& session, ObjectPtr<Track> track, ObjectPtr<TrackList> tracklist, const Wt::WDateTime& dateTime = {});
+        static pointer create(Session& session, ObjectPtr<PodcastEpisode> episode, ObjectPtr<TrackList> tracklist);
 
         Wt::WDateTime _dateTime; // optional date time
         Wt::Dbo::ptr<Track> _track;
+        Wt::Dbo::ptr<PodcastEpisode> _podcastEpisode;
         Wt::Dbo::ptr<TrackList> _tracklist;
     };
 

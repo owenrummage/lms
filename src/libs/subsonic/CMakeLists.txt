@@ -1,6 +1,7 @@
 
 add_library(lmssubsonic STATIC
 	impl/AuthUtils.cpp
+	impl/MusicBrainzArtistMetadata.cpp
 	impl/endpoints/transcoding/AudioFileInfo.cpp
 	impl/endpoints/transcoding/TranscodeDecision.cpp
 	impl/endpoints/transcoding/TranscodeDecisionTracker.cpp
@@ -8,12 +9,14 @@ add_library(lmssubsonic STATIC
 	impl/endpoints/Bookmarks.cpp
 	impl/endpoints/Browsing.cpp
 	impl/endpoints/Jukebox.cpp
+	impl/endpoints/InternetRadio.cpp
 	impl/endpoints/MediaAnnotation.cpp
 	impl/endpoints/MediaLibraryScanning.cpp
 	impl/endpoints/MediaRetrieval.cpp
 	impl/endpoints/Playlists.cpp
 	impl/endpoints/Podcast.cpp
 	impl/endpoints/Searching.cpp
+	impl/endpoints/Sharing.cpp
 	impl/endpoints/System.cpp
 	impl/endpoints/Transcoding.cpp
 	impl/endpoints/UserManagement.cpp

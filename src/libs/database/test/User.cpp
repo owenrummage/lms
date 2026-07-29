@@ -48,4 +48,61 @@ namespace lms::db::tests
             EXPECT_EQ(visitedUsers[1], user2->getId());
         }
     }
+
+    TEST_F(DatabaseFixture, UserMediaLibraries)
+    {
+        ScopedUser user{ session, "MyUser" };
+        ScopedMediaLibrary library1{ session, "Library1", "/library1" };
+        ScopedMediaLibrary library2{ session, "Library2", "/library2" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            auto userPtr{ user.get() };
+            userPtr.modify()->setMediaLibraries({ library1.get() });
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto userPtr{ user.get() };
+            ASSERT_EQ(userPtr->getMediaLibraries().size(), 1);
+            EXPECT_TRUE(userPtr->hasMediaLibrary(library1.getId()));
+            EXPECT_FALSE(userPtr->hasMediaLibrary(library2.getId()));
+        }
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.get().modify()->setMediaLibraries({ library2.get() });
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto userPtr{ user.get() };
+            ASSERT_EQ(userPtr->getMediaLibraries().size(), 1);
+            EXPECT_FALSE(userPtr->hasMediaLibrary(library1.getId()));
+            EXPECT_TRUE(userPtr->hasMediaLibrary(library2.getId()));
+        }
+    }
+
+    TEST_F(DatabaseFixture, UserNames)
+    {
+        ScopedUser user{ session, "MyUser" };
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_EQ(user->getLoginName(), "MyUser");
+            EXPECT_EQ(user->getDisplayName(), "MyUser");
+        }
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            user.get().modify()->setLoginName("new-login");
+            user.get().modify()->setDisplayName("New Display Name");
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_EQ(user->getLoginName(), "new-login");
+            EXPECT_EQ(user->getDisplayName(), "New Display Name");
+        }
+    }
 } // namespace lms::db::tests

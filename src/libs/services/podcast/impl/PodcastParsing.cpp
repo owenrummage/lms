@@ -107,7 +107,12 @@ namespace lms::podcast
             {
                 std::ostringstream oss;
                 for (const pugi::xml_node& n : child.children())
-                    n.print(oss, "", pugi::format_raw);
+                {
+                    if (n.type() == pugi::node_pcdata || n.type() == pugi::node_cdata)
+                        oss << n.value();
+                    else
+                        n.print(oss, "", pugi::format_raw);
+                }
                 res = oss.str();
             }
 

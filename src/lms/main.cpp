@@ -55,6 +55,8 @@
 #include "services/scrobbling/IScrobblingService.hpp"
 #include "services/transcoding/ITranscodeService.hpp"
 #include "subsonic/SubsonicResource.hpp"
+#include "subsonic/MusicBrainzArtistMetadata.hpp"
+#include "PublicShareResource.hpp"
 #include "ui/Auth.hpp"
 #include "ui/LmsApplication.hpp"
 #include "ui/LmsApplicationManager.hpp"
@@ -499,6 +501,7 @@ namespace lms
             core::Service<scanner::IScannerService> scannerService{ scanner::createScannerService(*database, cachePath) };
             core::Service<transcoding::ITranscodeService> transcodingService{ transcoding::createTranscodeService() };
             core::Service<podcast::IPodcastService> podcastService{ podcast::createPodcastService(ioContext, *database, cachePath / "podcasts") };
+            core::Service<api::subsonic::MusicBrainzArtistMetadataService> musicBrainzArtistMetadataService{ api::subsonic::createMusicBrainzArtistMetadataService(ioContext, *database) };
 
             const auto jukeboxAudioBackend{ getJukeboxAudioOutputBackend() };
             core::Service<jukebox::IJukeboxService> jukeboxService{ jukeboxAudioBackend ? jukebox::createJukeboxService(*database, *jukeboxAudioBackend) : nullptr };
@@ -520,6 +523,8 @@ namespace lms
             server.removeEntryPoint("");
 
             std::unique_ptr<Wt::WResource> subsonicResource;
+            auto publicShareResource = std::make_unique<PublicShareResource>(*database);
+            server.addResource(publicShareResource.get(), "/share");
             // bind API resources
             if (config->getBool("api-subsonic", true))
             {

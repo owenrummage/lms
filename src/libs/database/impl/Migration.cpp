@@ -36,7 +36,7 @@ namespace lms::db
 {
     namespace
     {
-        static constexpr Version LMS_DATABASE_VERSION{ 110 };
+        static constexpr Version LMS_DATABASE_VERSION{ 117 };
     }
 
     VersionInfo::VersionInfo()
@@ -1966,6 +1966,71 @@ CREATE TABLE IF NOT EXISTS "server_info" (
 ))");
     }
 
+    void migrateFromV110(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE tracklist_entry ADD COLUMN podcast_episode_id bigint REFERENCES podcast_episode(id) ON DELETE CASCADE DEFERRABLE INITIALLY DEFERRED)");
+        utils::executeCommand(*session.getDboSession(), R"(CREATE INDEX tracklist_entry_podcast_episode_idx ON tracklist_entry(podcast_episode_id))");
+    }
+
+    void migrateFromV111(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE "share" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "token" text not null,
+  "media_ids" text not null,
+  "description" text not null,
+  "created" text not null,
+  "expires" text,
+  "last_visited" text,
+  "visit_count" integer not null,
+  "user_id" bigint not null,
+  constraint "fk_share_user" foreign key ("user_id") references "user" ("id") on delete cascade deferrable initially deferred
+))");
+    }
+
+    void migrateFromV112(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE "user_media_library" (
+  "user_id" bigint,
+  "media_library_id" bigint,
+  primary key ("user_id", "media_library_id"),
+  constraint "fk_user_media_library_user" foreign key ("user_id") references "user" ("id") on delete cascade deferrable initially deferred,
+  constraint "fk_user_media_library_media_library" foreign key ("media_library_id") references "media_library" ("id") on delete cascade deferrable initially deferred
+))");
+        utils::executeCommand(*session.getDboSession(), R"(INSERT INTO user_media_library (user_id, media_library_id) SELECT u.id, ml.id FROM "user" u CROSS JOIN media_library ml)");
+    }
+
+    void migrateFromV113(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(CREATE TABLE "internet_radio_station" (
+  "id" integer primary key autoincrement,
+  "version" integer not null,
+  "name" text not null,
+  "stream_url" text not null,
+  "homepage_url" text not null
+))");
+    }
+
+    void migrateFromV114(Session& session)
+    {
+        // Album-less tracks are now assigned to an "Unknown Album" release.
+        // Force existing tracks through the audio metadata scanner again.
+        utils::executeCommand(*session.getDboSession(), "UPDATE scan_settings SET audio_scan_version = audio_scan_version + 1");
+    }
+
+    void migrateFromV115(Session& session)
+    {
+        // Reserved migration version. MusicBrainz public metadata needs no stored credentials.
+        (void)session;
+    }
+
+    void migrateFromV116(Session& session)
+    {
+        utils::executeCommand(*session.getDboSession(), R"(ALTER TABLE "user" ADD COLUMN display_name text NOT NULL DEFAULT '')");
+        utils::executeCommand(*session.getDboSession(), R"(UPDATE "user" SET display_name = login_name)");
+    }
+
     bool doDbMigration(Session& session)
     {
         constexpr std::string_view outdatedMsg{ "Outdated database, please rebuild it (delete the .db file and restart)" };
@@ -2052,6 +2117,13 @@ CREATE TABLE IF NOT EXISTS "server_info" (
             { 107, migrateFromV107 },
             { 108, migrateFromV108 },
             { 109, migrateFromV109 },
+            { 110, migrateFromV110 },
+            { 111, migrateFromV111 },
+            { 112, migrateFromV112 },
+            { 113, migrateFromV113 },
+            { 114, migrateFromV114 },
+            { 115, migrateFromV115 },
+            { 116, migrateFromV116 },
         };
 
         LMS_SCOPED_TRACE_OVERVIEW("Database", "Migration");

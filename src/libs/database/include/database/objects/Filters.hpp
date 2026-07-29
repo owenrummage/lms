@@ -39,6 +39,7 @@ namespace lms::db
     struct Filters
     {
         MediaLibraryId mediaLibrary;             // tracks that belongs to this library
+        std::optional<std::vector<MediaLibraryId>> mediaLibraries; // tracks in any of these authorized libraries; empty means none
         std::vector<ClusterId> clusters;         // tracks that belong to *all* these clusters
         GenreId genre;                           // tracks that belong to this genre
         GroupingId grouping;                     // tracks that belong to this grouping
@@ -76,6 +77,11 @@ namespace lms::db
         Filters& setMediaLibrary(MediaLibraryId _mediaLibrary)
         {
             mediaLibrary = _mediaLibrary;
+            return *this;
+        }
+        Filters& setMediaLibraries(std::vector<MediaLibraryId> _mediaLibraries)
+        {
+            mediaLibraries = std::move(_mediaLibraries);
             return *this;
         }
         Filters& setLabel(LabelId _label)

@@ -560,7 +560,25 @@ namespace lms::ui::utils
 
     void copyToClipboard(std::string_view text)
     {
-        LmsApp->doJavaScript("navigator.clipboard.writeText('" + core::stringUtils::jsEscape(text) + "').catch(function(){})");
+        LmsApp->doJavaScript(R"(
+(function(text) {
+    function fallback() {
+        var textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        document.body.removeChild(textArea);
+    }
+
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function')
+        navigator.clipboard.writeText(text).catch(fallback);
+    else
+        fallback();
+})(')" + core::stringUtils::jsEscape(text) + "');");
     }
 
     TrackDisplayInfo computeTrackDisplayInfo(const db::ObjectPtr<db::Track>& track)

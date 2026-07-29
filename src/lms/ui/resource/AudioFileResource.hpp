@@ -22,6 +22,7 @@
 #include <Wt/WResource.h>
 
 #include "database/objects/TrackId.hpp"
+#include "database/objects/PodcastEpisodeId.hpp"
 
 namespace lms::ui
 {
@@ -31,6 +32,7 @@ namespace lms::ui
         ~AudioFileResource() override;
 
         std::string getUrl(db::TrackId trackId) const;
+        std::string getUrl(db::PodcastEpisodeId episodeId) const;
 
     private:
         void handleRequest(const Wt::Http::Request& request,

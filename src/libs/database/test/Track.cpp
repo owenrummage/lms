@@ -301,6 +301,32 @@ namespace lms::db::tests
         }
     }
 
+    TEST_F(DatabaseFixture, Track_MediaLibraries)
+    {
+        ScopedTrack track1{ session };
+        ScopedTrack track2{ session };
+        ScopedMediaLibrary library1{ session, "Library1", "/library1" };
+        ScopedMediaLibrary library2{ session, "Library2", "/library2" };
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            track1.get().modify()->setMediaLibrary(library1.get());
+            track2.get().modify()->setMediaLibrary(library2.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const auto tracks{ Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMediaLibraries({ library1.getId() }))) };
+            ASSERT_EQ(tracks.size(), 1);
+            EXPECT_EQ(tracks.front(), track1.getId());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            EXPECT_TRUE(Track::findIds(session, Track::FindParameters{}.setFilters(Filters{}.setMediaLibraries({}))).empty());
+        }
+    }
+
     TEST_F(DatabaseFixture, Track_noMediaLibrary)
     {
         ScopedTrack track{ session };

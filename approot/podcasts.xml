@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<messages>
+
+<message id="Lms.Podcasts.template">
+	<legend class="mb-3">${tr:Lms.Podcasts.podcasts}</legend>
+	<div class="clearfix"></div>
+	${content class="d-block w-100"}
+</message>
+
+<message id="Lms.Podcasts.template.channel">
+	<div class="card w-100">
+		<div class="row g-0 align-items-center">
+			<div class="col-auto p-2">
+				<div class="Lms-cover-container" style="width: 8rem; height: 8rem;">
+					${cover class="shadow-sm rounded w-100 h-100" style="object-fit: cover;"}
+				</div>
+			</div>
+			<div class="col min-width-0">
+				<div class="card-body">
+					<h5 class="card-title">${title}</h5>
+					<p class="card-text text-body-secondary mb-0 text-break">${description}</p>
+				</div>
+			</div>
+			<div class="col-auto p-2">${share-btn class="btn btn-sm btn-outline-secondary"}</div>
+		</div>
+	</div>
+</message>
+
+<message id="Lms.Podcasts.template.channel-header">
+	<div class="mb-3 clearfix">
+		${back class="btn btn-sm btn-outline-secondary mb-3"}
+		<div class="d-flex gap-3 align-items-center">
+			<div class="Lms-cover-container flex-shrink-0" style="width: 8rem; height: 8rem;">
+				${cover class="shadow-sm rounded w-100 h-100" style="object-fit: cover;"}
+			</div>
+			<div class="min-width-0 flex-fill">
+				<h2>${title}</h2>
+				<p class="text-body-secondary mb-0">${description}</p>
+			</div>
+			${share-btn class="btn btn-sm btn-outline-secondary"}
+		</div>
+	</div>
+</message>
+
+<message id="Lms.Podcasts.template.episode">
+	<div class="d-flex align-items-center Lms-bg-dark-hover p-2 gap-2 ${row-class}">
+		<div class="flex-fill overflow-hidden">
+			<div class="text-truncate">${title}</div>
+			<small class="text-body-secondary">${date}</small>
+		</div>
+		${action-btn class="btn btn-sm btn-outline-primary"}
+		${share-btn class="btn btn-sm btn-outline-secondary"}
+	</div>
+</message>
+
+</messages>

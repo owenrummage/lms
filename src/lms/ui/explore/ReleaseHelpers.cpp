@@ -22,6 +22,7 @@
 #include <Wt/WAnchor.h>
 #include <Wt/WImage.h>
 #include <Wt/WText.h>
+#include <Wt/WPushButton.h>
 
 #include "core/EnumSet.hpp"
 #include "core/Utils.hpp"
@@ -30,6 +31,7 @@
 #include "database/objects/Release.hpp"
 
 #include "Utils.hpp"
+#include "ShareUtils.hpp"
 #include "explore/ReleaseTypes.hpp"
 
 namespace lms::ui::releaseListHelpers
@@ -40,6 +42,11 @@ namespace lms::ui::releaseListHelpers
 
         entry->bindWidget("release-name", utils::createReleaseAnchor(release));
         entry->addFunction("tr", &Wt::WTemplate::Functions::tr);
+        const db::ReleaseId releaseId{ release->getId() };
+        auto* shareBtn{ entry->bindNew<Wt::WPushButton>("share-btn", "<i class=\"fa fa-share-alt\" aria-hidden=\"true\"></i>", Wt::TextFormat::XHTML) };
+        shareBtn->setToolTip("Share");
+        shareBtn->setAttributeValue("aria-label", "Share " + std::string{ release->getName() });
+        shareBtn->clicked().connect([releaseId] { shareUtils::share(releaseId); });
 
         {
             Wt::WAnchor* anchor{ entry->bindWidget("cover", utils::createReleaseAnchor(release, false)) };

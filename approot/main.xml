@@ -31,6 +31,9 @@
 					<li class="nav-item">
 						${tracklists class="nav-link"}
 					</li>
+					<li class="nav-item">
+						${podcasts class="nav-link"}
+					</li>
 				</ul>
 				${filters class="d-flex align-items-center me-auto mb-2 mb-md-0"}
 				<div class="navbar-nav align-items-md-center">
@@ -41,6 +44,8 @@
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 							<li>${media-libraries class="dropdown-item"}</li>
+							<li>${admin-podcasts class="dropdown-item"}</li>
+							<li>${admin-internet-radio class="dropdown-item"}</li>
 							<li>${scan-settings class="dropdown-item"}</li>
 							<li>${scanner class="dropdown-item"}</li>
 							<li>${users class="dropdown-item"}</li>

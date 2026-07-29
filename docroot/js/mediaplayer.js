@@ -24,6 +24,9 @@ class LMSMediaPlayer {
 	#elems;
 	#offset;
 	#trackId;
+	#scrobbleEnabled;
+	#queueEnabled;
+	#transcodingEnabled;
 	#duration;
 	#audioNativeSrc;
 	#audioTranscodingSrc;
@@ -40,6 +43,9 @@ class LMSMediaPlayer {
 		this.#elems = {};
 		this.#offset = 0;
 		this.#trackId = null;
+		this.#scrobbleEnabled = true;
+		this.#queueEnabled = true;
+		this.#transcodingEnabled = true;
 		this.#duration = 0;
 		this.#settings = {};
 		this.#playedDuration = 0;
@@ -94,7 +100,8 @@ class LMSMediaPlayer {
 
 		this.#elems.audio.addEventListener("ended", () => {
 			this.#resetTimer();
-			Wt.emit(this.#root, "playbackEnded");
+			if (this.#queueEnabled)
+				Wt.emit(this.#root, "playbackEnded");
 		});
 
 		this.#elems.audio.addEventListener("canplay", () => {
@@ -224,7 +231,7 @@ class LMSMediaPlayer {
 	}
 
 	#startTimer() {
-		if (this.#lastStartPlaying == null)
+		if (this.#lastStartPlaying == null && this.#scrobbleEnabled)
 			Wt.emit(this.#root, "scrobbleListenNow", this.#trackId);
 		this.#lastStartPlaying = Date.now();
 	}
@@ -240,10 +247,10 @@ class LMSMediaPlayer {
 		if (this.#lastStartPlaying != null)
 			this.#pauseTimer();
 
-		if (this.#playedDuration > 0) {
+		if (this.#playedDuration > 0 && this.#scrobbleEnabled) {
 			Wt.emit(this.#root, "scrobbleListenFinished", this.#trackId, this.#playedDuration);
-			this.#playedDuration = 0;
 		}
+		this.#playedDuration = 0;
 	}
 
 	#durationToString(duration) {
@@ -280,12 +287,14 @@ class LMSMediaPlayer {
 
 	#playPrevious() {
 		this.#initAudioCtx();
-		Wt.emit(this.#root, "playPrevious");
+		if (this.#queueEnabled)
+			Wt.emit(this.#root, "playPrevious");
 	}
 
 	#playNext() {
 		this.#initAudioCtx();
-		Wt.emit(this.#root, "playNext");
+		if (this.#queueEnabled)
+			Wt.emit(this.#root, "playNext");
 	}
 
 	#initVolume() {
@@ -446,6 +455,11 @@ class LMSMediaPlayer {
 		this.#resetTimer();
 
 		this.#trackId = params.trackId;
+		this.#scrobbleEnabled = params.scrobbleEnabled ?? true;
+		this.#queueEnabled = params.queueEnabled ?? true;
+		this.#transcodingEnabled = params.transcodingEnabled ?? true;
+		this.#elems.previous.disabled = !this.#queueEnabled;
+		this.#elems.next.disabled = !this.#queueEnabled;
 		this.#offset = 0;
 		this.#duration = params.duration;
 		this.#audioNativeSrc = params.nativeResource;
@@ -455,10 +469,10 @@ class LMSMediaPlayer {
 
 		this.#removeAudioSources();
 		// ! order is important
-		if (this.#settings.transcoding.mode == LMSTranscodingMode.Never || this.#settings.transcoding.mode == LMSTranscodingMode.IfFormatNotSupported) {
+		if (!this.#transcodingEnabled || this.#settings.transcoding.mode == LMSTranscodingMode.Never || this.#settings.transcoding.mode == LMSTranscodingMode.IfFormatNotSupported) {
 			this.#addAudioSource(this.#audioNativeSrc);
 		}
-		if (this.#settings.transcoding.mode == LMSTranscodingMode.Always || this.#settings.transcoding.mode == LMSTranscodingMode.IfFormatNotSupported) {
+		if (this.#transcodingEnabled && (this.#settings.transcoding.mode == LMSTranscodingMode.Always || this.#settings.transcoding.mode == LMSTranscodingMode.IfFormatNotSupported)) {
 			this.#addAudioSource(this.#audioTranscodingSrc);
 		}
 		this.#elems.audio.load();

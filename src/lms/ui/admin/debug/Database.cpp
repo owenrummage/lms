@@ -27,11 +27,14 @@
 #include <Wt/WDateTime.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WResource.h>
+#include <Wt/WText.h>
+#include <Wt/WTimer.h>
 
 #include "core/Service.hpp"
 #include "core/String.hpp"
 
 #include "database/profiling/IQueryProfiler.hpp"
+#include "subsonic/MusicBrainzArtistMetadata.hpp"
 
 namespace lms::ui
 {
@@ -104,6 +107,26 @@ namespace lms::ui
         }
         else
             dumpBtn->setEnabled(false);
+
+        _musicBrainzResyncBtn = bindNew<Wt::WPushButton>("musicbrainz-resync-btn", Wt::WString::tr("Lms.Admin.DebugTools.Db.musicbrainz-resync"));
+        _musicBrainzResyncStatus = bindNew<Wt::WText>("musicbrainz-resync-status");
+        _statusTimer = addChild(std::make_unique<Wt::WTimer>());
+        _statusTimer->setInterval(std::chrono::seconds{ 1 });
+        _statusTimer->timeout().connect(this, &Database::updateMusicBrainzResyncStatus);
+        _musicBrainzResyncBtn->clicked().connect([] {
+            core::Service<api::subsonic::MusicBrainzArtistMetadataService>::get()->startAlbumResync();
+        });
+        updateMusicBrainzResyncStatus();
+    }
+
+    void Database::updateMusicBrainzResyncStatus()
+    {
+        const auto status{ core::Service<api::subsonic::MusicBrainzArtistMetadataService>::get()->getAlbumResyncStatus() };
+        _musicBrainzResyncBtn->setEnabled(!status.running);
+        _musicBrainzResyncStatus->setText(Wt::WString::tr("Lms.Admin.DebugTools.Db.musicbrainz-resync-progress")
+                                              .arg(status.processed).arg(status.total).arg(status.updated).arg(status.skipped).arg(status.failed));
+        if (status.running) _statusTimer->start();
+        else _statusTimer->stop();
     }
 
 } // namespace lms::ui

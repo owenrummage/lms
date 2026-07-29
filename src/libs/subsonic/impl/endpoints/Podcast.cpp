@@ -23,6 +23,7 @@
 #include "database/objects/Podcast.hpp"
 #include "database/objects/PodcastEpisode.hpp"
 #include "services/podcast/IPodcastService.hpp"
+#include "core/http/UrlValidation.hpp"
 
 #include "ParameterParsing.hpp"
 #include "RequestContext.hpp"
@@ -96,8 +97,8 @@ namespace lms::api::subsonic
         // Mandatory parameters
         const std::string url{ getMandatoryParameterAs<std::string>(context.getParameters(), "url") };
 
-        if (url.empty() || !(url.starts_with("http://") || url.starts_with("https://")))
-            throw BadParameterGenericError{ "url", "must start by http:// or https://" };
+        if (!core::http::isValidUrl(url))
+            throw BadParameterGenericError{ "url", "must be a valid absolute HTTP or HTTPS URL" };
 
         // no effect if podcast already exists
         core::Service<podcast::IPodcastService>::get()->addPodcast(url);

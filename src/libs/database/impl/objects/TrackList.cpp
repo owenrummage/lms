@@ -31,6 +31,7 @@
 #include "database/objects/Mood.hpp"
 #include "database/objects/Movement.hpp"
 #include "database/objects/PlayListFile.hpp"
+#include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/User.hpp"
 #include "database/objects/Work.hpp"
@@ -351,9 +352,22 @@ namespace lms::db
         assert(tracklist);
     }
 
+    TrackListEntry::TrackListEntry(ObjectPtr<PodcastEpisode> episode, ObjectPtr<TrackList> tracklist)
+        : _podcastEpisode{ getDboPtr(episode) }
+        , _tracklist{ getDboPtr(tracklist) }
+    {
+        assert(episode);
+        assert(tracklist);
+    }
+
     TrackListEntry::pointer TrackListEntry::create(Session& session, ObjectPtr<Track> track, ObjectPtr<TrackList> tracklist, const Wt::WDateTime& dateTime)
     {
         return session.getDboSession()->add(std::unique_ptr<TrackListEntry>{ new TrackListEntry{ track, tracklist, dateTime } });
+    }
+
+    TrackListEntry::pointer TrackListEntry::create(Session& session, ObjectPtr<PodcastEpisode> episode, ObjectPtr<TrackList> tracklist)
+    {
+        return session.getDboSession()->add(std::unique_ptr<TrackListEntry>{ new TrackListEntry{ episode, tracklist } });
     }
 
     TrackListEntry::pointer TrackListEntry::getById(Session& session, TrackListEntryId id)

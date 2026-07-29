@@ -20,6 +20,9 @@
 #include "image/Image.hpp"
 
 #include <array>
+#include <fstream>
+
+#include <webp/decode.h>
 
 #include "Exception.hpp"
 #include "StbImage.hpp"
@@ -39,7 +42,7 @@ namespace lms::image
 
     std::span<const std::filesystem::path> getSupportedFileExtensions()
     {
-        static const std::array<std::filesystem::path, 4> fileExtensions{ ".jpg", ".jpeg", ".png", ".bmp" };
+        static const std::array<std::filesystem::path, 5> fileExtensions{ ".jpg", ".jpeg", ".png", ".bmp", ".webp" };
         return fileExtensions;
     }
 
@@ -47,23 +50,20 @@ namespace lms::image
     {
         LMS_SCOPED_TRACE_DETAILED("Image", "ProbeFile");
 
-        int x{};
-        int y{};
-        int comp{};
-
-        if (::stbi_info(path.c_str(), &x, &y, &comp) == 0)
-            throw StbiException{ "Probe failed" };
-
-        ImageProperties properties;
-        properties.width = x;
-        properties.height = y;
-
-        return properties;
+        std::ifstream file{ path, std::ios::binary };
+        if (!file) throw StbiException{ "Probe failed" };
+        const std::string data{ std::istreambuf_iterator<char>{ file }, std::istreambuf_iterator<char>{} };
+        return probeImage(std::as_bytes(std::span{ data.data(), data.size() }));
     }
 
     ImageProperties probeImage(std::span<const std::byte> encodedData)
     {
         LMS_SCOPED_TRACE_DETAILED("Image", "ProbeBuffer");
+
+        int webpWidth{};
+        int webpHeight{};
+        if (::WebPGetInfo(reinterpret_cast<const uint8_t*>(encodedData.data()), encodedData.size(), &webpWidth, &webpHeight))
+            return ImageProperties{ .width = static_cast<ImageSize>(webpWidth), .height = static_cast<ImageSize>(webpHeight) };
 
         int x{};
         int y{};

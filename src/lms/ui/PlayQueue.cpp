@@ -35,6 +35,8 @@
 #include "database/Session.hpp"
 #include "database/objects/Artist.hpp"
 #include "database/objects/Medium.hpp"
+#include "database/objects/Podcast.hpp"
+#include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackList.hpp"
@@ -45,6 +47,7 @@
 #include "LmsApplication.hpp"
 #include "MediaPlayer.hpp"
 #include "ModalManager.hpp"
+#include "ShareUtils.hpp"
 #include "State.hpp"
 #include "Utils.hpp"
 #include "common/InfiniteScrollingContainer.hpp"
@@ -149,7 +152,12 @@ namespace lms::ui
 
                 queue.modify()->clear();
                 for (const db::TrackListEntry::pointer& entry : entries)
-                    LmsApp->getDbSession().create<db::TrackListEntry>(entry->getTrack(), queue);
+                {
+                    if (const db::Track::pointer track{ entry->getTrack() })
+                        LmsApp->getDbSession().create<db::TrackListEntry>(track, queue);
+                    else if (const db::PodcastEpisode::pointer episode{ entry->getPodcastEpisode() })
+                        LmsApp->getDbSession().create<db::TrackListEntry>(episode, queue);
+                }
             }
             _entriesContainer->reset();
             _nextPlayPos.reset();
@@ -252,7 +260,7 @@ namespace lms::ui
     {
         updateCurrentTrack(false);
 
-        db::TrackId trackId{};
+        MediaId mediaId;
         std::optional<float> replayGain{};
         {
             auto transaction{ LmsApp->getDbSession().createReadTransaction() };
@@ -275,9 +283,19 @@ namespace lms::ui
             if (resetNextPlayPos.value())
                 _nextPlayPos.reset();
 
-            const db::Track::pointer track{ queue->getEntry(*_trackPos)->getTrack() };
-            trackId = track->getId();
-            replayGain = getReplayGain(pos, track);
+            const db::TrackListEntry::pointer entry{ queue->getEntry(*_trackPos) };
+            if (const db::Track::pointer track{ entry->getTrack() })
+            {
+                mediaId = track->getId();
+                replayGain = getReplayGain(pos, track);
+            }
+            else if (const db::PodcastEpisode::pointer episode{ entry->getPodcastEpisode() })
+                mediaId = episode->getId();
+            else
+            {
+                stop();
+                return;
+            }
         }
 
         state::writeValue<size_t>("player_cur_playing_track_pos", pos);
@@ -285,7 +303,10 @@ namespace lms::ui
         enqueueRadioTracksIfNeeded();
         updateCurrentTrack(true);
         _isTrackSelected = true;
-        trackSelected.emit(trackId, play, replayGain ? *replayGain : 0);
+        if (const auto* trackId{ std::get_if<db::TrackId>(&mediaId) })
+            trackSelected.emit(*trackId, play, replayGain ? *replayGain : 0);
+        else
+            podcastEpisodeSelected.emit(std::get<db::PodcastEpisodeId>(mediaId), play);
     }
 
     void PlayQueue::playPrevious()
@@ -362,7 +383,15 @@ namespace lms::ui
         const db::TrackList::pointer queue{ getQueue() };
         const std::size_t trackCount{ queue->getCount() };
         _nbTracks->setText(Wt::WString::trn("Lms.track-count", trackCount).arg(trackCount));
-        _duration->setText(utils::durationToString(queue->getDuration()));
+        std::chrono::milliseconds duration{};
+        for (const db::TrackListEntry::pointer& entry : queue->getEntries())
+        {
+            if (const db::Track::pointer track{ entry->getTrack() })
+                duration += track->getDuration();
+            else if (const db::PodcastEpisode::pointer episode{ entry->getPodcastEpisode() })
+                duration += episode->getDuration();
+        }
+        _duration->setText(utils::durationToString(duration));
         trackCountChanged.emit(trackCount);
     }
 
@@ -378,7 +407,7 @@ namespace lms::ui
         entry->toggleStyleClass("Lms-entry-playing", selected);
     }
 
-    void PlayQueue::enqueueTracks(std::span<const db::TrackId> trackIds)
+    void PlayQueue::enqueueMedia(std::span<const MediaId> mediaIds)
     {
         {
             auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
@@ -386,17 +415,28 @@ namespace lms::ui
             db::TrackList::pointer queue{ getQueue() };
             const std::size_t queueSize{ queue->getCount() };
 
-            std::size_t nbTracksToEnqueue{ queueSize + trackIds.size() > getCapacity() ? getCapacity() - queueSize : trackIds.size() };
-            for (const db::TrackId trackId : trackIds)
+            std::size_t nbTracksToEnqueue{ queueSize + mediaIds.size() > getCapacity() ? getCapacity() - queueSize : mediaIds.size() };
+            for (const MediaId& mediaId : mediaIds)
             {
                 if (nbTracksToEnqueue == 0)
                     break;
 
-                db::Track::pointer track{ db::Track::find(LmsApp->getDbSession(), trackId) };
-                if (!track)
+                bool added{};
+                if (const auto* trackId{ std::get_if<db::TrackId>(&mediaId) })
+                {
+                    if (db::Track::pointer track{ db::Track::find(LmsApp->getDbSession(), *trackId) })
+                    {
+                        LmsApp->getDbSession().create<db::TrackListEntry>(track, queue);
+                        added = true;
+                    }
+                }
+                else if (db::PodcastEpisode::pointer episode{ db::PodcastEpisode::find(LmsApp->getDbSession(), std::get<db::PodcastEpisodeId>(mediaId)) }; episode && !episode->getAudioRelativeFilePath().empty())
+                {
+                    LmsApp->getDbSession().create<db::TrackListEntry>(episode, queue);
+                    added = true;
+                }
+                if (!added)
                     continue;
-
-                LmsApp->getDbSession().create<db::TrackListEntry>(track, queue);
                 nbTracksToEnqueue--;
             }
         }
@@ -406,18 +446,30 @@ namespace lms::ui
         _entriesContainer->setHasMore();
     }
 
-    std::vector<db::TrackId> PlayQueue::getAndClearTracksFrom(std::size_t pos)
+    void PlayQueue::enqueueTracks(std::span<const db::TrackId> trackIds)
     {
-        std::vector<db::TrackId> tracks;
+        std::vector<MediaId> mediaIds;
+        mediaIds.reserve(trackIds.size());
+        for (const db::TrackId trackId : trackIds)
+            mediaIds.emplace_back(trackId);
+        enqueueMedia(mediaIds);
+    }
+
+    std::vector<PlayQueue::MediaId> PlayQueue::getAndClearMediaFrom(std::size_t pos)
+    {
+        std::vector<MediaId> media;
 
         auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
 
         db::TrackList::pointer queue{ getQueue() };
         auto entries{ queue->getEntries(db::Range{ pos, getCapacity() }) };
-        tracks.reserve(entries.size());
+        media.reserve(entries.size());
         for (db::TrackListEntry::pointer& entry : entries)
         {
-            tracks.push_back(entry->getTrack()->getId());
+            if (const db::Track::pointer track{ entry->getTrack() })
+                media.emplace_back(track->getId());
+            else if (const db::PodcastEpisode::pointer episode{ entry->getPodcastEpisode() })
+                media.emplace_back(episode->getId());
             entry.remove();
         }
 
@@ -431,7 +483,7 @@ namespace lms::ui
             _entriesContainer->remove(pos, _entriesContainer->getCount() - 1);
         }
 
-        return tracks;
+        return media;
     }
 
     void PlayQueue::play(std::span<const db::TrackId> trackIds)
@@ -447,10 +499,11 @@ namespace lms::ui
 
         const std::size_t insertPos{ *_nextPlayPos };
 
-        std::vector<db::TrackId> tracksToInsert{ getAndClearTracksFrom(insertPos) };
-        tracksToInsert.insert(std::cbegin(tracksToInsert), std::cbegin(trackIds), std::cend(trackIds));
-
-        playOrAddLast(tracksToInsert);
+        std::vector<MediaId> mediaToInsert{ getAndClearMediaFrom(insertPos) };
+        mediaToInsert.insert(std::cbegin(mediaToInsert), std::cbegin(trackIds), std::cend(trackIds));
+        enqueueMedia(mediaToInsert);
+        if (!_isTrackSelected)
+            loadTrack(0, true);
 
         // set after playOrAddLast: it may call loadTrack() (queue was empty), which resets _nextPlayPos
         _nextPlayPos = insertPos + trackIds.size();
@@ -479,6 +532,17 @@ namespace lms::ui
         loadTrack(index, true);
     }
 
+    void PlayQueue::playPodcastEpisodes(std::span<const db::PodcastEpisodeId> episodeIds, std::size_t index)
+    {
+        clearTracks();
+        std::vector<MediaId> mediaIds;
+        mediaIds.reserve(episodeIds.size());
+        for (const db::PodcastEpisodeId episodeId : episodeIds)
+            mediaIds.emplace_back(episodeId);
+        enqueueMedia(mediaIds);
+        loadTrack(index, true);
+    }
+
     void PlayQueue::addSome()
     {
         auto transaction{ LmsApp->getDbSession().createReadTransaction() };
@@ -494,6 +558,83 @@ namespace lms::ui
     void PlayQueue::addEntry(const db::TrackListEntry::pointer& tracklistEntry)
     {
         const db::TrackListEntryId tracklistEntryId{ tracklistEntry->getId() };
+
+        if (const db::PodcastEpisode::pointer episode{ tracklistEntry->getPodcastEpisode() })
+        {
+            const db::PodcastEpisodeId episodeId{ episode->getId() };
+            const db::Podcast::pointer podcast{ episode->getPodcast() };
+            const std::string title{ episode->getTitle() };
+
+            Template* entry{ _entriesContainer->addNew<Template>(Wt::WString::tr("Lms.PlayQueue.template.entry")) };
+            entry->addFunction("id", &Wt::WTemplate::Functions::id);
+            entry->bindString("name", Wt::WString::fromUTF8(title), Wt::TextFormat::Plain);
+
+            const std::string author{ !episode->getAuthor().empty() ? std::string{ episode->getAuthor() } : (podcast ? std::string{ podcast->getAuthor() } : std::string{}) };
+            if (!author.empty())
+            {
+                entry->setCondition("if-has-artists", true);
+                entry->bindNew<Wt::WText>("artists", Wt::WString::fromUTF8(author), Wt::TextFormat::Plain);
+                entry->bindNew<Wt::WText>("artists-md", Wt::WString::fromUTF8(author), Wt::TextFormat::Plain);
+            }
+
+            db::ArtworkId artworkId{ episode->getArtworkId() };
+            if (!artworkId.isValid() && podcast)
+                artworkId = podcast->getArtworkId();
+            std::unique_ptr<Wt::WImage> image{ artworkId.isValid()
+                                                  ? utils::createArtworkImage(artworkId, ArtworkResource::DefaultArtworkType::Release, ArtworkResource::Size::Small)
+                                                  : utils::createDefaultArtworkImage(ArtworkResource::DefaultArtworkType::Release) };
+            image->addStyleClass("Lms-cover-track rounded");
+
+            if (podcast)
+            {
+                entry->setCondition("if-has-release", true);
+                const Wt::WLink podcastLink{ Wt::LinkType::InternalPath, "/podcasts/" + podcast->getId().toString() };
+                entry->bindNew<Wt::WAnchor>("release", podcastLink, Wt::WString::fromUTF8(std::string{ podcast->getTitle() }));
+                auto* coverAnchor{ entry->bindNew<Wt::WAnchor>("cover", podcastLink) };
+                image->addStyleClass("Lms-cover-anchor");
+                coverAnchor->setImage(std::move(image));
+            }
+            else
+                entry->bindWidget("cover", std::move(image));
+
+            entry->bindString("duration", utils::durationToString(episode->getDuration()), Wt::TextFormat::Plain);
+
+            auto playEpisode{ [this, entry] {
+                if (const std::optional<std::size_t> pos{ _entriesContainer->getIndexOf(*entry) })
+                    loadTrack(*pos, true);
+            } };
+            auto* playBtn{ entry->bindNew<Wt::WPushButton>("play-btn", Wt::WString::tr("Lms.template.play-btn"), Wt::TextFormat::XHTML) };
+            playBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.play-item").arg(title));
+            playBtn->clicked().connect(playEpisode);
+            entry->bindNew<Wt::WPushButton>("play", Wt::WString::tr("Lms.Explore.play"))->clicked().connect(playEpisode);
+
+            auto* delBtn{ entry->bindNew<Wt::WPushButton>("del-btn", Wt::WString::tr("Lms.template.delete-btn"), Wt::TextFormat::XHTML) };
+            delBtn->setAttributeValue("aria-label", Wt::WString::tr("Lms.delete-item").arg(title));
+            delBtn->setToolTip(Wt::WString::tr("Lms.delete"));
+            delBtn->clicked().connect([this, tracklistEntryId, entry] {
+                {
+                    auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
+                    db::TrackListEntry::pointer entryToRemove{ db::TrackListEntry::getById(LmsApp->getDbSession(), tracklistEntryId) };
+                    entryToRemove.remove();
+                }
+                if (_trackPos)
+                {
+                    const std::optional<std::size_t> pos{ _entriesContainer->getIndexOf(*entry) };
+                    if (pos && *_trackPos >= *pos)
+                        (*_trackPos)--;
+                    else if (*_trackPos >= _entriesContainer->getCount())
+                        _trackPos.reset();
+                }
+                _nextPlayPos.reset();
+                _entriesContainer->remove(*entry);
+                updateInfo();
+            });
+            entry->bindNew<Wt::WPushButton>("more-btn", Wt::WString::tr("Lms.template.more-btn"), Wt::TextFormat::XHTML);
+            entry->bindNew<Wt::WPushButton>("share", "Share")
+                ->clicked().connect([episodeId] { shareUtils::share(episodeId); });
+            return;
+        }
+
         const auto track{ tracklistEntry->getTrack() };
         const db::TrackId trackId{ track->getId() };
 
@@ -581,6 +722,8 @@ namespace lms::ui
         });
 
         entry->bindNew<Wt::WPushButton>("more-btn", Wt::WString::tr("Lms.template.more-btn"), Wt::TextFormat::XHTML);
+        entry->bindNew<Wt::WPushButton>("share", "Share")
+            ->clicked().connect([trackId] { shareUtils::share(trackId); });
         entry->bindNew<Wt::WPushButton>("play", Wt::WString::tr("Lms.Explore.play"))
             ->clicked()
             .connect([this, entry] {
@@ -591,6 +734,7 @@ namespace lms::ui
 
         auto isStarred{ [=] { return core::Service<feedback::IFeedbackService>::get()->isStarred(LmsApp->getUserId(), trackId); } };
 
+        entry->setCondition("if-has-star", true);
         Wt::WPushButton* starBtn{ entry->bindNew<Wt::WPushButton>("star", Wt::WString::tr(isStarred() ? "Lms.Explore.unstar" : "Lms.Explore.star")) };
         starBtn->clicked().connect([=] {
             auto transaction{ LmsApp->getDbSession().createWriteTransaction() };

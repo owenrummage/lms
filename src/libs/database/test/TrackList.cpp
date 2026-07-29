@@ -20,6 +20,8 @@
 #include <list>
 
 #include "database/objects/Release.hpp"
+#include "database/objects/Podcast.hpp"
+#include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/TrackList.hpp"
 
 #include "Common.hpp"
@@ -27,6 +29,7 @@
 namespace lms::db::tests
 {
     using ScopedReleaseType = ScopedEntity<db::ReleaseType>;
+    using ScopedPodcast = ScopedEntity<db::Podcast>;
 
     TEST_F(DatabaseFixture, SingleTrackList)
     {
@@ -74,6 +77,30 @@ namespace lms::db::tests
 
             tracks = Track::findIds(session, Track::FindParameters{}.setTrackList(trackList2.getId()));
             EXPECT_EQ(tracks.size(), 0);
+        }
+    }
+
+    TEST_F(DatabaseFixture, TrackListPodcastEpisode)
+    {
+        ScopedTrackList trackList{ session, "Podcast queue", TrackListType::Internal };
+        ScopedPodcast podcast{ session, "https://example.com/feed.xml" };
+        PodcastEpisodeId episodeId;
+
+        {
+            auto transaction{ session.createWriteTransaction() };
+            const PodcastEpisode::pointer episode{ session.create<PodcastEpisode>(podcast.get()) };
+            episodeId = episode->getId();
+            session.create<TrackListEntry>(episode, trackList.get());
+        }
+
+        {
+            auto transaction{ session.createReadTransaction() };
+            const TrackList::pointer queue{ TrackList::find(session, trackList.getId()) };
+            ASSERT_EQ(queue->getCount(), 1);
+            const TrackListEntry::pointer entry{ queue->getEntry(0) };
+            EXPECT_FALSE(entry->getTrack());
+            ASSERT_TRUE(entry->getPodcastEpisode());
+            EXPECT_EQ(entry->getPodcastEpisodeId(), episodeId);
         }
     }
 

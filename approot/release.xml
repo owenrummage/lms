@@ -24,6 +24,7 @@
 					<li>${play-last class="dropdown-item"}</li>
 					<li>${play-shuffled class="dropdown-item"}</li>
 					<li>${star class="dropdown-item"}</li>
+					<li>${share class="dropdown-item"}</li>
 					${<if-has-mbid>}
 					<li><a href="${mbid-link}" target="_blank" class="dropdown-item">${tr:Lms.Explore.musicbrainz-release}</a></li>
 					${</if-has-mbid>}
@@ -118,6 +119,7 @@
 					<li>${play-next class="dropdown-item"}</li>
 					<li>${play-last class="dropdown-item"}</li>
 					<li>${star class="dropdown-item"}</li>
+					<li>${share class="dropdown-item"}</li>
 					${<if-has-download>}
 					<li>${download class="dropdown-item"}</li>
 					${</if-has-download>}

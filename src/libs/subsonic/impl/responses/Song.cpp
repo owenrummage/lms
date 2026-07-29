@@ -77,6 +77,10 @@ namespace lms::api::subsonic
     {
         LMS_SCOPED_TRACE_DETAILED("Subsonic", "CreateSong");
 
+        const db::MediaLibrary::pointer mediaLibrary{ track->getMediaLibrary() };
+        if (!mediaLibrary || !context.isMediaLibraryAllowed(mediaLibrary->getId()))
+            throw RequestedDataNotFoundError{};
+
         const auto medium{ track->getMedium() };
 
         Response::Node trackResponse;

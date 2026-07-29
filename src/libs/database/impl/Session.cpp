@@ -42,6 +42,7 @@
 #include "database/objects/PlayListFile.hpp"
 #include "database/objects/PlayQueue.hpp"
 #include "database/objects/Podcast.hpp"
+#include "database/objects/InternetRadioStation.hpp"
 #include "database/objects/PodcastEpisode.hpp"
 #include "database/objects/RatedArtist.hpp"
 #include "database/objects/RatedRelease.hpp"
@@ -49,6 +50,7 @@
 #include "database/objects/Release.hpp"
 #include "database/objects/ReleaseArtistLink.hpp"
 #include "database/objects/ScanSettings.hpp"
+#include "database/objects/Share.hpp"
 #include "database/objects/ServerInfo.hpp"
 #include "database/objects/StarredArtist.hpp"
 #include "database/objects/StarredRelease.hpp"
@@ -95,6 +97,7 @@ namespace lms::db
         _session.mapClass<Country>("country");
         _session.mapClass<Directory>("directory");
         _session.mapClass<Image>("image");
+	_session.mapClass<InternetRadioStation>("internet_radio_station");
         _session.mapClass<Label>("label");
         _session.mapClass<Listen>("listen");
         _session.mapClass<MediaLibrary>("media_library");
@@ -110,6 +113,7 @@ namespace lms::db
         _session.mapClass<ReleaseArtistLink>("release_artist_link");
         _session.mapClass<ReleaseType>("release_type");
         _session.mapClass<ScanSettings>("scan_settings");
+        _session.mapClass<Share>("share");
         _session.mapClass<StarredArtist>("starred_artist");
         _session.mapClass<StarredRelease>("starred_release");
         _session.mapClass<StarredTrack>("starred_track");
@@ -223,6 +227,8 @@ namespace lms::db
             "CREATE INDEX IF NOT EXISTS auth_token_user_domain_idx ON auth_token(user_id, domain)",
             "CREATE INDEX IF NOT EXISTS auth_token_domain_expiry_idx ON auth_token(domain, expiry)",
             "CREATE INDEX IF NOT EXISTS auth_token_domain_value_idx ON auth_token(domain, value)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS share_token_idx ON share(token)",
+            "CREATE INDEX IF NOT EXISTS share_user_idx ON share(user_id)",
 
             "CREATE INDEX IF NOT EXISTS cluster_id_idx ON cluster(id)",
             "CREATE INDEX IF NOT EXISTS cluster_cluster_type_idx ON cluster(cluster_type_id)",

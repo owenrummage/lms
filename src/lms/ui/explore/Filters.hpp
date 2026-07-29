@@ -26,10 +26,13 @@
 #include "core/media/Codec.hpp"
 
 #include "database/objects/Filters.hpp"
+#include "database/objects/ArtistId.hpp"
 #include "database/objects/GenreId.hpp"
 #include "database/objects/GroupingId.hpp"
 #include "database/objects/LanguageId.hpp"
 #include "database/objects/MoodId.hpp"
+#include "database/objects/ReleaseId.hpp"
+#include "database/objects/TrackId.hpp"
 
 namespace lms::ui
 {
@@ -39,6 +42,10 @@ namespace lms::ui
         Filters();
 
         const db::Filters& getDbFilters() const { return _dbFilters; }
+        bool isMediaLibraryAllowed(db::MediaLibraryId mediaLibraryId) const;
+        bool isArtistAllowed(db::ArtistId artistId) const;
+        bool isReleaseAllowed(db::ReleaseId releaseId) const;
+        bool isTrackAllowed(db::TrackId trackId) const;
 
         void add(db::ClusterId clusterId);
         void set(db::GenreId genreId);

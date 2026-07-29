@@ -30,6 +30,7 @@
 #include "core/media/MimeType.hpp"
 
 #include "database/Session.hpp"
+#include "database/objects/MediaLibrary.hpp"
 #include "database/objects/PodcastEpisodeId.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackLyrics.hpp"
@@ -122,6 +123,15 @@ namespace lms::api::subsonic
                 throw RequiredParameterMissingError{ "id" };
 
             const AudioFileId audioId{ trackId ? AudioFileId{ *trackId } : AudioFileId{ *podcastEpisodeId } };
+
+            if (trackId)
+            {
+                auto transaction{ context.getDbSession().createReadTransaction() };
+                const db::Track::pointer track{ db::Track::find(context.getDbSession(), *trackId) };
+                const db::MediaLibrary::pointer library{ track ? track->getMediaLibrary() : db::MediaLibrary::pointer{} };
+                if (!library || !context.isMediaLibraryAllowed(library->getId()))
+                    throw RequestedDataNotFoundError{};
+            }
 
             // Optional params
             const std::size_t maxBitRate{ getParameterAs<std::size_t>(context.getParameters(), "maxBitRate").value_or(0) * 1000 }; // "If set to zero, no limit is imposed", given in kpbs
@@ -315,6 +325,9 @@ namespace lms::api::subsonic
 
                 auto track{ db::Track::find(context.getDbSession(), id) };
                 if (!track)
+                    throw RequestedDataNotFoundError{};
+                const db::MediaLibrary::pointer library{ track->getMediaLibrary() };
+                if (!library || !context.isMediaLibraryAllowed(library->getId()))
                     throw RequestedDataNotFoundError{};
 
                 trackPath = track->getAbsoluteFilePath();

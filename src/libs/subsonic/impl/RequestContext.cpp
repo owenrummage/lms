@@ -22,6 +22,8 @@
 #include "ParameterParsing.hpp"
 #include "SubsonicResourceConfig.hpp"
 #include "SubsonicResponse.hpp"
+#include "database/objects/MediaLibrary.hpp"
+#include "database/objects/User.hpp"
 
 namespace lms::api::subsonic
 {
@@ -55,6 +57,20 @@ namespace lms::api::subsonic
         checkProtocolVersion(_clientProtocolVersion, serverProtocolVersion);
     }
 
+    std::string RequestContext::getPublicBaseUrl() const
+    {
+        std::string scheme{ _request.headerValue("X-Forwarded-Proto") };
+        if (scheme.empty())
+            scheme = _request.urlScheme();
+        std::string host{ _request.headerValue("X-Forwarded-Host") };
+        if (host.empty())
+            host = _request.hostName();
+        if (host.find(':') == std::string::npos && !_request.serverPort().empty()
+            && !((scheme == "http" && _request.serverPort() == "80") || (scheme == "https" && _request.serverPort() == "443")))
+            host += ":" + _request.serverPort();
+        return scheme + "://" + host;
+    }
+
     RequestContext::~RequestContext() = default;
 
     const RequestContext::ParameterMap& RequestContext::getParameters() const
@@ -80,6 +96,30 @@ namespace lms::api::subsonic
     db::ObjectPtr<db::User> RequestContext::getUser() const
     {
         return _user;
+    }
+
+    bool RequestContext::isMediaLibraryAllowed(db::MediaLibraryId libraryId) const
+    {
+        return _user && libraryId.isValid() && _user->hasMediaLibrary(libraryId);
+    }
+
+    void RequestContext::applyUserLibraryFilter(db::Filters& filters, db::MediaLibraryId requestedLibrary) const
+    {
+        if (requestedLibrary.isValid())
+        {
+            if (!isMediaLibraryAllowed(requestedLibrary))
+                throw RequestedDataNotFoundError{};
+            filters.setMediaLibrary(requestedLibrary);
+            return;
+        }
+
+        std::vector<db::MediaLibraryId> libraryIds;
+        if (_user)
+        {
+            for (const db::MediaLibrary::pointer& library : _user->getMediaLibraries())
+                libraryIds.push_back(library->getId());
+        }
+        filters.setMediaLibraries(std::move(libraryIds));
     }
 
     std::string RequestContext::getClientIpAddr() const

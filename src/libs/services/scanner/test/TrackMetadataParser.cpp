@@ -29,6 +29,18 @@
 
 namespace lms::scanner::tests
 {
+    TEST(TrackMetadataParser, missingAlbumUsesUnknownAlbum)
+    {
+        const TestTagReader testTags{ TestTagReader::Tags{} };
+
+        const Track track{ TrackMetadataParser{}.parseTrackMetaData(testTags) };
+
+        ASSERT_TRUE(track.medium.has_value());
+        ASSERT_TRUE(track.medium->release.has_value());
+        EXPECT_EQ(track.medium->release->name, "Unknown Album");
+        EXPECT_EQ(track.medium->release->sortName, "Unknown Album");
+    }
+
     TEST(TrackMetadataParser, generalTest)
     {
         TrackMetadataParser::Parameters params;

@@ -19,7 +19,12 @@
 
 #pragma once
 
+#include <optional>
+
 #include <Wt/WContainerWidget.h>
+#include <Wt/WSignal.h>
+
+#include "database/objects/UserId.hpp"
 
 namespace lms::ui
 {
@@ -28,9 +33,15 @@ namespace lms::ui
     {
     public:
         UserView();
+        explicit UserView(db::UserId userId);
+
+        Wt::Signal<>& saved() { return _saved; }
 
     private:
         void refreshView();
+
+        std::optional<db::UserId> _userId;
+        Wt::Signal<> _saved;
     };
 
 } // namespace lms::ui

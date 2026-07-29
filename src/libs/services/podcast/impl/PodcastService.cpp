@@ -55,7 +55,7 @@ namespace lms::podcast
         , _refreshTimer(ioContext)
         , _httpClient{ core::http::createClient(ioContext, "") }
         , _refreshContext{ _executor, db, *_httpClient, cachePath }
-        , _refreshPeriod{ core::Service<core::IConfig>::get()->getULong("podcast-refresh-period-hours", 2) }
+        , _refreshPeriod{ core::Service<core::IConfig>::get()->getULong("podcast-refresh-period-hours", 24) }
         , _refreshInProgress{ false }
         , _abortRequested{ false }
         , _refreshStepIndex{ 0 }

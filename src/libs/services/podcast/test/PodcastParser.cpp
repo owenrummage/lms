@@ -33,7 +33,7 @@ namespace lms::podcast::tests
 <channel>
 <title>Affaires sensibles</title>
 <link>https://www.franceinter.fr/emission-affaires-sensibles</link>
-<description>Les grandes affaires, les aventures et les procès qui ont marqué les cinquante dernières années. Vous aimez ce podcast ? Pour écouter tous les épisodes sans limite, rendez-vous sur <a href="https://www.franceinter.fr/emission-affaires-sensibles?at_campaign=desc_podcast&at_medium=lien_RSS">Radio France</a>.</description>
+<description><![CDATA[Les grandes affaires, les aventures et les procès qui ont marqué les cinquante dernières années. Vous aimez ce podcast ? Pour écouter tous les épisodes sans limite, rendez-vous sur ]]><a href="https://www.franceinter.fr/emission-affaires-sensibles?at_campaign=desc_podcast&at_medium=lien_RSS">Radio France</a>.</description>
 <language>fr</language>
 <copyright>Radio France</copyright>
 <lastBuildDate>Sat, 09 Aug 2025 21:34:32 +0200</lastBuildDate>

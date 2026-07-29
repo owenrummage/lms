@@ -22,6 +22,7 @@
 #include <Wt/WCheckBox.h>
 #include <Wt/WComboBox.h>
 #include <Wt/WLineEdit.h>
+#include <Wt/WLengthValidator.h>
 #include <Wt/WLocalDateTime.h>
 #include <Wt/WPushButton.h>
 #include <Wt/WTemplateFormView.h>
@@ -34,6 +35,7 @@
 #include "core/UUID.hpp"
 
 #include "database/Session.hpp"
+#include "database/objects/MediaLibrary.hpp"
 #include "database/objects/User.hpp"
 #include "services/auth/IAuthTokenService.hpp"
 #include "services/auth/IPasswordService.hpp"
@@ -49,6 +51,7 @@ namespace lms::ui
     {
     public:
         static inline const Field LoginField{ "login" };
+        static inline const Field DisplayNameField{ "display-name" };
         static inline const Field PasswordField{ "password" };
         static inline const Field DemoField{ "demo" };
 
@@ -57,11 +60,16 @@ namespace lms::ui
             , _authPasswordService{ authPasswordService }
             , _authTokenService{ authTokenService }
         {
-            if (!_userId)
+            if (!_userId || authPasswordService)
             {
                 addField(LoginField);
                 setValidator(LoginField, createLoginNameValidator());
             }
+
+            addField(DisplayNameField);
+            auto displayNameValidator{ std::make_shared<Wt::WLengthValidator>(db::User::minNameLength, db::User::maxNameLength) };
+            displayNameValidator->setMandatory(true);
+            setValidator(DisplayNameField, displayNameValidator);
 
             if (authPasswordService)
             {
@@ -72,17 +80,36 @@ namespace lms::ui
             }
             addField(DemoField);
 
+            {
+                auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+                const db::User::pointer user{ _userId ? db::User::find(LmsApp->getDbSession(), *_userId) : db::User::pointer{} };
+                db::MediaLibrary::find(LmsApp->getDbSession(), [&](const db::MediaLibrary::pointer& library) {
+                    _mediaLibraries.emplace_back(library->getId(), !user || user->hasMediaLibrary(library->getId()));
+                });
+            }
+
             loadData();
+        }
+
+        const std::vector<std::pair<db::MediaLibraryId, bool>>& getMediaLibraries() const { return _mediaLibraries; }
+        void setMediaLibrary(db::MediaLibraryId mediaLibraryId, bool enabled)
+        {
+            for (auto& [id, value] : _mediaLibraries)
+            {
+                if (id == mediaLibraryId)
+                    value = enabled;
+            }
         }
 
         void saveData()
         {
             auto transaction{ LmsApp->getDbSession().createWriteTransaction() };
 
+            db::User::pointer user;
             if (_userId)
             {
                 // Update user
-                db::User::pointer user{ db::User::find(LmsApp->getDbSession(), *_userId) };
+                user = db::User::find(LmsApp->getDbSession(), *_userId);
                 if (!user)
                     throw UserNotFoundException{};
 
@@ -95,7 +122,7 @@ namespace lms::ui
             else
             {
                 // Check races with other endpoints (subsonic API...)
-                db::User::pointer user{ db::User::find(LmsApp->getDbSession(), valueText(LoginField).toUTF8()) };
+                user = db::User::find(LmsApp->getDbSession(), valueText(LoginField).toUTF8());
                 if (user)
                     throw UserNotAllowedException{};
 
@@ -113,9 +140,28 @@ namespace lms::ui
                 if (_authPasswordService)
                     _authPasswordService->setPassword(user->getId(), valueText(PasswordField).toUTF8());
             }
+
+            std::vector<db::ObjectPtr<db::MediaLibrary>> mediaLibraries;
+            for (const auto& [mediaLibraryId, enabled] : _mediaLibraries)
+            {
+                if (enabled)
+                {
+                    if (const auto library{ db::MediaLibrary::find(LmsApp->getDbSession(), mediaLibraryId) })
+                        mediaLibraries.push_back(library);
+                }
+            }
+            if (hasLoginField())
+                user.modify()->setLoginName(valueText(LoginField).toUTF8());
+            user.modify()->setDisplayName(valueText(DisplayNameField).toUTF8());
+            user.modify()->setMediaLibraries(mediaLibraries);
         }
 
     private:
+        bool hasLoginField() const
+        {
+            return !_userId || _authPasswordService;
+        }
+
         void loadData()
         {
             if (!_userId)
@@ -126,8 +172,9 @@ namespace lms::ui
             const db::User::pointer user{ db::User::find(LmsApp->getDbSession(), *_userId) };
             if (!user)
                 throw UserNotFoundException{};
-            if (user == LmsApp->getUser())
-                throw UserNotAllowedException{};
+            if (hasLoginField())
+                setValue(LoginField, user->getLoginName());
+            setValue(DisplayNameField, user->getDisplayName());
         }
 
         db::UserType getUserType() const
@@ -145,6 +192,9 @@ namespace lms::ui
 
         std::string getLoginName() const
         {
+            if (hasLoginField())
+                return valueText(LoginField).toUTF8();
+
             if (_userId)
             {
                 auto transaction{ LmsApp->getDbSession().createReadTransaction() };
@@ -165,7 +215,7 @@ namespace lms::ui
                 auto transaction{ LmsApp->getDbSession().createReadTransaction() };
 
                 const db::User::pointer user{ db::User::find(LmsApp->getDbSession(), valueText(LoginField).toUTF8()) };
-                if (user)
+                if (user && (!_userId || user->getId() != *_userId))
                     error = Wt::WString::tr("Lms.Admin.User.user-already-exists");
             }
             else if (field == DemoField)
@@ -187,6 +237,7 @@ namespace lms::ui
         std::optional<db::UserId> _userId;
         auth::IPasswordService* _authPasswordService{};
         auth::IAuthTokenService& _authTokenService;
+        std::vector<std::pair<db::MediaLibraryId, bool>> _mediaLibraries;
     };
 
     UserView::UserView()
@@ -198,12 +249,18 @@ namespace lms::ui
         refreshView();
     }
 
+    UserView::UserView(db::UserId userId)
+        : _userId{ userId }
+    {
+        refreshView();
+    }
+
     void UserView::refreshView()
     {
-        if (!wApp->internalPathMatches("/admin/user"))
+        if (!_userId && !wApp->internalPathMatches("/admin/user"))
             return;
 
-        const std::optional<db::UserId> userId{ core::stringUtils::readAs<db::UserId::ValueType>(wApp->internalPathNextPart("/admin/user/")) };
+        const std::optional<db::UserId> userId{ _userId ? _userId : core::stringUtils::readAs<db::UserId::ValueType>(wApp->internalPathNextPart("/admin/user/")) };
 
         clear();
 
@@ -226,7 +283,8 @@ namespace lms::ui
                 throw UserNotFoundException{};
 
             const Wt::WString title{ Wt::WString::tr("Lms.Admin.User.user-edit").arg(user->getLoginName()) };
-            LmsApp->setTitle(title);
+            if (!_userId)
+                LmsApp->setTitle(title);
 
             t->bindString("title", title, Wt::TextFormat::Plain);
             t->setCondition("if-has-last-login", true);
@@ -234,6 +292,12 @@ namespace lms::ui
             const Wt::WDateTime lastLogin{ user->getLastLogin() };
             const Wt::WString lastLoginStr{ locale.timeZone() ? lastLogin.toLocalTime().toString() : lastLogin.toString(locale.dateTimeFormat()) + " (UTC)" };
             t->bindString("last-login", lastLoginStr, Wt::TextFormat::Plain);
+
+            if (authPasswordService)
+            {
+                t->setCondition("if-has-login", true);
+                t->setFormWidget(UserModel::LoginField, std::make_unique<Wt::WLineEdit>());
+            }
         }
         else
         {
@@ -245,6 +309,8 @@ namespace lms::ui
             t->setFormWidget(UserModel::LoginField, std::make_unique<Wt::WLineEdit>());
             t->bindString("title", title);
         }
+
+        t->setFormWidget(UserModel::DisplayNameField, std::make_unique<Wt::WLineEdit>());
 
         if (authPasswordService)
         {
@@ -262,15 +328,35 @@ namespace lms::ui
         if (!userId && core::Service<core::IConfig>::get()->getBool("demo", false))
             t->setCondition("if-demo", true);
 
+        auto* mediaLibrariesContainer{ t->bindNew<Wt::WContainerWidget>("media-libraries") };
+        std::vector<std::pair<db::MediaLibraryId, Wt::WCheckBox*>> mediaLibraryCheckBoxes;
+        for (const auto& [mediaLibraryId, enabled] : model->getMediaLibraries())
+        {
+            auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+            const auto library{ db::MediaLibrary::find(LmsApp->getDbSession(), mediaLibraryId) };
+            if (!library)
+                continue;
+            auto checkBox{ std::make_unique<Wt::WCheckBox>(Wt::WString::fromUTF8(std::string{ library->getName() })) };
+            checkBox->setChecked(enabled);
+            Wt::WCheckBox* checkBoxPtr{ checkBox.get() };
+            mediaLibrariesContainer->addWidget(std::move(checkBox));
+            mediaLibraryCheckBoxes.emplace_back(mediaLibraryId, checkBoxPtr);
+        }
+
         Wt::WPushButton* saveBtn{ t->bindNew<Wt::WPushButton>("save-btn", Wt::WString::tr(userId ? "Lms.save" : "Lms.create")) };
-        saveBtn->clicked().connect([=]() {
+        saveBtn->clicked().connect([=, this]() {
             t->updateModel(model.get());
+            for (const auto& [mediaLibraryId, checkBox] : mediaLibraryCheckBoxes)
+                model->setMediaLibrary(mediaLibraryId, checkBox->isChecked());
 
             if (model->validate())
             {
                 model->saveData();
                 LmsApp->notifyMsg(Notification::Type::Info, Wt::WString::tr(userId ? "Lms.Admin.User.user-updated" : "Lms.Admin.User.user-created"));
-                LmsApp->setInternalPath("/admin/users", true);
+                if (_userId)
+                    saved().emit();
+                else
+                    LmsApp->setInternalPath("/admin/users", true);
             }
             else
             {

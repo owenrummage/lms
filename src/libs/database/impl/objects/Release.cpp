@@ -89,6 +89,7 @@ namespace lms::db
                 || params.filters.grouping.isValid()
                 || params.filters.language.isValid()
                 || params.filters.mediaLibrary.isValid()
+                || params.filters.mediaLibraries.has_value()
                 || params.filters.mood.isValid()
                 || params.filters.codec.has_value()
                 || params.directory.isValid()
@@ -108,6 +109,21 @@ namespace lms::db
 
             if (params.filters.mediaLibrary.isValid())
                 query.where("t.media_library_id = ?").bind(params.filters.mediaLibrary);
+            else if (params.filters.mediaLibraries)
+            {
+                if (params.filters.mediaLibraries->empty())
+                    query.where("1 = 0");
+                else
+                {
+                    std::string clause{ "t.media_library_id IN (?" };
+                    for (std::size_t i{ 1 }; i < params.filters.mediaLibraries->size(); ++i)
+                        clause += ",?";
+                    clause += ")";
+                    query.where(clause);
+                    for (db::MediaLibraryId libraryId : *params.filters.mediaLibraries)
+                        query.bind(libraryId);
+                }
+            }
 
             if (params.filters.label.isValid())
             {

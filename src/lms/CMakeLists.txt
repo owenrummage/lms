@@ -1,6 +1,7 @@
 
 add_executable(lms
 	main.cpp
+	PublicShareResource.cpp
 	ui/Auth.cpp
 	ui/LmsApplication.cpp
 	ui/LmsApplicationManager.cpp
@@ -10,6 +11,7 @@ add_executable(lms
 	ui/ModalManager.cpp
 	ui/NotificationContainer.cpp
 	ui/PlayQueue.cpp
+	ui/PodcastsView.cpp
 	ui/settings/AudioSettingsView.cpp
 	ui/settings/PasswordSettingsView.cpp
 	ui/settings/ServicesSettingsView.cpp
@@ -18,6 +20,7 @@ add_executable(lms
 	ui/settings/SubsonicSettingsView.cpp
 	ui/settings/UISettingsView.cpp
 	ui/State.cpp
+	ui/ShareUtils.cpp
 	ui/Tooltip.cpp
 	ui/Utils.cpp
 	ui/admin/AdminView.cpp
@@ -28,8 +31,10 @@ add_executable(lms
 	ui/admin/About.cpp
 	ui/admin/DebugToolsView.cpp
 	ui/admin/InitWizardView.cpp
+	ui/admin/InternetRadioView.cpp
 	ui/admin/MediaLibrariesView.cpp
 	ui/admin/MediaLibraryModal.cpp
+	ui/admin/PodcastsView.cpp
 	ui/admin/ScannerController.cpp
 	ui/admin/ScannerReportResource.cpp
 	ui/admin/ScanSettingsView.cpp

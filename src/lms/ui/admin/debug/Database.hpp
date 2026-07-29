@@ -21,11 +21,20 @@
 
 #include <Wt/WTemplate.h>
 
+namespace Wt { class WPushButton; class WText; class WTimer; }
+
 namespace lms::ui
 {
     class Database : public Wt::WTemplate
     {
     public:
         Database();
+
+    private:
+        void updateMusicBrainzResyncStatus();
+
+        Wt::WPushButton* _musicBrainzResyncBtn{};
+        Wt::WText* _musicBrainzResyncStatus{};
+        Wt::WTimer* _statusTimer{};
     };
 } // namespace lms::ui
