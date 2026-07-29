@@ -16,6 +16,7 @@
 #include "database/objects/User.hpp"
 #include "services/podcast/IPodcastService.hpp"
 #include "core/Service.hpp"
+#include "core/IConfig.hpp"
 
 #include "LmsApplication.hpp"
 #include "ModalManager.hpp"
@@ -36,8 +37,15 @@ namespace lms::ui::shareUtils
                 LmsApp->getDbSession().create<db::Share>(token, mediaId, user);
             }
 
-            const auto& env{ LmsApp->environment() };
-            const std::string url{ env.urlScheme() + "://" + env.hostName() + "/share/" + token };
+            std::string publicUrl{ core::Service<core::IConfig>::get()->getString("public-url", "") };
+            while (publicUrl.ends_with('/'))
+                publicUrl.pop_back();
+            if (publicUrl.empty())
+            {
+                const auto& env{ LmsApp->environment() };
+                publicUrl = env.urlScheme() + "://" + env.hostName();
+            }
+            const std::string url{ publicUrl + "/share/" + token };
             auto modal{ std::make_unique<Wt::WTemplate>(Wt::WString::fromUTF8(R"(
 <div class="modal fade" tabindex="-1"><div class="modal-dialog"><div class="modal-content">
 <div class="modal-header"><h5 class="modal-title">Share</h5>${close-x class="btn-close" data-bs-dismiss="modal" aria-label="Close"}</div>

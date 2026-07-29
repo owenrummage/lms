@@ -24,6 +24,8 @@
 #include "SubsonicResponse.hpp"
 #include "database/objects/MediaLibrary.hpp"
 #include "database/objects/User.hpp"
+#include "core/IConfig.hpp"
+#include "core/Service.hpp"
 
 namespace lms::api::subsonic
 {
@@ -59,6 +61,12 @@ namespace lms::api::subsonic
 
     std::string RequestContext::getPublicBaseUrl() const
     {
+        std::string publicUrl{ core::Service<core::IConfig>::get()->getString("public-url", "") };
+        while (publicUrl.ends_with('/'))
+            publicUrl.pop_back();
+        if (!publicUrl.empty())
+            return publicUrl;
+
         std::string scheme{ _request.headerValue("X-Forwarded-Proto") };
         if (scheme.empty())
             scheme = _request.urlScheme();
