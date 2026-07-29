@@ -30,6 +30,7 @@
 
 #include "database/objects/TrackId.hpp"
 #include "database/objects/PodcastEpisodeId.hpp"
+#include "database/objects/InternetRadioStationId.hpp"
 #include "database/objects/Types.hpp"
 
 namespace lms::ui
@@ -99,6 +100,7 @@ namespace lms::ui
 
         void loadTrack(db::TrackId trackId, bool play, float replayGain);
         void loadPodcastEpisode(db::PodcastEpisodeId episodeId, bool play = true);
+        void loadInternetRadio(db::InternetRadioStationId stationId);
         void stop();
 
         std::optional<Settings> getSettings() const { return _settings; }

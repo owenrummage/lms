@@ -34,6 +34,7 @@
 #include "database/objects/Artist.hpp"
 #include "database/objects/Podcast.hpp"
 #include "database/objects/PodcastEpisode.hpp"
+#include "database/objects/InternetRadioStation.hpp"
 #include "database/objects/Release.hpp"
 #include "database/objects/Track.hpp"
 #include "database/objects/TrackList.hpp"
@@ -398,6 +399,56 @@ namespace lms::ui
         doJavaScript(oss.str());
         _trackIdLoaded.reset();
         _podcastEpisodeIdLoaded = episodeId;
+    }
+
+    void MediaPlayer::loadInternetRadio(db::InternetRadioStationId stationId)
+    {
+        LMS_LOG(UI, DEBUG, "Playing internet radio station ID = " << stationId.toString());
+
+        std::ostringstream oss;
+        {
+            auto transaction{ LmsApp->getDbSession().createReadTransaction() };
+            const db::InternetRadioStation::pointer station{ db::InternetRadioStation::find(LmsApp->getDbSession(), stationId) };
+            if (!station)
+                return;
+
+            const std::string name{ station->getName() };
+            const std::string streamUrl{ station->getStreamUrl() };
+            const std::string homepageUrl{ station->getHomepageUrl() };
+            oss
+                << "var params = {"
+                << " trackId: \"radio-" << stationId.toString() << "\","
+                << " nativeResource: \"" << core::stringUtils::jsEscape(streamUrl) << "\","
+                << " transcodingResource: \"\","
+                << " duration: 0,"
+                << " replayGain: 0,"
+                << " isLive: true,"
+                << " scrobbleEnabled: false,"
+                << " queueEnabled: false,"
+                << " transcodingEnabled: false,"
+                << " title: \"" << core::stringUtils::jsEscape(name) << "\","
+                << " artist: \"Internet Radio\","
+                << " release: \"\","
+                << " artwork: [{ src: \"" << LmsApp->getArtworkResource()->getDefaultArtworkUrl(ArtworkResource::DefaultArtworkType::Track) << "\", type: \"image/svg+xml\" }]"
+                << "};";
+            oss << jsRef() + ".mediaplayer.loadTrack(params, true)";
+
+            _title->setTextFormat(Wt::TextFormat::Plain);
+            _title->setText(Wt::WString::fromUTF8(name));
+            _artists->clear();
+            _artists->addNew<Wt::WText>(Wt::WString::tr("Lms.Radio.live"), Wt::TextFormat::Plain);
+            _release->setTextFormat(Wt::TextFormat::Plain);
+            _release->setText(homepageUrl.empty() ? Wt::WString{} : Wt::WString::tr("Lms.Radio.homepage"));
+            _release->setLink(homepageUrl.empty() ? Wt::WLink{} : Wt::WLink{ homepageUrl });
+            _release->setAttributeValue("target", "_blank");
+            _release->setAttributeValue("rel", "noopener noreferrer");
+            _separator->setText(homepageUrl.empty() ? "" : " — ");
+        }
+
+        LMS_LOG(UI, DEBUG, "Running js = '" << oss.str() << "'");
+        doJavaScript(oss.str());
+        _trackIdLoaded.reset();
+        _podcastEpisodeIdLoaded.reset();
     }
 
     void MediaPlayer::stop()

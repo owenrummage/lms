@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<messages>
+
+<message id="Lms.Radio.template">
+	<legend class="mb-3">${tr:Lms.Radio.radio}</legend>
+	<p class="text-body-secondary">${tr:Lms.Radio.description}</p>
+	${stations class="d-grid gap-2"}
+</message>
+
+<message id="Lms.Radio.template.station">
+	<div class="card w-100">
+		<div class="card-body d-flex align-items-center gap-3">
+			<div class="flex-fill min-width-0">
+				<h5 class="card-title text-truncate mb-1">${name}</h5>
+				${homepage class="small"}
+			</div>
+			${play-btn class="btn btn-primary flex-shrink-0"}
+		</div>
+	</div>
+</message>
+
+</messages>

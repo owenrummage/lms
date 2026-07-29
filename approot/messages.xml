@@ -371,6 +371,13 @@
 
 <!--Podcasts-->
 <message id="Lms.Podcasts.podcasts">Podcasts</message>
+<message id="Lms.Radio.radio">Radio</message>
+<message id="Lms.Radio.description">Stream configured internet radio stations through the main player.</message>
+<message id="Lms.Radio.play"><i class="fa fa-play" aria-hidden="true"></i> Play</message>
+<message id="Lms.Radio.play-station">Play {1}</message>
+<message id="Lms.Radio.homepage">Station website</message>
+<message id="Lms.Radio.live">Live radio</message>
+<message id="Lms.Radio.empty">No internet radio stations are configured.</message>
 <message id="Lms.Podcasts.empty">No podcast feeds have been added yet.</message>
 <message id="Lms.Podcasts.back">← All podcasts</message>
 <message id="Lms.Podcasts.no-episodes">No episodes have been discovered yet.</message>

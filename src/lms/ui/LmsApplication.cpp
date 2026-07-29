@@ -55,6 +55,7 @@
 #include "NotificationContainer.hpp"
 #include "PlayQueue.hpp"
 #include "PodcastsView.hpp"
+#include "RadioView.hpp"
 #include "admin/About.hpp"
 #include "admin/AdminView.hpp"
 #include "admin/InitWizardView.hpp"
@@ -102,6 +103,7 @@ namespace lms::ui
             res->use(appRoot + "notifications");
             res->use(appRoot + "playqueue");
             res->use(appRoot + "podcasts");
+            res->use(appRoot + "radio");
             res->use(appRoot + "release");
             res->use(appRoot + "releases");
             res->use(appRoot + "settings-audio");
@@ -417,6 +419,7 @@ namespace lms::ui
         navbar->bindNew<Wt::WAnchor>("tracks", Wt::WLink{ Wt::LinkType::InternalPath, "/tracks" }, Wt::WString::tr("Lms.Explore.tracks"));
         navbar->bindNew<Wt::WAnchor>("tracklists", Wt::WLink{ Wt::LinkType::InternalPath, "/tracklists" }, Wt::WString::tr("Lms.Explore.tracklists"));
         navbar->bindNew<Wt::WAnchor>("podcasts", Wt::WLink{ Wt::LinkType::InternalPath, "/podcasts" }, Wt::WString::tr("Lms.Podcasts.podcasts"));
+        navbar->bindNew<Wt::WAnchor>("radio", Wt::WLink{ Wt::LinkType::InternalPath, "/radio" }, Wt::WString::tr("Lms.Radio.radio"));
 
         Filters* filters{ navbar->bindNew<Filters>("filters") };
         navbar->bindString("username", std::string{ getUserLoginName() }, Wt::TextFormat::Plain);
@@ -472,6 +475,7 @@ namespace lms::ui
 
         mainRouter->add<SettingsView>("/settings", std::nullopt);
         mainRouter->add<PodcastsView>("/podcasts", Wt::WString::tr("Lms.Podcasts.podcasts"));
+        mainRouter->add<RadioView>("/radio", Wt::WString::tr("Lms.Radio.radio"));
 
         if (getUserType() == db::UserType::ADMIN)
             mainRouter->add<AdminView>("/admin", std::nullopt);

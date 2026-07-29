@@ -28,6 +28,7 @@ class LMSMediaPlayer {
 	#queueEnabled;
 	#transcodingEnabled;
 	#duration;
+	#isLive;
 	#audioNativeSrc;
 	#audioTranscodingSrc;
 	#settings;
@@ -47,6 +48,7 @@ class LMSMediaPlayer {
 		this.#queueEnabled = true;
 		this.#transcodingEnabled = true;
 		this.#duration = 0;
+		this.#isLive = false;
 		this.#settings = {};
 		this.#playedDuration = 0;
 		this.#lastStartPlaying = null;
@@ -94,8 +96,8 @@ class LMSMediaPlayer {
 		this.#elems.audio.addEventListener("waiting", this.#pauseTimer.bind(this));
 
 		this.#elems.audio.addEventListener("timeupdate", () => {
-			this.#elems.progress.style.width = "" + ((this.#offset + this.#elems.audio.currentTime) / this.#duration) * 100 + "%";
-			this.#elems.curtime.innerHTML = this.#durationToString(this.#offset + this.#elems.audio.currentTime);
+			this.#elems.progress.style.width = this.#isLive ? "0%" : "" + ((this.#offset + this.#elems.audio.currentTime) / this.#duration) * 100 + "%";
+			this.#elems.curtime.innerHTML = this.#isLive ? "LIVE" : this.#durationToString(this.#offset + this.#elems.audio.currentTime);
 		});
 
 		this.#elems.audio.addEventListener("ended", () => {
@@ -362,6 +364,8 @@ class LMSMediaPlayer {
 	}
 
 	#seekTo(seekTime) {
+		if (this.#isLive)
+			return;
 		this.#initAudioCtx();
 		let mode = this.#getAudioMode();
 		if (!mode)
@@ -402,7 +406,7 @@ class LMSMediaPlayer {
 	}
 
 	#updateMediaSessionState() {
-		if ("mediaSession" in navigator) {
+		if ("mediaSession" in navigator && !this.#isLive && this.#duration > 0) {
 			navigator.mediaSession.setPositionState({
 				duration: this.#duration,
 				playbackRate: 1,
@@ -462,10 +466,12 @@ class LMSMediaPlayer {
 		this.#elems.next.disabled = !this.#queueEnabled;
 		this.#offset = 0;
 		this.#duration = params.duration;
+		this.#isLive = params.isLive ?? false;
 		this.#audioNativeSrc = params.nativeResource;
 		this.#audioTranscodingSrc = params.transcodingResource + "&bitrate=" + this.#settings.transcoding.bitrate + "&format=" + this.#settings.transcoding.format;
 
 		this.#elems.seek.max = this.#duration;
+		this.#elems.seek.disabled = this.#isLive;
 
 		this.#removeAudioSources();
 		// ! order is important
@@ -477,8 +483,8 @@ class LMSMediaPlayer {
 		}
 		this.#elems.audio.load();
 
-		this.#elems.curtime.innerHTML = this.#durationToString(this.#offset);
-		this.#elems.duration.innerHTML = this.#durationToString(this.#duration);
+		this.#elems.curtime.innerHTML = this.#isLive ? "LIVE" : this.#durationToString(this.#offset);
+		this.#elems.duration.innerHTML = this.#isLive ? "" : this.#durationToString(this.#duration);
 
 		if (!this.#audioIsInit) {
 			this.#pendingTrackParameters = params;

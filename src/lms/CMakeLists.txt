@@ -12,6 +12,7 @@ add_executable(lms
 	ui/NotificationContainer.cpp
 	ui/PlayQueue.cpp
 	ui/PodcastsView.cpp
+	ui/RadioView.cpp
 	ui/settings/AudioSettingsView.cpp
 	ui/settings/PasswordSettingsView.cpp
 	ui/settings/ServicesSettingsView.cpp
