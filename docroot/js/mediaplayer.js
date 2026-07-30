@@ -455,11 +455,23 @@ class LMSMediaPlayer {
 		}
 	}
 
-	loadTrack(params, autoplay) {
+	async loadTrack(params, autoplay) {
 		this.#resetTimer();
 
+		if (params.nativeResource && params.nativeResource.endsWith(".pls")) {
+			try {
+				const response = await fetch(params.nativeResource);
+				const text = await response.text();
+				const match = text.match(/^File\d+=(.*)$/m);
+				if (match) {
+					params.nativeResource = match[1].trim();
+				}
+			} catch (e) {
+				console.error("Failed to resolve .pls URL:", e);
+			}
+		}
+
 		this.#trackId = params.trackId;
-		this.#scrobbleEnabled = params.scrobbleEnabled ?? true;
 		this.#queueEnabled = params.queueEnabled ?? true;
 		this.#transcodingEnabled = params.transcodingEnabled ?? true;
 		this.#elems.previous.disabled = !this.#queueEnabled;
